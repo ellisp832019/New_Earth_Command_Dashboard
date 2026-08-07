@@ -312,7 +312,9 @@ class _UsersDevicesPinsScreenState
     ref.invalidate(usersDevicesPinRegistrySnapshotProvider);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Recovery PIN issued: ${record.pinCode}')),
+      const SnackBar(
+        content: Text('Recovery PIN issued and shown once to the operator.'),
+      ),
     );
   }
 
@@ -802,7 +804,8 @@ class _UsersDevicesPinsScreenState
                                         label: 'Primary: ${primaryPins.length}',
                                       ),
                                       _CardChip(
-                                        label: 'Recovery: ${recoveryPins.length}',
+                                        label:
+                                            'Recovery: ${recoveryPins.length}',
                                       ),
                                       _CardChip(
                                         label: lockedOutCount == 0
@@ -1053,9 +1056,9 @@ class _UsersDevicesPinsScreenState
                                   if (primaryPins.isNotEmpty) ...[
                                     Text(
                                       'Primary PIN replacement revokes the current active primary PIN before writing the new one.',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                     const SizedBox(height: 10),
                                   ],

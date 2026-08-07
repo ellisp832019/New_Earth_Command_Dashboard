@@ -6,10 +6,7 @@ import '../../../core/widgets/workspace_shell.dart';
 import '../application/assets_controller.dart';
 
 class PartsInventoryScreen extends ConsumerStatefulWidget {
-  const PartsInventoryScreen({
-    super.key,
-    this.initialSearch,
-  });
+  const PartsInventoryScreen({super.key, this.initialSearch});
 
   final String? initialSearch;
 
@@ -88,120 +85,125 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                   SafeArea(
                     child: CustomScrollView(
                       slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.all(20),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _RegisterHeader(
-                              title: 'Parts Inventory',
-                              subtitle:
-                                  'Keep parts light, clear, and easy to search by part, project, or stock status.',
-                              countLabel:
-                                  '${filteredRows.length} of ${table.rows.length} part records shown.',
-                              actionLabel: workspaceData.assetsRootPath == null
-                                  ? 'Asset folder not linked yet'
-                                  : workspaceData.assetsRootPath!,
-                              onReload: () {
-                                ref.invalidate(assetPartsRegisterProvider);
-                              },
-                              onBack: () => Navigator.of(context).maybePop(),
-                            ),
-                            const SizedBox(height: 20),
-                            _RegisterSearchBar(
-                              controller: _searchController,
-                              hintText:
-                                  'Search parts by name, ID, category, supplier, project, or status',
-                              activeFilter: _activeFilter,
-                              filterLabels: const {
-                                'all': 'All',
-                                'low_stock': 'Low Stock',
-                                'wishlist': 'Wishlist',
-                              },
-                              onFilterChanged: (value) {
-                                setState(() => _activeFilter = value);
-                              },
-                              onClear: () {
-                                setState(() {
-                                  _activeFilter = 'all';
-                                  _searchController.clear();
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            _RegisterSummaryRow(
-                              items: [
-                                _SummaryMetric(
-                                  label: 'Low Stock',
-                                  value: _countLowStock(table.rows),
-                                  accent: AppColours.darkAmber,
+                        SliverPadding(
+                          padding: const EdgeInsets.all(20),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _RegisterHeader(
+                                  title: 'Parts Inventory',
+                                  subtitle:
+                                      'Keep parts light, clear, and easy to search by part, project, or stock status.',
+                                  countLabel:
+                                      '${filteredRows.length} of ${table.rows.length} part records shown.',
+                                  actionLabel:
+                                      workspaceData.assetsRootPath == null
+                                      ? 'Asset folder not linked yet'
+                                      : workspaceData.assetsRootPath!,
+                                  onReload: () {
+                                    ref.invalidate(assetPartsRegisterProvider);
+                                  },
+                                  onBack: () =>
+                                      Navigator.of(context).maybePop(),
                                 ),
-                                _SummaryMetric(
-                                  label: 'Wishlist',
-                                  value: _countStatuses(table.rows, const [
-                                    'wishlist',
-                                  ]),
-                                  accent: AppColours.darkPurple,
+                                const SizedBox(height: 20),
+                                _RegisterSearchBar(
+                                  controller: _searchController,
+                                  hintText:
+                                      'Search parts by name, ID, category, supplier, project, or status',
+                                  activeFilter: _activeFilter,
+                                  filterLabels: const {
+                                    'all': 'All',
+                                    'low_stock': 'Low Stock',
+                                    'wishlist': 'Wishlist',
+                                  },
+                                  onFilterChanged: (value) {
+                                    setState(() => _activeFilter = value);
+                                  },
+                                  onClear: () {
+                                    setState(() {
+                                      _activeFilter = 'all';
+                                      _searchController.clear();
+                                    });
+                                  },
                                 ),
-                                _SummaryMetric(
-                                  label: 'Projects Linked',
-                                  value: _countDistinctProjects(table.rows),
-                                  accent: AppColours.darkSecondary,
+                                const SizedBox(height: 16),
+                                _RegisterSummaryRow(
+                                  items: [
+                                    _SummaryMetric(
+                                      label: 'Low Stock',
+                                      value: _countLowStock(table.rows),
+                                      accent: AppColours.darkAmber,
+                                    ),
+                                    _SummaryMetric(
+                                      label: 'Wishlist',
+                                      value: _countStatuses(table.rows, const [
+                                        'wishlist',
+                                      ]),
+                                      accent: AppColours.darkPurple,
+                                    ),
+                                    _SummaryMetric(
+                                      label: 'Projects Linked',
+                                      value: _countDistinctProjects(table.rows),
+                                      accent: AppColours.darkSecondary,
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 20),
+                                if (filteredRows.isEmpty)
+                                  if (table.rows.isEmpty)
+                                    _EmptyRegisterState(
+                                      title: 'No parts yet',
+                                      message:
+                                          'Add your first part so the reorder and low stock workflow has something to work with.',
+                                      onAdd:
+                                          workspaceData.assetsRootPath == null
+                                          ? null
+                                          : () => _addRecord(
+                                              workspaceData.assetsRootPath!,
+                                            ),
+                                    )
+                                  else
+                                    _EmptyFilterState(
+                                      title: 'No parts match this view',
+                                      message:
+                                          'Try a different search or switch the filter back to All.',
+                                      onClear: _clearFilters,
+                                    )
+                                else
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: filteredRows.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: 12),
+                                    itemBuilder: (context, index) {
+                                      final row = filteredRows[index];
+                                      return _PartCard(
+                                        row: row,
+                                        onEdit:
+                                            workspaceData.assetsRootPath == null
+                                            ? null
+                                            : () => _editRecord(
+                                                workspaceData.assetsRootPath!,
+                                                row,
+                                              ),
+                                        onDelete:
+                                            workspaceData.assetsRootPath == null
+                                            ? null
+                                            : () => _deleteRecord(
+                                                workspaceData.assetsRootPath!,
+                                                row,
+                                              ),
+                                      );
+                                    },
+                                  ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            if (filteredRows.isEmpty)
-                              if (table.rows.isEmpty)
-                                _EmptyRegisterState(
-                                  title: 'No parts yet',
-                                  message:
-                                      'Add your first part so the reorder and low stock workflow has something to work with.',
-                                  onAdd: workspaceData.assetsRootPath == null
-                                      ? null
-                                      : () => _addRecord(
-                                          workspaceData.assetsRootPath!,
-                                        ),
-                                )
-                              else
-                                _EmptyFilterState(
-                                  title: 'No parts match this view',
-                                  message:
-                                      'Try a different search or switch the filter back to All.',
-                                  onClear: _clearFilters,
-                                )
-                            else
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: filteredRows.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(height: 12),
-                                itemBuilder: (context, index) {
-                                  final row = filteredRows[index];
-                                  return _PartCard(
-                                    row: row,
-                                    onEdit: workspaceData.assetsRootPath == null
-                                        ? null
-                                        : () => _editRecord(
-                                            workspaceData.assetsRootPath!,
-                                            row,
-                                          ),
-                                    onDelete:
-                                        workspaceData.assetsRootPath == null
-                                        ? null
-                                        : () => _deleteRecord(
-                                            workspaceData.assetsRootPath!,
-                                            row,
-                                          ),
-                                  );
-                                },
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
                       ],
                     ),
                   ),
@@ -209,7 +211,8 @@ class _PartsInventoryScreenState extends ConsumerState<PartsInventoryScreen> {
                     right: 20,
                     bottom: 20,
                     child: FloatingActionButton.extended(
-                      onPressed: _isSaving || workspaceData.assetsRootPath == null
+                      onPressed:
+                          _isSaving || workspaceData.assetsRootPath == null
                           ? null
                           : () => _addRecord(workspaceData.assetsRootPath!),
                       icon: _isSaving

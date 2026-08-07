@@ -1,0 +1,47 @@
+name: Flutter Quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/new-earth-dashboard-platform-control-hardening-2026-08-06
+      - ci/dashboard-github-actions-and-branch-controls-2026-08-07
+
+concurrency:
+  group: flutter-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  flutter_quality:
+    name: Flutter Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.7
+          channel: stable
+          cache: true
+
+      - name: Fetch packages
+        run: flutter pub get
+
+      - name: Regenerate generated code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Validate formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test --reporter expanded

@@ -67,9 +67,7 @@ void main() {
     addTearDown(database.close);
 
     final firstContainer = ProviderContainer(
-      overrides: [
-        appDatabaseProvider.overrideWithValue(database),
-      ],
+      overrides: [appDatabaseProvider.overrideWithValue(database)],
     );
     addTearDown(firstContainer.dispose);
 
@@ -97,9 +95,7 @@ void main() {
     );
 
     final secondContainer = ProviderContainer(
-      overrides: [
-        appDatabaseProvider.overrideWithValue(database),
-      ],
+      overrides: [appDatabaseProvider.overrideWithValue(database)],
     );
     addTearDown(secondContainer.dispose);
 

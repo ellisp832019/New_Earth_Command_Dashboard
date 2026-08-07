@@ -430,8 +430,10 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                                     decoration: InputDecoration(
                                       labelText: 'Search meetings',
                                       prefixIcon: Icon(Icons.search),
-                                      suffixIcon: _masterIndexSearchController
-                                              .text.isEmpty
+                                      suffixIcon:
+                                          _masterIndexSearchController
+                                              .text
+                                              .isEmpty
                                           ? null
                                           : IconButton(
                                               tooltip: 'Clear search',
@@ -517,7 +519,9 @@ class _MeetingSettingsScreenState extends ConsumerState<MeetingSettingsScreen> {
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(color: AppColours.darkMutedText),
                               ),
-                              if (_masterIndexSearchController.text.trim().isNotEmpty ||
+                              if (_masterIndexSearchController.text
+                                      .trim()
+                                      .isNotEmpty ||
                                   _masterIndexStatusFilter != 'All') ...[
                                 const SizedBox(height: 8),
                                 Wrap(

@@ -38,7 +38,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       child: items.when(
         data: (inboxItems) {
           final filteredItems = _applyFilter(inboxItems);
-          final recentHistory = recentProcessed.asData?.value ?? const <InboxListItem>[];
+          final recentHistory =
+              recentProcessed.asData?.value ?? const <InboxListItem>[];
           final hasHistory = recentHistory.isNotEmpty;
 
           if (inboxItems.isEmpty) {
@@ -246,9 +247,7 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.visibility_outlined),
-                  label: Text(
-                    _isProcessing ? 'Processing...' : 'Open Review',
-                  ),
+                  label: Text(_isProcessing ? 'Processing...' : 'Open Review'),
                 ),
                 OutlinedButton.icon(
                   key: Key('parkInboxItemButton-${item.item.inboxItemId}'),
@@ -321,9 +320,9 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
                       const SizedBox(height: 10),
                       Text(
                         item.item.body!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          height: 1.35,
-                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(height: 1.35),
                       ),
                     ],
                     const SizedBox(height: 10),
@@ -338,8 +337,7 @@ class _InboxItemCardState extends ConsumerState<_InboxItemCard> {
               _ConversionChoiceTile(
                 icon: Icons.task_alt_outlined,
                 label: 'Convert to Task',
-                onTap: () =>
-                    Navigator.of(context).pop(_InboxReviewAction.task),
+                onTap: () => Navigator.of(context).pop(_InboxReviewAction.task),
               ),
               _ConversionChoiceTile(
                 icon: Icons.book_outlined,

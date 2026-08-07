@@ -98,8 +98,10 @@ void main() {
     );
 
     expect(find.text('Alpha Module'), findsWidgets);
-    expect(find.text('Calm local control for the alpha workflow.'),
-        findsWidgets);
+    expect(
+      find.text('Calm local control for the alpha workflow.'),
+      findsWidgets,
+    );
     expect(find.text('Module body'), findsOneWidget);
     expect(find.byKey(const Key('module-switcher-dropdown')), findsOneWidget);
   });

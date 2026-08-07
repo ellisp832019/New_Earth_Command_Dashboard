@@ -17,10 +17,7 @@ void main() {
       timestamp: DateTime.utc(2026, 5, 28, 9, 30),
       machineId: 'HAYLEY-LAPTOP',
       userLabel: 'Hayley',
-      changedFields: const {
-        'status': 'broken',
-        'location': 'Workbench B',
-      },
+      changedFields: const {'status': 'broken', 'location': 'Workbench B'},
       note: 'Moved for repair.',
     );
 
@@ -41,32 +38,34 @@ void main() {
   });
 
   test('asset change journal entry tolerates invalid changed fields', () {
-    final parsed = AssetChangeJournalEntry.fromCsvRow(
-      const {
-        'record_id': 'NE-PART-0001',
-        'record_type': 'parts',
-        'action': 'create',
-        'timestamp': '2026-05-28T09:45:00Z',
-        'machine_id': 'HAYLEY-LAPTOP',
-        'user_label': 'Hayley',
-        'changed_fields': 'not valid json',
-        'note': '',
-      },
-    );
+    final parsed = AssetChangeJournalEntry.fromCsvRow(const {
+      'record_id': 'NE-PART-0001',
+      'record_type': 'parts',
+      'action': 'create',
+      'timestamp': '2026-05-28T09:45:00Z',
+      'machine_id': 'HAYLEY-LAPTOP',
+      'user_label': 'Hayley',
+      'changed_fields': 'not valid json',
+      'note': '',
+    });
 
     expect(parsed.changedFields, isEmpty);
     expect(parsed.action, AssetChangeAction.create);
   });
 
   test('asset register repository appends and reads journal entries', () async {
-    final tempRoot = await Directory.systemTemp.createTemp('asset-journal-test-');
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'asset-journal-test-',
+    );
     addTearDown(() async {
       if (await tempRoot.exists()) {
         await tempRoot.delete(recursive: true);
       }
     });
 
-    final assetsRoot = Directory('${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS');
+    final assetsRoot = Directory(
+      '${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS',
+    );
     await assetsRoot.create(recursive: true);
 
     final repository = AssetRegisterRepository(workingDirectory: tempRoot);
@@ -77,10 +76,7 @@ void main() {
       timestamp: DateTime.utc(2026, 5, 28, 10, 0),
       machineId: 'HAYLEY-LAPTOP',
       userLabel: 'Hayley',
-      changedFields: const {
-        'name': 'Cable ties',
-        'quantity': '10',
-      },
+      changedFields: const {'name': 'Cable ties', 'quantity': '10'},
       note: 'Added after delivery.',
     );
 
@@ -96,14 +92,18 @@ void main() {
   });
 
   test('asset change journal detects a basic conflict', () async {
-    final tempRoot = await Directory.systemTemp.createTemp('asset-conflict-test-');
+    final tempRoot = await Directory.systemTemp.createTemp(
+      'asset-conflict-test-',
+    );
     addTearDown(() async {
       if (await tempRoot.exists()) {
         await tempRoot.delete(recursive: true);
       }
     });
 
-    final assetsRoot = Directory('${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS');
+    final assetsRoot = Directory(
+      '${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS',
+    );
     await assetsRoot.create(recursive: true);
 
     final repository = AssetRegisterRepository(workingDirectory: tempRoot);
@@ -161,53 +161,67 @@ void main() {
     expect(conflicts, hasLength(1));
     expect(conflicts.single.recordId, 'NE-EQ-0001');
     expect(conflicts.single.entryCount, 2);
-    expect(conflicts.single.machineIds, containsAll(['HAYLEY-LAPTOP', 'PETER-DESKTOP']));
+    expect(
+      conflicts.single.machineIds,
+      containsAll(['HAYLEY-LAPTOP', 'PETER-DESKTOP']),
+    );
   });
 
-  test('asset register repository rebuilds the journal snapshot to latest entries', () async {
-    final tempRoot = await Directory.systemTemp.createTemp('asset-rebuild-test-');
-    addTearDown(() async {
-      if (await tempRoot.exists()) {
-        await tempRoot.delete(recursive: true);
-      }
-    });
+  test(
+    'asset register repository rebuilds the journal snapshot to latest entries',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'asset-rebuild-test-',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
 
-    final assetsRoot = Directory('${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS');
-    await assetsRoot.create(recursive: true);
+      final assetsRoot = Directory(
+        '${tempRoot.path}/18_ASSETS_EQUIPMENT_AND_PARTS',
+      );
+      await assetsRoot.create(recursive: true);
 
-    final repository = AssetRegisterRepository(workingDirectory: tempRoot);
-    await repository.appendChangeJournalEntry(
-      assetsRoot.path,
-      AssetChangeJournalEntry(
-        recordId: 'NE-EQ-0001',
-        recordType: 'equipment',
-        action: AssetChangeAction.update,
-        timestamp: DateTime.utc(2026, 5, 28, 10, 0),
-        machineId: 'HAYLEY-LAPTOP',
-        userLabel: 'Hayley',
-        changedFields: const {'status': 'broken'},
-        note: '',
-      ),
-    );
-    await repository.appendChangeJournalEntry(
-      assetsRoot.path,
-      AssetChangeJournalEntry(
-        recordId: 'NE-EQ-0001',
-        recordType: 'equipment',
-        action: AssetChangeAction.update,
-        timestamp: DateTime.utc(2026, 5, 28, 10, 12),
-        machineId: 'PETER-DESKTOP',
-        userLabel: 'Peter',
-        changedFields: const {'status': 'repairing'},
-        note: '',
-      ),
-    );
+      final repository = AssetRegisterRepository(workingDirectory: tempRoot);
+      await repository.appendChangeJournalEntry(
+        assetsRoot.path,
+        AssetChangeJournalEntry(
+          recordId: 'NE-EQ-0001',
+          recordType: 'equipment',
+          action: AssetChangeAction.update,
+          timestamp: DateTime.utc(2026, 5, 28, 10, 0),
+          machineId: 'HAYLEY-LAPTOP',
+          userLabel: 'Hayley',
+          changedFields: const {'status': 'broken'},
+          note: '',
+        ),
+      );
+      await repository.appendChangeJournalEntry(
+        assetsRoot.path,
+        AssetChangeJournalEntry(
+          recordId: 'NE-EQ-0001',
+          recordType: 'equipment',
+          action: AssetChangeAction.update,
+          timestamp: DateTime.utc(2026, 5, 28, 10, 12),
+          machineId: 'PETER-DESKTOP',
+          userLabel: 'Peter',
+          changedFields: const {'status': 'repairing'},
+          note: '',
+        ),
+      );
 
-    final rebuilt = await repository.rebuildChangeJournalSnapshot(assetsRoot.path);
-    final parsed = rebuilt.rows.map(AssetChangeJournalEntry.fromCsvRow).toList();
+      final rebuilt = await repository.rebuildChangeJournalSnapshot(
+        assetsRoot.path,
+      );
+      final parsed = rebuilt.rows
+          .map(AssetChangeJournalEntry.fromCsvRow)
+          .toList();
 
-    expect(parsed, hasLength(1));
-    expect(parsed.single.machineId, 'PETER-DESKTOP');
-    expect(parsed.single.changedFields['status'], 'repairing');
-  });
+      expect(parsed, hasLength(1));
+      expect(parsed.single.machineId, 'PETER-DESKTOP');
+      expect(parsed.single.changedFields['status'], 'repairing');
+    },
+  );
 }

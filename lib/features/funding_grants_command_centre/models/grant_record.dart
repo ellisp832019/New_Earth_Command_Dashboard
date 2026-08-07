@@ -88,7 +88,8 @@ class GrantRecord {
     );
   }
 
-  bool get hasDeadline => deadline.trim().isNotEmpty && deadline.trim() != 'TBC';
+  bool get hasDeadline =>
+      deadline.trim().isNotEmpty && deadline.trim() != 'TBC';
 
   DateTime? get deadlineDate {
     if (!hasDeadline) {

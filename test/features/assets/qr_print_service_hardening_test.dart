@@ -24,10 +24,7 @@ void main() {
 
 class _EmptyQueueQrLabelPrintService extends QrLabelPrintService {
   _EmptyQueueQrLabelPrintService()
-      : super(
-          csvService: AssetCsvService(),
-          workingDirectory: Directory.current,
-        );
+    : super(csvService: AssetCsvService(), workingDirectory: Directory.current);
 
   @override
   Future<AssetCsvTable> readPrintQueue(String assetsRootPath) async {

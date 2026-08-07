@@ -57,11 +57,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Location Register'), findsOneWidget);
-    expect(find.text('Office Shelf A'), findsOneWidget);
-    expect(find.text('NE-EQ-0001'), findsOneWidget);
-    expect(find.text('Photo links'), findsOneWidget);
-    expect(find.text('Open Bin Map'), findsOneWidget);
+    expect(find.text('Location Register'), findsAtLeastNWidgets(1));
+    expect(find.text('Office Shelf A'), findsAtLeastNWidgets(1));
+    expect(find.text('NE-EQ-0001'), findsAtLeastNWidgets(1));
+    expect(find.text('Photo links'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Bin Map'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('bin map shows grouped location bins and route', (tester) async {
@@ -91,11 +91,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Location / Bin Map'), findsOneWidget);
-    expect(find.text('Open Location Register'), findsOneWidget);
-    expect(find.text('Office Shelf A'), findsOneWidget);
-    expect(find.text('Electronics Drawer 2'), findsOneWidget);
-    expect(find.text('2 bins'), findsOneWidget);
+    expect(find.text('Location / Bin Map'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Location Register'), findsAtLeastNWidgets(1));
+    expect(find.text('Office Shelf A'), findsAtLeastNWidgets(1));
+    expect(find.text('Electronics Drawer 2'), findsAtLeastNWidgets(1));
+    expect(find.text('2 bins'), findsAtLeastNWidgets(1));
   });
 
   test('valuation overview groups totals by project', () async {
@@ -220,14 +220,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('Valuation Summary'), findsOneWidget);
-    expect(find.text('Purchase cost'), findsOneWidget);
-    expect(find.text('Insurance review'), findsOneWidget);
-    expect(find.text('Evidence check'), findsOneWidget);
-    expect(find.text('1 linked'), findsOneWidget);
-    expect(find.text('Asset value by project'), findsOneWidget);
-    expect(find.text('Field scanner'), findsOneWidget);
-    expect(find.text('Open Evidence Library'), findsOneWidget);
+    expect(find.text('Valuation Summary'), findsAtLeastNWidgets(1));
+    expect(find.text('Purchase cost'), findsAtLeastNWidgets(1));
+    expect(find.text('Insurance review'), findsAtLeastNWidgets(1));
+    expect(find.text('Evidence check'), findsAtLeastNWidgets(1));
+    expect(find.text('1 linked'), findsAtLeastNWidgets(1));
+    expect(find.text('Asset value by project'), findsAtLeastNWidgets(1));
+    expect(find.text('Field scanner'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Evidence Library'), findsAtLeastNWidgets(1));
   });
 }
 

@@ -67,11 +67,9 @@ class VoiceAuditLogger extends Notifier<List<VoiceAuditEntry>> {
   Future<void> _savePersistedLog(List<VoiceAuditEntry> currentEntries) async {
     final repository = VoiceAuditLogRepository(ref.read(appDatabaseProvider));
     await repository.savePersistedLogPayload(
-      repository.encodePayload(
-        <String, dynamic>{
-          'entries': currentEntries.map(_entryToJson).toList(growable: false),
-        },
-      ),
+      repository.encodePayload(<String, dynamic>{
+        'entries': currentEntries.map(_entryToJson).toList(growable: false),
+      }),
     );
   }
 
@@ -116,9 +114,11 @@ class VoiceAuditLogger extends Notifier<List<VoiceAuditEntry>> {
     );
 
     return VoiceAuditEntry(
-      id: json['id']?.toString() ??
+      id:
+          json['id']?.toString() ??
           'voice-audit-${DateTime.now().millisecondsSinceEpoch}',
-      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+      timestamp:
+          DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
           DateTime.now(),
       section: json['section']?.toString() ?? 'Voice',
       userText: json['userText']?.toString() ?? '',

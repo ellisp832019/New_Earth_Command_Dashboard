@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "module_maturity_values": [
+    {"value": "planned", "definition": "Concept only; no meaningful implementation yet."},
+    {"value": "scaffold", "definition": "Routes or placeholders exist, but core logic is not yet built."},
+    {"value": "prototype", "definition": "Useful exploration exists, but the surface is still incomplete."},
+    {"value": "functional", "definition": "Core workflow works locally, but hardening is still in progress."},
+    {"value": "alpha", "definition": "Meaningful implementation exists with known gaps and risks."},
+    {"value": "beta", "definition": "Broad workflows work and are tested, with manageable remaining risks."},
+    {"value": "release_candidate", "definition": "Release-ready apart from final approval or packaging steps."},
+    {"value": "stable", "definition": "Release evidence, verification and documentation are complete."},
+    {"value": "parked", "definition": "Intentionally paused or deferred."},
+    {"value": "deprecated", "definition": "Superseded and should not be used for new work."}
+  ],
+  "verification_states": [
+    {"value": "not_checked", "definition": "No verification has been recorded."},
+    {"value": "failed", "definition": "Verification failed."},
+    {"value": "partial", "definition": "Some checks passed, but the record is incomplete."},
+    {"value": "passed", "definition": "Verification passed."},
+    {"value": "passed_with_warnings", "definition": "Verification passed, but with non-blocking warnings."},
+    {"value": "stale", "definition": "Verification is present but no longer reflects current state."}
+  ],
+  "documentation_states": [
+    {"value": "missing", "definition": "No usable documentation is present."},
+    {"value": "partial", "definition": "Documentation exists, but coverage is incomplete."},
+    {"value": "current", "definition": "Documentation matches the current implementation."},
+    {"value": "stale", "definition": "Documentation exists, but no longer matches the implementation."},
+    {"value": "conflicting", "definition": "Documentation conflicts with the code or other canonical records."}
+  ],
+  "release_readiness_states": [
+    {"value": "blocked", "definition": "A P0 blocker or equivalent hard stop is present."},
+    {"value": "not_ready", "definition": "Important evidence or hardening is still missing."},
+    {"value": "ready_with_conditions", "definition": "Usable internally with documented conditions and risks."},
+    {"value": "ready", "definition": "All required release gates are satisfied."}
+  ],
+  "risk_severities": [
+    {"value": "P0", "definition": "Hard blocker or security-critical issue."},
+    {"value": "P1", "definition": "High-priority issue that materially affects readiness."},
+    {"value": "P2", "definition": "Important issue with limited near-term impact."},
+    {"value": "P3", "definition": "Low-priority or future improvement."}
+  ],
+  "risk_status_values": [
+    {"value": "open", "definition": "The risk is active and unresolved."},
+    {"value": "accepted", "definition": "The risk is acknowledged and intentionally accepted."},
+    {"value": "mitigating", "definition": "Work is in progress to reduce the risk."},
+    {"value": "blocked", "definition": "The risk is currently blocking progress."},
+    {"value": "resolved", "definition": "Evidence shows the risk has been addressed."},
+    {"value": "deferred", "definition": "The risk is intentionally postponed."}
+  ]
+}

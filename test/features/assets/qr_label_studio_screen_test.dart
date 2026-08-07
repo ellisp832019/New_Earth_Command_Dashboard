@@ -284,7 +284,7 @@ void main() {
 
 class _FakeQrLabelPrintService extends QrLabelPrintService {
   _FakeQrLabelPrintService()
-      : super(csvService: AssetCsvService(), workingDirectory: Directory.current);
+    : super(csvService: AssetCsvService(), workingDirectory: Directory.current);
 
   String? updatedLabelId;
   String? deletedLabelId;

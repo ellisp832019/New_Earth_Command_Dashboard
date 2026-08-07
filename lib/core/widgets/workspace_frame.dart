@@ -38,7 +38,9 @@ class WorkspaceFrame extends StatelessWidget {
                     height: shellHeight - outerPadding.vertical,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: AppColours.darkBackground.withValues(alpha: 0.72),
+                        color: AppColours.darkBackground.withValues(
+                          alpha: 0.72,
+                        ),
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(
                           color: AppColours.darkText.withValues(alpha: 0.12),

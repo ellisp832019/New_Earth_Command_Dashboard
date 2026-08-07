@@ -1186,9 +1186,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                     ),
                     TextField(
                       controller: ownerIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Owner ID',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Owner ID'),
                     ),
                     TextField(
                       controller: titleController,
@@ -1534,168 +1532,165 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
   ) {
     return switch (section) {
       EngineeringSection.dashboard => Column(
-          children: [
-            _InfoTileCard(
-              title: 'Projects',
-              value: '${snapshot.projectCount}',
-              subtitle:
-                  '${snapshot.activeProjectCount} active, ${snapshot.blockedProjectCount} parked',
-              icon: Icons.folder_outlined,
-            ),
-            const SizedBox(height: 12),
-            _InfoTileCard(
-              title: 'Readiness',
-              value: '${snapshot.validationPassCount}',
-              subtitle: 'Validation checks passing',
-              icon: Icons.verified_outlined,
-            ),
-          ],
-        ),
+        children: [
+          _InfoTileCard(
+            title: 'Projects',
+            value: '${snapshot.projectCount}',
+            subtitle:
+                '${snapshot.activeProjectCount} active, ${snapshot.blockedProjectCount} parked',
+            icon: Icons.folder_outlined,
+          ),
+          const SizedBox(height: 12),
+          _InfoTileCard(
+            title: 'Readiness',
+            value: '${snapshot.validationPassCount}',
+            subtitle: 'Validation checks passing',
+            icon: Icons.verified_outlined,
+          ),
+        ],
+      ),
       EngineeringSection.projects => Column(
-          children: [
-            _SummaryLine(
-              label: 'Active',
-              value: '${snapshot.activeProjectCount}',
-            ),
-            _SummaryLine(
-              label: 'Ready',
-              value: '${snapshot.readyProjectCount}',
-            ),
-            _SummaryLine(
-              label: 'Parked',
-              value: '${snapshot.blockedProjectCount}',
-            ),
-            _SummaryLine(
-              label: 'Open tasks',
-              value:
-                  '${snapshot.projects.fold<int>(0, (sum, project) => sum + project.openTaskCount)}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Active',
+            value: '${snapshot.activeProjectCount}',
+          ),
+          _SummaryLine(label: 'Ready', value: '${snapshot.readyProjectCount}'),
+          _SummaryLine(
+            label: 'Parked',
+            value: '${snapshot.blockedProjectCount}',
+          ),
+          _SummaryLine(
+            label: 'Open tasks',
+            value:
+                '${snapshot.projects.fold<int>(0, (sum, project) => sum + project.openTaskCount)}',
+          ),
+        ],
+      ),
       EngineeringSection.circuitLibrary => Column(
-          children: [
-            _SummaryLine(label: 'Blocks', value: '${snapshot.circuitBlocks.length}'),
-            _SummaryLine(
-              label: 'Search hits',
-              value: '${CircuitLibraryService(snapshot).blocks(query: _searchQuery, status: _statusFilter).length}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Blocks',
+            value: '${snapshot.circuitBlocks.length}',
+          ),
+          _SummaryLine(
+            label: 'Search hits',
+            value:
+                '${CircuitLibraryService(snapshot).blocks(query: _searchQuery, status: _statusFilter).length}',
+          ),
+        ],
+      ),
       EngineeringSection.pcbManager => Column(
-          children: [
-            _SummaryLine(
-              label: 'Ready',
-              value: '${snapshot.fabReadyPcbCount}',
-            ),
-            _SummaryLine(
-              label: 'Board files',
-              value: '${snapshot.boardFileAttachmentCount}',
-            ),
-            _SummaryLine(
-              label: 'Attachments',
-              value: '${snapshot.attachmentCount}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(label: 'Ready', value: '${snapshot.fabReadyPcbCount}'),
+          _SummaryLine(
+            label: 'Board files',
+            value: '${snapshot.boardFileAttachmentCount}',
+          ),
+          _SummaryLine(
+            label: 'Attachments',
+            value: '${snapshot.attachmentCount}',
+          ),
+        ],
+      ),
       EngineeringSection.firmwareCentre => Column(
-          children: [
-            _SummaryLine(
-              label: 'Ready builds',
-              value: '${snapshot.firmwareReadyCount}',
-            ),
-            _SummaryLine(
-              label: 'Artifacts',
-              value: '${snapshot.firmwareAttachmentCount}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Ready builds',
+            value: '${snapshot.firmwareReadyCount}',
+          ),
+          _SummaryLine(
+            label: 'Artifacts',
+            value: '${snapshot.firmwareAttachmentCount}',
+          ),
+        ],
+      ),
       EngineeringSection.deviceFleet => Column(
-          children: [
-            _SummaryLine(label: 'Online', value: '${snapshot.liveDeviceCount}'),
-            _SummaryLine(
-              label: 'Last seen',
-              value: snapshot.deviceNodes.isEmpty
-                  ? 'None'
-                  : snapshot.deviceNodes.first.lastSeenAt.toLocal().toIso8601String().split('T').first,
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(label: 'Online', value: '${snapshot.liveDeviceCount}'),
+          _SummaryLine(
+            label: 'Last seen',
+            value: snapshot.deviceNodes.isEmpty
+                ? 'None'
+                : snapshot.deviceNodes.first.lastSeenAt
+                      .toLocal()
+                      .toIso8601String()
+                      .split('T')
+                      .first,
+          ),
+        ],
+      ),
       EngineeringSection.componentInventory => Column(
-          children: [
-            _SummaryLine(
-              label: 'Low stock',
-              value: '${snapshot.lowStockCount}',
-            ),
-            _SummaryLine(
-              label: 'Items',
-              value: '${snapshot.componentItems.length}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(label: 'Low stock', value: '${snapshot.lowStockCount}'),
+          _SummaryLine(
+            label: 'Items',
+            value: '${snapshot.componentItems.length}',
+          ),
+        ],
+      ),
       EngineeringSection.experimentLab => Column(
-          children: [
-            _SummaryLine(
-              label: 'Experiments',
-              value: '${snapshot.experiments.length}',
-            ),
-            _SummaryLine(
-              label: 'Open evidence',
-              value: '${snapshot.evidenceAttachmentCount}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Experiments',
+            value: '${snapshot.experiments.length}',
+          ),
+          _SummaryLine(
+            label: 'Open evidence',
+            value: '${snapshot.evidenceAttachmentCount}',
+          ),
+        ],
+      ),
       EngineeringSection.testValidation => Column(
-          children: [
-            _SummaryLine(
-              label: 'Pass rate',
-              value: '${(snapshot.validationPassRate * 100).toStringAsFixed(0)}%',
-            ),
-            _SummaryLine(
-              label: 'Attention',
-              value: '${snapshot.validationAttentionCount}',
-            ),
-            _SummaryLine(
-              label: 'Coverage',
-              value: '${(snapshot.validationCoverageRate * 100).toStringAsFixed(0)}%',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Pass rate',
+            value: '${(snapshot.validationPassRate * 100).toStringAsFixed(0)}%',
+          ),
+          _SummaryLine(
+            label: 'Attention',
+            value: '${snapshot.validationAttentionCount}',
+          ),
+          _SummaryLine(
+            label: 'Coverage',
+            value:
+                '${(snapshot.validationCoverageRate * 100).toStringAsFixed(0)}%',
+          ),
+        ],
+      ),
       EngineeringSection.manufacturing => Column(
-          children: [
-            _SummaryLine(
-              label: 'Ready',
-              value: '${snapshot.manufacturingReadyCount}',
-            ),
-            _SummaryLine(
-              label: 'Blocked',
-              value: '${snapshot.manufacturingBlockedCount}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Ready',
+            value: '${snapshot.manufacturingReadyCount}',
+          ),
+          _SummaryLine(
+            label: 'Blocked',
+            value: '${snapshot.manufacturingBlockedCount}',
+          ),
+        ],
+      ),
       EngineeringSection.documentation => Column(
-          children: [
-            _SummaryLine(
-              label: 'Docs',
-              value: '${snapshot.documents.length}',
-            ),
-            _SummaryLine(
-              label: 'Evidence',
-              value: '${snapshot.evidenceAttachmentCount}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(label: 'Docs', value: '${snapshot.documents.length}'),
+          _SummaryLine(
+            label: 'Evidence',
+            value: '${snapshot.evidenceAttachmentCount}',
+          ),
+        ],
+      ),
       EngineeringSection.settings => Column(
-          children: [
-            _SummaryLine(
-              label: 'Offline',
-              value: snapshot.settings.offlineOnly ? 'Yes' : 'No',
-            ),
-            _SummaryLine(
-              label: 'Modules',
-              value: '${EngineeringSection.values.length}',
-            ),
-          ],
-        ),
+        children: [
+          _SummaryLine(
+            label: 'Offline',
+            value: snapshot.settings.offlineOnly ? 'Yes' : 'No',
+          ),
+          _SummaryLine(
+            label: 'Modules',
+            value: '${EngineeringSection.values.length}',
+          ),
+        ],
+      ),
     };
   }
 
@@ -2158,21 +2153,15 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                 );
               }
 
-              return Column(
-                children: [
-                  priorityPanel,
-                  insightsPanel,
-                ],
-              );
+              return Column(children: [priorityPanel, insightsPanel]);
             },
           ),
           const SizedBox(height: 16),
           EngineeringSectionShell(
             title: 'All projects',
-            subtitle:
-                projects.isEmpty
-                    ? 'No project matches the current search or filter.'
-                    : 'A calm grid of every engineering project in the local workspace.',
+            subtitle: projects.isEmpty
+                ? 'No project matches the current search or filter.'
+                : 'A calm grid of every engineering project in the local workspace.',
             child: projects.isEmpty
                 ? EngineeringEmptyState(
                     title: 'No project matches',
@@ -2233,8 +2222,9 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           OutlinedButton.icon(
             onPressed: () => _editAttachmentForWorkspace(
               ownerType: 'PCB',
-              ownerId:
-                  pcbRevisions.isEmpty ? 'pcb-draft' : pcbRevisions.first.id,
+              ownerId: pcbRevisions.isEmpty
+                  ? 'pcb-draft'
+                  : pcbRevisions.first.id,
               title: 'PCB attachment',
               kind: 'Board file',
             ),
@@ -2277,8 +2267,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
           OutlinedButton.icon(
             onPressed: () => _editAttachmentForWorkspace(
               ownerType: 'Firmware',
-              ownerId:
-                  builds.isEmpty ? 'firmware-draft' : builds.first.id,
+              ownerId: builds.isEmpty ? 'firmware-draft' : builds.first.id,
               title: 'Firmware attachment',
               kind: 'Firmware artifact',
             ),
@@ -2765,22 +2754,20 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     final percent = total == 0 ? 0.0 : 100 / total;
     final readyCount = snapshot.manufacturingReadyCount;
     final blockedCount = snapshot.manufacturingBlockedCount;
-    final activeCount = snapshot.manufacturingSteps.where(
-      (step) {
-        final status = step.status.toLowerCase();
-        return status.contains('active') ||
-            status.contains('progress') ||
-            status.contains('building') ||
-            status.contains('working');
-      },
-    ).length;
+    final activeCount = snapshot.manufacturingSteps.where((step) {
+      final status = step.status.toLowerCase();
+      return status.contains('active') ||
+          status.contains('progress') ||
+          status.contains('building') ||
+          status.contains('working');
+    }).length;
     final averageProgress = snapshot.manufacturingSteps.isEmpty
         ? 0.0
         : snapshot.manufacturingSteps.fold<int>(
-              0,
-              (sum, step) => sum + step.progressPercent,
-            ) /
-            snapshot.manufacturingSteps.length;
+                0,
+                (sum, step) => sum + step.progressPercent,
+              ) /
+              snapshot.manufacturingSteps.length;
 
     return [
       EngineeringTrendPoint(
@@ -2806,9 +2793,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
     ];
   }
 
-  List<_EngineeringActivityItem> _recentActivity(
-    EngineeringSnapshot snapshot,
-  ) {
+  List<_EngineeringActivityItem> _recentActivity(EngineeringSnapshot snapshot) {
     final items = <_EngineeringActivityItem>[
       ...snapshot.projects.map(
         (project) => _EngineeringActivityItem(
@@ -3283,8 +3268,9 @@ class _WorkspaceHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final today = MaterialLocalizations.of(context)
-        .formatFullDate(DateTime.now());
+    final today = MaterialLocalizations.of(
+      context,
+    ).formatFullDate(DateTime.now());
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -3402,11 +3388,7 @@ class _WorkspaceHeaderCard extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    metrics,
-                    const SizedBox(height: 14),
-                    actionRow,
-                  ],
+                  children: [metrics, const SizedBox(height: 14), actionRow],
                 ),
               ),
             ],
@@ -3418,10 +3400,7 @@ class _WorkspaceHeaderCard extends StatelessWidget {
 }
 
 class _HeaderMetricChip extends StatelessWidget {
-  const _HeaderMetricChip({
-    required this.label,
-    required this.value,
-  });
+  const _HeaderMetricChip({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -3593,7 +3572,13 @@ class _WorkspaceInsightsRail extends StatelessWidget {
   }
 }
 
-enum _EngineeringPaletteCategory { navigation, create, utilities, integration, attachments }
+enum _EngineeringPaletteCategory {
+  navigation,
+  create,
+  utilities,
+  integration,
+  attachments,
+}
 
 class _EngineeringPaletteAction {
   const _EngineeringPaletteAction({
@@ -3719,9 +3704,7 @@ class _EngineeringCommandPaletteDialogState
                               .contains(
                                 widget.currentSection.label.toLowerCase(),
                               );
-                          final categoryLabel = _categoryLabel(
-                            action.category,
-                          );
+                          final categoryLabel = _categoryLabel(action.category);
                           return InkWell(
                             onTap: () async {
                               await action.onSelected();
@@ -3736,8 +3719,7 @@ class _EngineeringCommandPaletteDialogState
                                       .colorScheme
                                       .outlineVariant
                                       .withValues(
-                                        alpha:
-                                            isCurrentSection ? 0.9 : 0.55,
+                                        alpha: isCurrentSection ? 0.9 : 0.55,
                                       ),
                                 ),
                                 color: Theme.of(context)
@@ -4465,41 +4447,41 @@ class _AttachmentCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    attachment.title,
-                    style: Theme.of(context).textTheme.titleMedium,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      attachment.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
-                ),
-                EngineeringStatusChip(label: attachment.status),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(attachment.kind),
-            const SizedBox(height: 4),
-            Text(
-              attachment.filePath,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 4),
-            Text(attachment.notes),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                EngineeringStatusChip(label: attachment.ownerType),
-                EngineeringStatusChip(label: attachment.ownerId),
-                for (final tag in attachment.tags.take(2))
-                  EngineeringStatusChip(label: tag),
-              ],
-            ),
-          ],
-        ),
+                  EngineeringStatusChip(label: attachment.status),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(attachment.kind),
+              const SizedBox(height: 4),
+              Text(
+                attachment.filePath,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 4),
+              Text(attachment.notes),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  EngineeringStatusChip(label: attachment.ownerType),
+                  EngineeringStatusChip(label: attachment.ownerId),
+                  for (final tag in attachment.tags.take(2))
+                    EngineeringStatusChip(label: tag),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -4564,7 +4546,10 @@ class _ActivityCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.label, style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    item.label,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   const SizedBox(height: 4),
                   Text(item.detail),
                 ],
@@ -4588,9 +4573,9 @@ class _ActivityCard extends StatelessWidget {
   String _timeLabel(BuildContext context, DateTime timestamp) {
     final local = timestamp.toLocal();
     final date = MaterialLocalizations.of(context).formatShortDate(local);
-    final time = MaterialLocalizations.of(context).formatTimeOfDay(
-      TimeOfDay.fromDateTime(local),
-    );
+    final time = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(local));
     return '$date $time';
   }
 }

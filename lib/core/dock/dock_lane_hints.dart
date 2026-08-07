@@ -39,14 +39,9 @@ class DockLaneHintsOverlay extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      _LaneRail(
-                        accentColor: accentColor,
-                      ),
+                      _LaneRail(accentColor: accentColor),
                       const Spacer(),
-                      _LaneRail(
-                        accentColor: accentColor,
-                        alignRight: true,
-                      ),
+                      _LaneRail(accentColor: accentColor, alignRight: true),
                     ],
                   ),
                 );
@@ -60,10 +55,7 @@ class DockLaneHintsOverlay extends StatelessWidget {
 }
 
 class _LaneRail extends StatelessWidget {
-  const _LaneRail({
-    required this.accentColor,
-    this.alignRight = false,
-  });
+  const _LaneRail({required this.accentColor, this.alignRight = false});
 
   final Color accentColor;
   final bool alignRight;
@@ -76,8 +68,9 @@ class _LaneRail extends StatelessWidget {
       width: 96,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment:
-            alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: alignRight
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           _LaneMarker(
             label: 'Top',
@@ -118,12 +111,8 @@ class _LaneMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fillColor = accentColor.withValues(
-      alpha: emphasis ? 0.20 : 0.10,
-    );
-    final borderColor = accentColor.withValues(
-      alpha: emphasis ? 0.45 : 0.20,
-    );
+    final fillColor = accentColor.withValues(alpha: emphasis ? 0.20 : 0.10);
+    final borderColor = accentColor.withValues(alpha: emphasis ? 0.45 : 0.20);
     final textColor = Colors.white.withValues(alpha: emphasis ? 0.82 : 0.58);
 
     return AnimatedContainer(
@@ -144,8 +133,9 @@ class _LaneMarker extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment:
-            textAlign == TextAlign.right ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: textAlign == TextAlign.right
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!emphasis) ...[
             Icon(
@@ -159,10 +149,10 @@ class _LaneMarker extends StatelessWidget {
             label,
             textAlign: textAlign,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
-                ),
+              color: textColor,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
           ),
           if (emphasis) ...[
             const SizedBox(width: 8),

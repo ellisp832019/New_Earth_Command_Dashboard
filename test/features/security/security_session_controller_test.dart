@@ -13,12 +13,14 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container.read(securitySessionProvider.notifier).unlock(
-        timeout: const Duration(minutes: 20),
-        activeUserLabel: 'Peter Ellis',
-        activeDeviceLabel: 'NEW_EARTH_DEV',
-        activeUserOnline: true,
-      );
+      container
+          .read(securitySessionProvider.notifier)
+          .unlock(
+            timeout: const Duration(minutes: 20),
+            activeUserLabel: 'Peter Ellis',
+            activeDeviceLabel: 'NEW_EARTH_DEV',
+            activeUserOnline: true,
+          );
 
       final session = container.read(securitySessionProvider);
       expect(session.isUnlocked, isTrue);
@@ -30,7 +32,10 @@ void main() {
       expect(session.remaining, isNotNull);
 
       expect(SecuritySessionRouterBridge.current.isUnlocked, isTrue);
-      expect(SecuritySessionRouterBridge.current.activeUserLabel, 'Peter Ellis');
+      expect(
+        SecuritySessionRouterBridge.current.activeUserLabel,
+        'Peter Ellis',
+      );
       expect(
         SecuritySessionRouterBridge.current.activeDeviceLabel,
         'NEW_EARTH_DEV',
@@ -41,10 +46,12 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container.read(securitySessionProvider.notifier).unlock(
-        timeout: const Duration(minutes: 15),
-        activeUserLabel: 'Peter Ellis',
-      );
+      container
+          .read(securitySessionProvider.notifier)
+          .unlock(
+            timeout: const Duration(minutes: 15),
+            activeUserLabel: 'Peter Ellis',
+          );
       final firstState = container.read(securitySessionProvider);
       final firstExpiry = firstState.expiresAt;
 
@@ -58,29 +65,34 @@ void main() {
       expect(updatedState.expiresAt!.isAfter(firstExpiry!), isTrue);
     });
 
-    test('lockNow clears session identity and returns router bridge to locked', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'lockNow clears session identity and returns router bridge to locked',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      container.read(securitySessionProvider.notifier).unlock(
-        activeUserLabel: 'Peter Ellis',
-        activeDeviceLabel: 'NEW_EARTH_DEV',
-        activeUserOnline: true,
-      );
+        container
+            .read(securitySessionProvider.notifier)
+            .unlock(
+              activeUserLabel: 'Peter Ellis',
+              activeDeviceLabel: 'NEW_EARTH_DEV',
+              activeUserOnline: true,
+            );
 
-      container.read(securitySessionProvider.notifier).lockNow();
+        container.read(securitySessionProvider.notifier).lockNow();
 
-      final session = container.read(securitySessionProvider);
-      expect(session.isUnlocked, isFalse);
-      expect(session.isExpired, isTrue);
-      expect(session.activeUserLabel, isNull);
-      expect(session.activeDeviceLabel, isNull);
-      expect(session.activeUserOnline, isFalse);
-      expect(session.remaining, isNull);
+        final session = container.read(securitySessionProvider);
+        expect(session.isUnlocked, isFalse);
+        expect(session.isExpired, isTrue);
+        expect(session.activeUserLabel, isNull);
+        expect(session.activeDeviceLabel, isNull);
+        expect(session.activeUserOnline, isFalse);
+        expect(session.remaining, isNull);
 
-      expect(SecuritySessionRouterBridge.current.isUnlocked, isFalse);
-      expect(SecuritySessionRouterBridge.current.activeUserLabel, isNull);
-      expect(SecuritySessionRouterBridge.current.activeDeviceLabel, isNull);
-    });
+        expect(SecuritySessionRouterBridge.current.isUnlocked, isFalse);
+        expect(SecuritySessionRouterBridge.current.activeUserLabel, isNull);
+        expect(SecuritySessionRouterBridge.current.activeDeviceLabel, isNull);
+      },
+    );
   });
 }

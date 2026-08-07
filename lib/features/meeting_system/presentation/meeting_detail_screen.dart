@@ -2560,9 +2560,7 @@ class _MeetingAttachmentsTabState
                 decoration: meetingPanelDecoration(),
                 child: Text(
                   'Transcript files could not load right now.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColours.darkMutedText,
                   ),
                 ),
@@ -2579,8 +2577,9 @@ class _MeetingAttachmentsTabState
                 }
               }
             }
-            selectedTranscript ??=
-                transcripts.isEmpty ? null : transcripts.first;
+            selectedTranscript ??= transcripts.isEmpty
+                ? null
+                : transcripts.first;
 
             if (transcripts.isNotEmpty &&
                 selectedTranscript != null &&
@@ -2606,8 +2605,9 @@ class _MeetingAttachmentsTabState
                 }
               }
             }
-            selectedAttachment ??=
-                attachments.isEmpty ? null : attachments.first;
+            selectedAttachment ??= attachments.isEmpty
+                ? null
+                : attachments.first;
 
             if (attachments.isNotEmpty &&
                 selectedAttachment != null &&
@@ -2766,8 +2766,7 @@ class _MeetingAttachmentsTabState
                         attachment: selectedAttachment,
                         onOpenFile: selectedAttachment == null
                             ? null
-                            : () =>
-                                  service.openFile(selectedAttachment!.path),
+                            : () => service.openFile(selectedAttachment!.path),
                         onOpenFolder: selectedAttachment == null
                             ? null
                             : () => service.openFolder(
@@ -2977,18 +2976,18 @@ class _MeetingFileSectionCard extends StatelessWidget {
             orElse: () => files.first,
           ),
           onOpenFile: () => onOpenFile(
-            files.firstWhere(
-              (item) => item.path == selectedFilePath,
-              orElse: () => files.first,
-            ).path,
+            files
+                .firstWhere(
+                  (item) => item.path == selectedFilePath,
+                  orElse: () => files.first,
+                )
+                .path,
           ),
           onOpenFolder: onOpenFolder,
         );
 
         if (!wide) {
-          return Column(
-            children: [list, const SizedBox(height: 16), preview],
-          );
+          return Column(children: [list, const SizedBox(height: 16), preview]);
         }
 
         return Row(
@@ -3029,10 +3028,7 @@ class _AttachmentListPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MeetingSectionHeader(
-            title: title,
-            subtitle: subtitle,
-          ),
+          MeetingSectionHeader(title: title, subtitle: subtitle),
           const SizedBox(height: 12),
           ...attachments.map((attachment) {
             final selected = attachment.path == selectedPath;
@@ -3144,10 +3140,7 @@ class _AttachmentPreviewPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MeetingSectionHeader(
-            title: title,
-            subtitle: subtitle,
-          ),
+          MeetingSectionHeader(title: title, subtitle: subtitle),
           const SizedBox(height: 12),
           if (attachment == null)
             const MeetingEmptyPanel(
@@ -3539,10 +3532,7 @@ class _MeetingProjectTaskLinksCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            MeetingSectionHeader(
-              title: title,
-              subtitle: subtitle,
-            ),
+            MeetingSectionHeader(title: title, subtitle: subtitle),
             const SizedBox(height: 12),
             Text(
               'Project links are available once the workspace loads.',
@@ -3575,14 +3565,13 @@ class _MeetingProjectTaskLinksCard extends StatelessWidget {
 
         return Container(
           padding: const EdgeInsets.all(18),
-          decoration: meetingPanelDecoration(highlighted: linkedProject != null),
+          decoration: meetingPanelDecoration(
+            highlighted: linkedProject != null,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MeetingSectionHeader(
-                title: title,
-                subtitle: subtitle,
-              ),
+              MeetingSectionHeader(title: title, subtitle: subtitle),
               const SizedBox(height: 12),
               Text(
                 meeting.project,

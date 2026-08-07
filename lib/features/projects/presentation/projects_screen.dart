@@ -120,8 +120,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             ),
           ),
         ),
-    ),
-  );
+      ),
+    );
   }
 
   Widget _pageHeader(ThemeData theme, int totalProjects) {

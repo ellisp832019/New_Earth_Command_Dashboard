@@ -22,18 +22,16 @@ class _MaintenanceLogScreenState extends ConsumerState<MaintenanceLogScreen> {
     final maintenance = ref.watch(assetMaintenanceLogProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _RegisterError(
         title: 'Maintenance Log',
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return maintenance.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _RegisterError(
             title: 'Maintenance Log',
             onReload: () => ref.invalidate(assetMaintenanceLogProvider),
@@ -82,18 +80,19 @@ class _MaintenanceLogScreenState extends ConsumerState<MaintenanceLogScreen> {
                               items: [
                                 _SummaryMetric(
                                   label: 'Open',
-                                  value: _countStatuses(
-                                    table.rows,
-                                    const ['open', 'in_progress', 'waiting_parts'],
-                                  ),
+                                  value: _countStatuses(table.rows, const [
+                                    'open',
+                                    'in_progress',
+                                    'waiting_parts',
+                                  ]),
                                   accent: AppColours.darkAmber,
                                 ),
                                 _SummaryMetric(
                                   label: 'Done',
-                                  value: _countStatuses(
-                                    table.rows,
-                                    const ['done', 'closed'],
-                                  ),
+                                  value: _countStatuses(table.rows, const [
+                                    'done',
+                                    'closed',
+                                  ]),
                                   accent: AppColours.darkSuccess,
                                 ),
                                 _SummaryMetric(
@@ -111,7 +110,9 @@ class _MaintenanceLogScreenState extends ConsumerState<MaintenanceLogScreen> {
                                     'Add the first repair note or follow-up action so maintenance history stays easy to read later.',
                                 onAdd: workspaceData.assetsRootPath == null
                                     ? null
-                                    : () => _addRecord(workspaceData.assetsRootPath!),
+                                    : () => _addRecord(
+                                        workspaceData.assetsRootPath!,
+                                      ),
                               )
                             else
                               ListView.separated(
@@ -121,7 +122,9 @@ class _MaintenanceLogScreenState extends ConsumerState<MaintenanceLogScreen> {
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  return _MaintenanceCard(row: table.rows[index]);
+                                  return _MaintenanceCard(
+                                    row: table.rows[index],
+                                  );
                                 },
                               ),
                           ],
@@ -153,17 +156,16 @@ class _MaintenanceLogScreenState extends ConsumerState<MaintenanceLogScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await ref.read(assetRegisterRepositoryProvider).appendMaintenanceRecord(
-            assetsRootPath,
-            draft.toRow(),
-          );
+      await ref
+          .read(assetRegisterRepositoryProvider)
+          .appendMaintenanceRecord(assetsRootPath, draft.toRow());
       if (!mounted) {
         return;
       }
       ref.invalidate(assetMaintenanceLogProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maintenance log saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Maintenance log saved.')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -213,9 +215,9 @@ class _MaintenanceCard extends StatelessWidget {
                       ? row['item']!.trim()
                       : 'Untitled maintenance item',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
@@ -231,7 +233,11 @@ class _MaintenanceCard extends StatelessWidget {
             children: [
               _InfoChip(label: row['date'] ?? 'No date'),
               _InfoChip(label: row['asset_id'] ?? 'No asset ID'),
-              _InfoChip(label: row['cost']?.trim().isNotEmpty == true ? 'Cost ${row['cost']!.trim()}' : 'No cost'),
+              _InfoChip(
+                label: row['cost']?.trim().isNotEmpty == true
+                    ? 'Cost ${row['cost']!.trim()}'
+                    : 'No cost',
+              ),
               _InfoChip(
                 label: row['linked_finance_record']?.trim().isNotEmpty == true
                     ? 'Finance ${row['linked_finance_record']!.trim()}'
@@ -245,9 +251,9 @@ class _MaintenanceCard extends StatelessWidget {
                 ? 'Issue: ${row['issue']!.trim()}'
                 : 'Issue noted, with no extra details yet.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -255,18 +261,18 @@ class _MaintenanceCard extends StatelessWidget {
                 ? 'Action: ${row['action']!.trim()}'
                 : 'Action still parked for now.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                  height: 1.35,
-                ),
+              color: AppColours.darkMutedText,
+              height: 1.35,
+            ),
           ),
           if ((row['notes'] ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               row['notes']!.trim(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.35,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.35,
+              ),
             ),
           ],
         ],
@@ -366,11 +372,23 @@ class _MaintenanceDialogState extends State<_MaintenanceDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                _field(controller: _issueController, label: 'Issue', hintText: 'Screen flickering'),
+                _field(
+                  controller: _issueController,
+                  label: 'Issue',
+                  hintText: 'Screen flickering',
+                ),
                 const SizedBox(height: 12),
-                _field(controller: _actionController, label: 'Action', hintText: 'Replace cable'),
+                _field(
+                  controller: _actionController,
+                  label: 'Action',
+                  hintText: 'Replace cable',
+                ),
                 const SizedBox(height: 12),
-                _field(controller: _costController, label: 'Cost', hintText: '12.50'),
+                _field(
+                  controller: _costController,
+                  label: 'Cost',
+                  hintText: '12.50',
+                ),
                 const SizedBox(height: 12),
                 _field(
                   controller: _financeController,
@@ -582,8 +600,7 @@ class _RegisterSummaryRow extends StatelessWidget {
       builder: (context, constraints) {
         final useWideLayout = constraints.maxWidth >= 840;
         final children = [
-          for (final item in items)
-            Expanded(child: _SummaryTile(metric: item)),
+          for (final item in items) Expanded(child: _SummaryTile(metric: item)),
         ];
 
         if (useWideLayout) {
@@ -627,17 +644,17 @@ class _SummaryTile extends StatelessWidget {
           Text(
             metric.label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: metric.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: metric.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '${metric.value}',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -668,16 +685,16 @@ class _EmptyRegisterState extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
           if (onAdd != null) ...[
             const SizedBox(height: 14),
@@ -757,9 +774,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -783,9 +800,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

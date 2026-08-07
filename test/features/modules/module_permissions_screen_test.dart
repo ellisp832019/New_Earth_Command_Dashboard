@@ -67,7 +67,10 @@ void main() {
       expect(find.text('Alpha Module Permissions'), findsOneWidget);
       expect(find.text('Local controls and permission review'), findsOneWidget);
       expect(find.text('Permission summary'), findsOneWidget);
-      expect(find.text('Local UI state only. Permission gating comes later.'), findsOneWidget);
+      expect(
+        find.text('Local UI state only. Permission gating comes later.'),
+        findsOneWidget,
+      );
       expect(find.text('File Read'), findsOneWidget);
       expect(find.text('Internet Access'), findsOneWidget);
       expect(find.text('Allowed'), findsWidgets);

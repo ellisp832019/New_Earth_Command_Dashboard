@@ -23,10 +23,7 @@ class LaunchpadPhase2SectionView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (section == 'analytics') {
-      return _LaunchpadAnalyticsPanel(
-        campaign: campaign,
-        workspace: workspace,
-      );
+      return _LaunchpadAnalyticsPanel(campaign: campaign, workspace: workspace);
     }
 
     if (section == 'launch-checklist') {
@@ -46,10 +43,11 @@ class LaunchpadPhase2SectionView extends ConsumerWidget {
     }
 
     final spec = _sectionSpec(section);
-    final records = campaign.phase2Records
-        .where((record) => record.section == section)
-        .toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final records =
+        campaign.phase2Records
+            .where((record) => record.section == section)
+            .toList(growable: false)
+          ..sort((a, b) => a.order.compareTo(b.order));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,10 +65,13 @@ class LaunchpadPhase2SectionView extends ConsumerWidget {
                 spec: spec,
                 nextOrder: records.isEmpty
                     ? 0
-                    : records.map((record) => record.order).reduce(
-                        (value, element) => value > element ? value : element,
-                      ) +
-                        1,
+                    : records
+                              .map((record) => record.order)
+                              .reduce(
+                                (value, element) =>
+                                    value > element ? value : element,
+                              ) +
+                          1,
               ),
             );
 
@@ -80,10 +81,9 @@ class LaunchpadPhase2SectionView extends ConsumerWidget {
 
             final updatedRecords = [...campaign.phase2Records, draft];
             updatedRecords.sort((a, b) => a.order.compareTo(b.order));
-            await ref.read(launchpadRepositoryProvider).savePhase2Records(
-              campaign.id,
-              updatedRecords,
-            );
+            await ref
+                .read(launchpadRepositoryProvider)
+                .savePhase2Records(campaign.id, updatedRecords);
             ref.invalidate(launchpadWorkspaceProvider);
           },
         ),
@@ -116,24 +116,23 @@ class LaunchpadPhase2SectionView extends ConsumerWidget {
                     return;
                   }
 
-                  final updatedRecords = campaign.phase2Records
-                      .map((item) => item.id == draft.id ? draft : item)
-                      .toList(growable: false)
-                    ..sort((a, b) => a.order.compareTo(b.order));
-                  await ref.read(launchpadRepositoryProvider).savePhase2Records(
-                    campaign.id,
-                    updatedRecords,
-                  );
+                  final updatedRecords =
+                      campaign.phase2Records
+                          .map((item) => item.id == draft.id ? draft : item)
+                          .toList(growable: false)
+                        ..sort((a, b) => a.order.compareTo(b.order));
+                  await ref
+                      .read(launchpadRepositoryProvider)
+                      .savePhase2Records(campaign.id, updatedRecords);
                   ref.invalidate(launchpadWorkspaceProvider);
                 },
                 onDelete: () async {
                   final updatedRecords = campaign.phase2Records
                       .where((item) => item.id != record.id)
                       .toList(growable: false);
-                  await ref.read(launchpadRepositoryProvider).savePhase2Records(
-                    campaign.id,
-                    updatedRecords,
-                  );
+                  await ref
+                      .read(launchpadRepositoryProvider)
+                      .savePhase2Records(campaign.id, updatedRecords);
                   ref.invalidate(launchpadWorkspaceProvider);
                 },
               ),
@@ -210,9 +209,18 @@ class _LaunchpadAnalyticsPanel extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _StatCard(label: 'Readiness', value: '${readiness.overallPercent.toStringAsFixed(0)}%'),
-            _StatCard(label: 'Net funds', value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}'),
-            _StatCard(label: 'Campaigns', value: '${workspace.campaigns.length}'),
+            _StatCard(
+              label: 'Readiness',
+              value: '${readiness.overallPercent.toStringAsFixed(0)}%',
+            ),
+            _StatCard(
+              label: 'Net funds',
+              value: '£${finance.netAvailableFundsGbp.toStringAsFixed(0)}',
+            ),
+            _StatCard(
+              label: 'Campaigns',
+              value: '${workspace.campaigns.length}',
+            ),
             _StatCard(label: 'Phase 2 records', value: '$phase2Count'),
           ],
         ),
@@ -223,10 +231,7 @@ class _LaunchpadAnalyticsPanel extends StatelessWidget {
               'Analytics stays local-first and practical: read the readiness trend, sanity-check the finances, and keep the launch scope visible.',
           children: counts.entries
               .map(
-                (entry) => _MiniTag(
-                  label: entry.key,
-                  value: '${entry.value}',
-                ),
+                (entry) => _MiniTag(label: entry.key, value: '${entry.value}'),
               )
               .toList(growable: false),
         ),
@@ -236,19 +241,18 @@ class _LaunchpadAnalyticsPanel extends StatelessWidget {
 }
 
 class _LaunchChecklistPanel extends ConsumerWidget {
-  const _LaunchChecklistPanel({
-    required this.campaign,
-  });
+  const _LaunchChecklistPanel({required this.campaign});
 
   final LaunchpadCampaignRecord campaign;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = _sectionSpec('launch-checklist');
-    final records = campaign.phase2Records
-        .where((record) => record.section == 'launch-checklist')
-        .toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final records =
+        campaign.phase2Records
+            .where((record) => record.section == 'launch-checklist')
+            .toList(growable: false)
+          ..sort((a, b) => a.order.compareTo(b.order));
 
     final doneCount = records.where(_isChecklistDone).length;
     final overdueCount = records.where(_isChecklistOverdue).length;
@@ -258,20 +262,21 @@ class _LaunchChecklistPanel extends ConsumerWidget {
         : (doneCount / records.length) * 100;
 
     Future<void> saveRecords(List<LaunchpadPhase2Record> updatedRecords) async {
-      await ref.read(launchpadRepositoryProvider).savePhase2Records(
-            campaign.id,
-            updatedRecords,
-          );
+      await ref
+          .read(launchpadRepositoryProvider)
+          .savePhase2Records(campaign.id, updatedRecords);
       ref.invalidate(launchpadWorkspaceProvider);
     }
 
     Future<void> addRecord() async {
       final nextOrder = records.isEmpty
           ? 0
-          : records.map((record) => record.order).reduce(
-                (value, element) => value > element ? value : element,
-              ) +
-              1;
+          : records
+                    .map((record) => record.order)
+                    .reduce(
+                      (value, element) => value > element ? value : element,
+                    ) +
+                1;
       final draft = await showDialog<LaunchpadPhase2Record>(
         context: context,
         builder: (dialogContext) => _Phase2RecordDialog(
@@ -308,10 +313,11 @@ class _LaunchChecklistPanel extends ConsumerWidget {
         return;
       }
 
-      final updatedRecords = campaign.phase2Records
-          .map((item) => item.id == draft.id ? draft : item)
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map((item) => item.id == draft.id ? draft : item)
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
@@ -323,25 +329,22 @@ class _LaunchChecklistPanel extends ConsumerWidget {
     }
 
     Future<void> toggleDone(LaunchpadPhase2Record record, bool checked) async {
-      final updatedRecords = campaign.phase2Records
-          .map(
-            (item) => item.id == record.id
-                ? item.copyWith(status: checked ? 'Done' : 'Planned')
-                : item,
-          )
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map(
+                (item) => item.id == record.id
+                    ? item.copyWith(status: checked ? 'Done' : 'Planned')
+                    : item,
+              )
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHero(
-          spec: spec,
-          count: records.length,
-          onAdd: addRecord,
-        ),
+        _SectionHero(spec: spec, count: records.length, onAdd: addRecord),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
@@ -351,18 +354,9 @@ class _LaunchChecklistPanel extends ConsumerWidget {
               label: 'Progress',
               value: '${progressPercent.toStringAsFixed(0)}%',
             ),
-            _StatCard(
-              label: 'Done',
-              value: '$doneCount',
-            ),
-            _StatCard(
-              label: 'Due soon',
-              value: '$dueSoonCount',
-            ),
-            _StatCard(
-              label: 'Overdue',
-              value: '$overdueCount',
-            ),
+            _StatCard(label: 'Done', value: '$doneCount'),
+            _StatCard(label: 'Due soon', value: '$dueSoonCount'),
+            _StatCard(label: 'Overdue', value: '$overdueCount'),
           ],
         ),
         const SizedBox(height: 16),
@@ -371,7 +365,10 @@ class _LaunchChecklistPanel extends ConsumerWidget {
           body:
               'Use the checklist to keep launch tasks visible, mark items complete as they clear, and spot overdue work before it slows the campaign down.',
           children: [
-            _MiniTag(label: 'Launch ready', value: '$doneCount / ${records.length}'),
+            _MiniTag(
+              label: 'Launch ready',
+              value: '$doneCount / ${records.length}',
+            ),
             _MiniTag(label: 'Due soon', value: '$dueSoonCount'),
             _MiniTag(label: 'Overdue', value: '$overdueCount'),
           ],
@@ -401,41 +398,49 @@ class _LaunchChecklistPanel extends ConsumerWidget {
 }
 
 class _BackerUpdatesPanel extends ConsumerWidget {
-  const _BackerUpdatesPanel({
-    required this.campaign,
-  });
+  const _BackerUpdatesPanel({required this.campaign});
 
   final LaunchpadCampaignRecord campaign;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = _sectionSpec('backer-updates');
-    final records = campaign.phase2Records
-        .where((record) => record.section == 'backer-updates')
-        .toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final records =
+        campaign.phase2Records
+            .where((record) => record.section == 'backer-updates')
+            .toList(growable: false)
+          ..sort((a, b) => a.order.compareTo(b.order));
 
-    final draftCount = records.where((record) => _backerUpdateState(record) == 'draft').length;
-    final scheduledCount = records.where((record) => _backerUpdateState(record) == 'scheduled').length;
-    final sentCount = records.where((record) => _backerUpdateState(record) == 'sent').length;
+    final draftCount = records
+        .where((record) => _backerUpdateState(record) == 'draft')
+        .length;
+    final scheduledCount = records
+        .where((record) => _backerUpdateState(record) == 'scheduled')
+        .length;
+    final sentCount = records
+        .where((record) => _backerUpdateState(record) == 'sent')
+        .length;
     final dueSoonCount = records.where(_isChecklistDueSoon).length;
-    final progressPercent = records.isEmpty ? 0 : (sentCount / records.length) * 100;
+    final progressPercent = records.isEmpty
+        ? 0
+        : (sentCount / records.length) * 100;
 
     Future<void> saveRecords(List<LaunchpadPhase2Record> updatedRecords) async {
-      await ref.read(launchpadRepositoryProvider).savePhase2Records(
-            campaign.id,
-            updatedRecords,
-          );
+      await ref
+          .read(launchpadRepositoryProvider)
+          .savePhase2Records(campaign.id, updatedRecords);
       ref.invalidate(launchpadWorkspaceProvider);
     }
 
     Future<void> addRecord() async {
       final nextOrder = records.isEmpty
           ? 0
-          : records.map((record) => record.order).reduce(
-                (value, element) => value > element ? value : element,
-              ) +
-              1;
+          : records
+                    .map((record) => record.order)
+                    .reduce(
+                      (value, element) => value > element ? value : element,
+                    ) +
+                1;
       final draft = await showDialog<LaunchpadPhase2Record>(
         context: context,
         builder: (dialogContext) => _Phase2RecordDialog(
@@ -472,10 +477,11 @@ class _BackerUpdatesPanel extends ConsumerWidget {
         return;
       }
 
-      final updatedRecords = campaign.phase2Records
-          .map((item) => item.id == draft.id ? draft : item)
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map((item) => item.id == draft.id ? draft : item)
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
@@ -487,25 +493,21 @@ class _BackerUpdatesPanel extends ConsumerWidget {
     }
 
     Future<void> setStatus(LaunchpadPhase2Record record, String status) async {
-      final updatedRecords = campaign.phase2Records
-          .map(
-            (item) => item.id == record.id
-                ? item.copyWith(status: status)
-                : item,
-          )
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map(
+                (item) =>
+                    item.id == record.id ? item.copyWith(status: status) : item,
+              )
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHero(
-          spec: spec,
-          count: records.length,
-          onAdd: addRecord,
-        ),
+        _SectionHero(spec: spec, count: records.length, onAdd: addRecord),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
@@ -559,42 +561,52 @@ class _BackerUpdatesPanel extends ConsumerWidget {
 }
 
 class _FulfilmentTrackerPanel extends ConsumerWidget {
-  const _FulfilmentTrackerPanel({
-    required this.campaign,
-  });
+  const _FulfilmentTrackerPanel({required this.campaign});
 
   final LaunchpadCampaignRecord campaign;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = _sectionSpec('fulfilment-tracker');
-    final records = campaign.phase2Records
-        .where((record) => record.section == 'fulfilment-tracker')
-        .toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final records =
+        campaign.phase2Records
+            .where((record) => record.section == 'fulfilment-tracker')
+            .toList(growable: false)
+          ..sort((a, b) => a.order.compareTo(b.order));
 
-    final planningCount = records.where((record) => _fulfilmentState(record) == 'planning').length;
-    final packedCount = records.where((record) => _fulfilmentState(record) == 'packed').length;
-    final shippedCount = records.where((record) => _fulfilmentState(record) == 'shipped').length;
-    final deliveredCount = records.where((record) => _fulfilmentState(record) == 'delivered').length;
+    final planningCount = records
+        .where((record) => _fulfilmentState(record) == 'planning')
+        .length;
+    final packedCount = records
+        .where((record) => _fulfilmentState(record) == 'packed')
+        .length;
+    final shippedCount = records
+        .where((record) => _fulfilmentState(record) == 'shipped')
+        .length;
+    final deliveredCount = records
+        .where((record) => _fulfilmentState(record) == 'delivered')
+        .length;
     final overdueCount = records.where(_isOverdue).length;
-    final progressPercent = records.isEmpty ? 0 : (deliveredCount / records.length) * 100;
+    final progressPercent = records.isEmpty
+        ? 0
+        : (deliveredCount / records.length) * 100;
 
     Future<void> saveRecords(List<LaunchpadPhase2Record> updatedRecords) async {
-      await ref.read(launchpadRepositoryProvider).savePhase2Records(
-            campaign.id,
-            updatedRecords,
-          );
+      await ref
+          .read(launchpadRepositoryProvider)
+          .savePhase2Records(campaign.id, updatedRecords);
       ref.invalidate(launchpadWorkspaceProvider);
     }
 
     Future<void> addRecord() async {
       final nextOrder = records.isEmpty
           ? 0
-          : records.map((record) => record.order).reduce(
-                (value, element) => value > element ? value : element,
-              ) +
-              1;
+          : records
+                    .map((record) => record.order)
+                    .reduce(
+                      (value, element) => value > element ? value : element,
+                    ) +
+                1;
       final draft = await showDialog<LaunchpadPhase2Record>(
         context: context,
         builder: (dialogContext) => _Phase2RecordDialog(
@@ -631,10 +643,11 @@ class _FulfilmentTrackerPanel extends ConsumerWidget {
         return;
       }
 
-      final updatedRecords = campaign.phase2Records
-          .map((item) => item.id == draft.id ? draft : item)
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map((item) => item.id == draft.id ? draft : item)
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
@@ -646,25 +659,21 @@ class _FulfilmentTrackerPanel extends ConsumerWidget {
     }
 
     Future<void> setStatus(LaunchpadPhase2Record record, String status) async {
-      final updatedRecords = campaign.phase2Records
-          .map(
-            (item) => item.id == record.id
-                ? item.copyWith(status: status)
-                : item,
-          )
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map(
+                (item) =>
+                    item.id == record.id ? item.copyWith(status: status) : item,
+              )
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHero(
-          spec: spec,
-          count: records.length,
-          onAdd: addRecord,
-        ),
+        _SectionHero(spec: spec, count: records.length, onAdd: addRecord),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
@@ -687,7 +696,10 @@ class _FulfilmentTrackerPanel extends ConsumerWidget {
           body:
               'Map the first shipment wave carefully, keep the volume realistic, and make the delivery path visible before the campaign scales up.',
           children: [
-            _MiniTag(label: 'Batch flow', value: 'Plan -> Pack -> Ship -> Deliver'),
+            _MiniTag(
+              label: 'Batch flow',
+              value: 'Plan -> Pack -> Ship -> Deliver',
+            ),
             _MiniTag(label: 'Focus', value: 'Starter kits'),
             _MiniTag(label: 'Risk', value: '$overdueCount overdue'),
           ],
@@ -720,41 +732,51 @@ class _FulfilmentTrackerPanel extends ConsumerWidget {
 }
 
 class _ImpactTrackerPanel extends ConsumerWidget {
-  const _ImpactTrackerPanel({
-    required this.campaign,
-  });
+  const _ImpactTrackerPanel({required this.campaign});
 
   final LaunchpadCampaignRecord campaign;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spec = _sectionSpec('impact-tracker');
-    final records = campaign.phase2Records
-        .where((record) => record.section == 'impact-tracker')
-        .toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final records =
+        campaign.phase2Records
+            .where((record) => record.section == 'impact-tracker')
+            .toList(growable: false)
+          ..sort((a, b) => a.order.compareTo(b.order));
 
-    final draftCount = records.where((record) => _impactState(record) == 'draft').length;
-    final trackedCount = records.where((record) => _impactState(record) == 'tracked').length;
-    final validatedCount = records.where((record) => _impactState(record) == 'validated').length;
-    final reportedCount = records.where((record) => _impactState(record) == 'reported').length;
-    final progressPercent = records.isEmpty ? 0 : (reportedCount / records.length) * 100;
+    final draftCount = records
+        .where((record) => _impactState(record) == 'draft')
+        .length;
+    final trackedCount = records
+        .where((record) => _impactState(record) == 'tracked')
+        .length;
+    final validatedCount = records
+        .where((record) => _impactState(record) == 'validated')
+        .length;
+    final reportedCount = records
+        .where((record) => _impactState(record) == 'reported')
+        .length;
+    final progressPercent = records.isEmpty
+        ? 0
+        : (reportedCount / records.length) * 100;
 
     Future<void> saveRecords(List<LaunchpadPhase2Record> updatedRecords) async {
-      await ref.read(launchpadRepositoryProvider).savePhase2Records(
-            campaign.id,
-            updatedRecords,
-          );
+      await ref
+          .read(launchpadRepositoryProvider)
+          .savePhase2Records(campaign.id, updatedRecords);
       ref.invalidate(launchpadWorkspaceProvider);
     }
 
     Future<void> addRecord() async {
       final nextOrder = records.isEmpty
           ? 0
-          : records.map((record) => record.order).reduce(
-                (value, element) => value > element ? value : element,
-              ) +
-              1;
+          : records
+                    .map((record) => record.order)
+                    .reduce(
+                      (value, element) => value > element ? value : element,
+                    ) +
+                1;
       final draft = await showDialog<LaunchpadPhase2Record>(
         context: context,
         builder: (dialogContext) => _Phase2RecordDialog(
@@ -791,10 +813,11 @@ class _ImpactTrackerPanel extends ConsumerWidget {
         return;
       }
 
-      final updatedRecords = campaign.phase2Records
-          .map((item) => item.id == draft.id ? draft : item)
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map((item) => item.id == draft.id ? draft : item)
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
@@ -806,25 +829,21 @@ class _ImpactTrackerPanel extends ConsumerWidget {
     }
 
     Future<void> setStatus(LaunchpadPhase2Record record, String status) async {
-      final updatedRecords = campaign.phase2Records
-          .map(
-            (item) => item.id == record.id
-                ? item.copyWith(status: status)
-                : item,
-          )
-          .toList(growable: false)
-        ..sort((a, b) => a.order.compareTo(b.order));
+      final updatedRecords =
+          campaign.phase2Records
+              .map(
+                (item) =>
+                    item.id == record.id ? item.copyWith(status: status) : item,
+              )
+              .toList(growable: false)
+            ..sort((a, b) => a.order.compareTo(b.order));
       await saveRecords(updatedRecords);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHero(
-          spec: spec,
-          count: records.length,
-          onAdd: addRecord,
-        ),
+        _SectionHero(spec: spec, count: records.length, onAdd: addRecord),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
@@ -992,7 +1011,9 @@ class _Phase2RecordCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               _Chip(label: '${record.primaryLabel}: ${record.primaryValue}'),
-              _Chip(label: '${record.secondaryLabel}: ${record.secondaryValue}'),
+              _Chip(
+                label: '${record.secondaryLabel}: ${record.secondaryValue}',
+              ),
               _Chip(label: dueDateLabel, accent: AppColours.darkSecondary),
             ],
           ),
@@ -1051,8 +1072,8 @@ class _ChecklistRecordCard extends StatelessWidget {
     final accent = isDone
         ? AppColours.darkSuccess
         : isOverdue
-            ? AppColours.darkAmber
-            : AppColours.darkPrimary;
+        ? AppColours.darkAmber
+        : AppColours.darkPrimary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1099,7 +1120,9 @@ class _ChecklistRecordCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               _Chip(label: '${record.primaryLabel}: ${record.primaryValue}'),
-              _Chip(label: '${record.secondaryLabel}: ${record.secondaryValue}'),
+              _Chip(
+                label: '${record.secondaryLabel}: ${record.secondaryValue}',
+              ),
               _Chip(label: dueDateLabel, accent: AppColours.darkSecondary),
               if (isOverdue)
                 _Chip(label: 'Overdue', accent: AppColours.darkAmber),
@@ -1164,8 +1187,8 @@ class _BackerUpdateCard extends StatelessWidget {
     final accent = state == 'sent'
         ? AppColours.darkSuccess
         : state == 'scheduled'
-            ? AppColours.darkPrimary
-            : AppColours.darkSecondary;
+        ? AppColours.darkPrimary
+        : AppColours.darkSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1207,7 +1230,9 @@ class _BackerUpdateCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               _Chip(label: '${record.primaryLabel}: ${record.primaryValue}'),
-              _Chip(label: '${record.secondaryLabel}: ${record.secondaryValue}'),
+              _Chip(
+                label: '${record.secondaryLabel}: ${record.secondaryValue}',
+              ),
               _Chip(label: dueDateLabel, accent: AppColours.darkSecondary),
             ],
           ),
@@ -1226,10 +1251,7 @@ class _BackerUpdateCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              OutlinedButton(
-                onPressed: onSetDraft,
-                child: const Text('Draft'),
-              ),
+              OutlinedButton(onPressed: onSetDraft, child: const Text('Draft')),
               OutlinedButton(
                 onPressed: onSetScheduled,
                 child: const Text('Scheduled'),
@@ -1284,10 +1306,10 @@ class _FulfilmentRecordCard extends StatelessWidget {
     final accent = state == 'delivered'
         ? AppColours.darkSuccess
         : state == 'shipped'
-            ? AppColours.darkPrimary
-            : state == 'packed'
-                ? AppColours.darkSecondary
-                : AppColours.darkAmber;
+        ? AppColours.darkPrimary
+        : state == 'packed'
+        ? AppColours.darkSecondary
+        : AppColours.darkAmber;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1329,7 +1351,9 @@ class _FulfilmentRecordCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               _Chip(label: '${record.primaryLabel}: ${record.primaryValue}'),
-              _Chip(label: '${record.secondaryLabel}: ${record.secondaryValue}'),
+              _Chip(
+                label: '${record.secondaryLabel}: ${record.secondaryValue}',
+              ),
               _Chip(label: dueDateLabel, accent: AppColours.darkSecondary),
               if (_isOverdue(record))
                 _Chip(label: 'Overdue', accent: AppColours.darkAmber),
@@ -1412,10 +1436,10 @@ class _ImpactRecordCard extends StatelessWidget {
     final accent = state == 'reported'
         ? AppColours.darkSuccess
         : state == 'validated'
-            ? AppColours.darkPrimary
-            : state == 'tracked'
-                ? AppColours.darkSecondary
-                : AppColours.darkAmber;
+        ? AppColours.darkPrimary
+        : state == 'tracked'
+        ? AppColours.darkSecondary
+        : AppColours.darkAmber;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1457,7 +1481,9 @@ class _ImpactRecordCard extends StatelessWidget {
             runSpacing: 10,
             children: [
               _Chip(label: '${record.primaryLabel}: ${record.primaryValue}'),
-              _Chip(label: '${record.secondaryLabel}: ${record.secondaryValue}'),
+              _Chip(
+                label: '${record.secondaryLabel}: ${record.secondaryValue}',
+              ),
               _Chip(label: dueDateLabel, accent: AppColours.darkSecondary),
             ],
           ),
@@ -1476,10 +1502,7 @@ class _ImpactRecordCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              OutlinedButton(
-                onPressed: onSetDraft,
-                child: const Text('Draft'),
-              ),
+              OutlinedButton(onPressed: onSetDraft, child: const Text('Draft')),
               OutlinedButton(
                 onPressed: onSetTracked,
                 child: const Text('Tracked'),
@@ -1535,9 +1558,9 @@ class _EmptyPhase2State extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             body,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -1617,7 +1640,11 @@ class _Phase2RecordDialogState extends State<_Phase2RecordDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.record != null;
     return AlertDialog(
-      title: Text(isEditing ? 'Edit ${widget.spec.singularLabel}' : 'Add ${widget.spec.singularLabel}'),
+      title: Text(
+        isEditing
+            ? 'Edit ${widget.spec.singularLabel}'
+            : 'Add ${widget.spec.singularLabel}',
+      ),
       content: SizedBox(
         width: 620,
         child: SingleChildScrollView(
@@ -1678,7 +1705,8 @@ class _Phase2RecordDialogState extends State<_Phase2RecordDialog> {
         FilledButton(
           onPressed: () {
             final record = LaunchpadPhase2Record(
-              id: widget.record?.id ??
+              id:
+                  widget.record?.id ??
                   'phase2-${widget.section}-${DateTime.now().millisecondsSinceEpoch}',
               campaignId: widget.record?.campaignId ?? widget.campaignId,
               section: widget.section,
@@ -1750,7 +1778,9 @@ bool _isChecklistDueSoon(LaunchpadPhase2Record record) => _isDueSoon(record);
 
 String _backerUpdateState(LaunchpadPhase2Record record) {
   final status = record.status.trim().toLowerCase();
-  if (status.contains('sent') || status.contains('published') || status.contains('live')) {
+  if (status.contains('sent') ||
+      status.contains('published') ||
+      status.contains('live')) {
     return 'sent';
   }
   if (status.contains('sched') || status.contains('ready')) {
@@ -1764,7 +1794,9 @@ String _fulfilmentState(LaunchpadPhase2Record record) {
   if (status.contains('deliver') || status.contains('complete')) {
     return 'delivered';
   }
-  if (status.contains('ship') || status.contains('sent') || status.contains('dispatch')) {
+  if (status.contains('ship') ||
+      status.contains('sent') ||
+      status.contains('dispatch')) {
     return 'shipped';
   }
   if (status.contains('pack') || status.contains('ready')) {
@@ -1775,7 +1807,9 @@ String _fulfilmentState(LaunchpadPhase2Record record) {
 
 String _impactState(LaunchpadPhase2Record record) {
   final status = record.status.trim().toLowerCase();
-  if (status.contains('report') || status.contains('published') || status.contains('done')) {
+  if (status.contains('report') ||
+      status.contains('published') ||
+      status.contains('done')) {
     return 'reported';
   }
   if (status.contains('validat') || status.contains('reviewed')) {
@@ -1819,7 +1853,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'media-studio':
       return const _Phase2SectionSpec(
         title: 'Media Studio',
-        subtitle: 'Track the proof assets that make the campaign feel real and honest.',
+        subtitle:
+            'Track the proof assets that make the campaign feel real and honest.',
         singularLabel: 'Asset',
         pluralLabel: 'Assets',
         icon: Icons.perm_media,
@@ -1829,7 +1864,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'manufacturing-planner':
       return const _Phase2SectionSpec(
         title: 'Manufacturing Planner',
-        subtitle: 'Keep supplier quotes, lead times, and production notes in one calm place.',
+        subtitle:
+            'Keep supplier quotes, lead times, and production notes in one calm place.',
         singularLabel: 'Quote',
         pluralLabel: 'Quotes',
         icon: Icons.precision_manufacturing,
@@ -1839,7 +1875,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'community-builder':
       return const _Phase2SectionSpec(
         title: 'Community Builder',
-        subtitle: 'Shape the supporters, channels, and early circles around the launch.',
+        subtitle:
+            'Shape the supporters, channels, and early circles around the launch.',
         singularLabel: 'Entry',
         pluralLabel: 'Entries',
         icon: Icons.groups,
@@ -1849,7 +1886,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'grant-centre':
       return const _Phase2SectionSpec(
         title: 'Grant Centre',
-        subtitle: 'Keep grant opportunities visible, realistic, and easy to review.',
+        subtitle:
+            'Keep grant opportunities visible, realistic, and easy to review.',
         singularLabel: 'Grant',
         pluralLabel: 'Grants',
         icon: Icons.request_page,
@@ -1859,7 +1897,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'investor-crm':
       return const _Phase2SectionSpec(
         title: 'Investor CRM',
-        subtitle: 'Track conversations, interest, and next actions without the noise.',
+        subtitle:
+            'Track conversations, interest, and next actions without the noise.',
         singularLabel: 'Contact',
         pluralLabel: 'Contacts',
         icon: Icons.people,
@@ -1869,7 +1908,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'partner-crm':
       return const _Phase2SectionSpec(
         title: 'Partner CRM',
-        subtitle: 'Keep partner pilots and collaboration ideas open, practical, and clear.',
+        subtitle:
+            'Keep partner pilots and collaboration ideas open, practical, and clear.',
         singularLabel: 'Partner',
         pluralLabel: 'Partners',
         icon: Icons.handshake,
@@ -1879,7 +1919,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'timeline-planner':
       return const _Phase2SectionSpec(
         title: 'Timeline Planner',
-        subtitle: 'Sequence the campaign work so launch day never feels chaotic.',
+        subtitle:
+            'Sequence the campaign work so launch day never feels chaotic.',
         singularLabel: 'Milestone',
         pluralLabel: 'Milestones',
         icon: Icons.timeline,
@@ -1889,7 +1930,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'analytics':
       return const _Phase2SectionSpec(
         title: 'Analytics',
-        subtitle: 'Read the launch at a glance using local, mission-first signals.',
+        subtitle:
+            'Read the launch at a glance using local, mission-first signals.',
         singularLabel: 'Metric',
         pluralLabel: 'Metrics',
         icon: Icons.query_stats,
@@ -1899,7 +1941,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'launch-checklist':
       return const _Phase2SectionSpec(
         title: 'Launch Checklist',
-        subtitle: 'Keep the pre-launch tasks visible so nothing important is missed.',
+        subtitle:
+            'Keep the pre-launch tasks visible so nothing important is missed.',
         singularLabel: 'Task',
         pluralLabel: 'Tasks',
         icon: Icons.fact_check,
@@ -1909,7 +1952,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'backer-updates':
       return const _Phase2SectionSpec(
         title: 'Backer Updates',
-        subtitle: 'Draft the messages that keep supporters informed and confident.',
+        subtitle:
+            'Draft the messages that keep supporters informed and confident.',
         singularLabel: 'Update',
         pluralLabel: 'Updates',
         icon: Icons.campaign,
@@ -1929,7 +1973,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     case 'impact-tracker':
       return const _Phase2SectionSpec(
         title: 'Impact Tracker',
-        subtitle: 'Hold the mission outcome in view after the campaign is delivered.',
+        subtitle:
+            'Hold the mission outcome in view after the campaign is delivered.',
         singularLabel: 'Metric',
         pluralLabel: 'Metrics',
         icon: Icons.insights,
@@ -1939,7 +1984,8 @@ _Phase2SectionSpec _sectionSpec(String section) {
     default:
       return const _Phase2SectionSpec(
         title: 'Launchpad',
-        subtitle: 'Phase 2 launch operations stay local-first and easy to review.',
+        subtitle:
+            'Phase 2 launch operations stay local-first and easy to review.',
         singularLabel: 'Item',
         pluralLabel: 'Items',
         icon: Icons.dashboard,
@@ -2082,10 +2128,7 @@ class _MiniTag extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    this.accent = AppColours.darkSecondary,
-  });
+  const _Chip({required this.label, this.accent = AppColours.darkSecondary});
 
   final String label;
   final Color accent;

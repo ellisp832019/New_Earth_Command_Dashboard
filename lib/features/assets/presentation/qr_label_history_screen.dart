@@ -886,14 +886,8 @@ class _LabelRecordCard extends StatelessWidget {
                 onPressed: onMarkApplied,
                 child: const Text('Mark applied'),
               ),
-              TextButton(
-                onPressed: onEdit,
-                child: const Text('Edit'),
-              ),
-              TextButton(
-                onPressed: onDelete,
-                child: const Text('Delete'),
-              ),
+              TextButton(onPressed: onEdit, child: const Text('Edit')),
+              TextButton(onPressed: onDelete, child: const Text('Delete')),
             ],
           ),
         ],
@@ -1143,14 +1137,18 @@ class _EditLabelEntryDialogState extends State<_EditLabelEntryDialog> {
                   Expanded(
                     child: TextField(
                       controller: _labelTypeController,
-                      decoration: const InputDecoration(labelText: 'Label type'),
+                      decoration: const InputDecoration(
+                        labelText: 'Label type',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _labelSizeController,
-                      decoration: const InputDecoration(labelText: 'Label size'),
+                      decoration: const InputDecoration(
+                        labelText: 'Label size',
+                      ),
                     ),
                   ),
                 ],
@@ -1163,7 +1161,9 @@ class _EditLabelEntryDialogState extends State<_EditLabelEntryDialog> {
               const SizedBox(height: 12),
               TextField(
                 controller: _locationController,
-                decoration: const InputDecoration(labelText: 'Location / project'),
+                decoration: const InputDecoration(
+                  labelText: 'Location / project',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -1180,14 +1180,18 @@ class _EditLabelEntryDialogState extends State<_EditLabelEntryDialog> {
                   Expanded(
                     child: TextField(
                       controller: _printStatusController,
-                      decoration: const InputDecoration(labelText: 'Print status'),
+                      decoration: const InputDecoration(
+                        labelText: 'Print status',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _printedDateController,
-                      decoration: const InputDecoration(labelText: 'Printed date'),
+                      decoration: const InputDecoration(
+                        labelText: 'Printed date',
+                      ),
                     ),
                   ),
                 ],

@@ -591,11 +591,9 @@ class UsersDevicesControlMigrationHealthSnapshot {
   int get missingSeedFileCount =>
       seedFiles.where((file) => !file.exists).length;
 
-  int get missingTableCount =>
-      tables.where((table) => !table.exists).length;
+  int get missingTableCount => tables.where((table) => !table.exists).length;
 
-  int get totalRows =>
-      tables.fold(0, (sum, table) => sum + table.rowCount);
+  int get totalRows => tables.fold(0, (sum, table) => sum + table.rowCount);
 }
 
 class UsersDevicesControlMigrationSeedFileStatus {
@@ -664,7 +662,8 @@ class UsersDevicesControlRepository {
     );
   }
 
-  Future<UsersDevicesControlMigrationHealthSnapshot> loadMigrationHealth() async {
+  Future<UsersDevicesControlMigrationHealthSnapshot>
+  loadMigrationHealth() async {
     await _ensureDatabaseSeeded();
     final db = database;
     final databasePath = await appDatabaseFilePath();
@@ -2248,17 +2247,19 @@ class UsersDevicesControlRepository {
   }
 
   Future<bool> _tableExists(AppDatabase db, String tableName) async {
-    final row = await db.customSelect(
-      "SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
-      variables: [Variable<String>(tableName)],
-    ).getSingleOrNull();
+    final row = await db
+        .customSelect(
+          "SELECT 1 AS found FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+          variables: [Variable<String>(tableName)],
+        )
+        .getSingleOrNull();
     return row != null;
   }
 
   Future<int> _rowCount(AppDatabase db, String tableName) async {
-    final row = await db.customSelect(
-      'SELECT COUNT(*) AS count FROM $tableName',
-    ).getSingle();
+    final row = await db
+        .customSelect('SELECT COUNT(*) AS count FROM $tableName')
+        .getSingle();
     return row.read<int>('count');
   }
 }

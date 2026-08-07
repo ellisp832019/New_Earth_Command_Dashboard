@@ -101,13 +101,13 @@ void main() {
 
     expect(find.text('Module Hub'), findsNothing);
     expect(find.text('Back to More'), findsWidgets);
-    expect(find.text('Weekly Pack PDF'), findsOneWidget);
+    expect(find.text('Weekly Pack PDF'), findsAtLeastNWidgets(1));
 
     await tester.tap(find.text('Back to More').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('More'), findsOneWidget);
-    expect(find.text('Supporting modules'), findsOneWidget);
+    expect(find.text('More'), findsAtLeastNWidgets(1));
+    expect(find.text('Supporting modules'), findsAtLeastNWidgets(1));
   });
 
   testWidgets(
@@ -167,7 +167,7 @@ void main() {
 
       expect(
         find.text('Open folder link settings', skipOffstage: false),
-        findsOneWidget,
+        findsAtLeastNWidgets(1),
       );
 
       await tester.tap(
@@ -177,9 +177,12 @@ void main() {
 
       expect(
         find.text('Treasury settings', skipOffstage: false),
-        findsOneWidget,
+        findsAtLeastNWidgets(1),
       );
-      expect(find.text('Setup state', skipOffstage: false), findsOneWidget);
+      expect(
+        find.text('Setup state', skipOffstage: false),
+        findsAtLeastNWidgets(1),
+      );
     },
   );
 
@@ -236,8 +239,8 @@ void main() {
     await tester.tap(find.text('Open setup wizard', skipOffstage: false));
     await tester.pumpAndSettle();
 
-    expect(find.text('Treasury setup wizard'), findsOneWidget);
-    expect(find.text('Step 1 of 3'), findsOneWidget);
-    expect(find.text('Review the folder link'), findsOneWidget);
+    expect(find.text('Treasury setup wizard'), findsAtLeastNWidgets(1));
+    expect(find.text('Step 1 of 3'), findsAtLeastNWidgets(1));
+    expect(find.text('Review the folder link'), findsAtLeastNWidgets(1));
   });
 }

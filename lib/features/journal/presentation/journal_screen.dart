@@ -18,7 +18,8 @@ class JournalScreen extends ConsumerWidget {
 
     return WorkspaceShell(
       title: 'Journal',
-      subtitle: 'Capture what moved, what was learned, and what continues next.',
+      subtitle:
+          'Capture what moved, what was learned, and what continues next.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(

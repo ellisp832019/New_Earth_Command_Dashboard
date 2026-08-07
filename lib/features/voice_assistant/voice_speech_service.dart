@@ -261,9 +261,7 @@ class VoiceAssistantSpeechService {
     await pending;
   }
 
-  Future<void> primeSpeechOutput({
-    required bool enabled,
-  }) async {
+  Future<void> primeSpeechOutput({required bool enabled}) async {
     if (!enabled || !_isVoiceOutputSupported) {
       return;
     }
@@ -415,7 +413,13 @@ class VoiceAssistantSpeechService {
         'Add-Type -AssemblyName System.Speech',
         r'$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer',
         r'try {',
-        r'  $synth.SpeakSsml("<speak version=''1.0'' xml:lang=''en-US''><break time=''700ms''/></speak>")',
+        r'  $synth.SpeakSsml("<speak version='
+            '1.0'
+            ' xml:lang='
+            'en-US'
+            '><break time='
+            '700ms'
+            '/></speak>")',
         r'} finally {',
         r'  $synth.Dispose()',
         r'}',

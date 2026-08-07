@@ -1,0 +1,25 @@
+{
+  "branch": "integration/dashboard-gaia-controlled-baseline-2026-08-07",
+  "commit": "aeb8dcc38b52316aa53660b9af9523cc1b41eddf",
+  "risk_totals": {
+    "by_severity": {
+      "P0": 1,
+      "P1": 2,
+      "P2": 2,
+      "P3": 1
+    },
+    "by_status": {
+      "deferred": 1,
+      "mitigating": 1,
+      "open": 1,
+      "resolved": 3
+    },
+    "total": 6
+  },
+  "scan_id": "scan-2026-08-07T11:18:20.365702Z",
+  "warnings": [
+    "Working tree is dirty.",
+    "Some modules lack documentation."
+  ],
+  "working_tree_state": "dirty"
+}

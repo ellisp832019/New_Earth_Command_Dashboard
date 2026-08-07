@@ -4548,9 +4548,12 @@ class _UsersDevicesRouteGateScreenState
                                 children: [
                                   if (selectedUser != null) ...[
                                     _CardChip(
-                                      label: 'User: ${selectedUser.displayName}',
+                                      label:
+                                          'User: ${selectedUser.displayName}',
                                     ),
-                                    _CardChip(label: 'Role: ${selectedUser.role}'),
+                                    _CardChip(
+                                      label: 'Role: ${selectedUser.role}',
+                                    ),
                                     _CardChip(
                                       label: 'Status: ${selectedUser.status}',
                                     ),
@@ -4560,10 +4563,12 @@ class _UsersDevicesRouteGateScreenState
                                       label: 'Device: ${selectedDevice.name}',
                                     ),
                                     _CardChip(
-                                      label: 'Trust: T${selectedDevice.trustLevel}',
+                                      label:
+                                          'Trust: T${selectedDevice.trustLevel}',
                                     ),
                                     _CardChip(
-                                      label: 'Device status: ${selectedDevice.status}',
+                                      label:
+                                          'Device status: ${selectedDevice.status}',
                                     ),
                                   ],
                                   if (_latestAuditEventId != null)
@@ -7055,7 +7060,9 @@ class _ProtectedRouteContextShell extends ConsumerWidget {
                           _CardChip(label: 'User: $selectedUserLabel'),
                           _CardChip(label: 'Role: $selectedUserRole'),
                           _CardChip(label: 'Device: $selectedDeviceLabel'),
-                          _CardChip(label: 'Device status: $selectedDeviceStatus'),
+                          _CardChip(
+                            label: 'Device status: $selectedDeviceStatus',
+                          ),
                           _CardChip(label: 'Trust: T$selectedDeviceTrustLevel'),
                           _CardChip(
                             label: remaining == null
@@ -8002,7 +8009,9 @@ List<String> buildUsersDevicesBlockedHints({
     hints.add('Open the Devices screen to review the device state.');
   }
   if (issueCode == 'inactive_user') {
-    hints.add('Select another active identity or restore the archived user first.');
+    hints.add(
+      'Select another active identity or restore the archived user first.',
+    );
   }
   if (issueCode == 'blocked_device') {
     if (selectedDeviceStatus.trim().isNotEmpty) {
@@ -8012,20 +8021,30 @@ List<String> buildUsersDevicesBlockedHints({
       'Restore the device or switch to a trusted device before trying again.',
     );
   }
-  if (issueCode == 'missing_pin' || lowerReason.contains('no local pin is configured')) {
+  if (issueCode == 'missing_pin' ||
+      lowerReason.contains('no local pin is configured')) {
     hints.add('Open PIN Registry and issue or restore a primary PIN first.');
     hints.add('A user needs a local PIN before Security Lock can open.');
   }
   if (issueCode == 'locked_out_active' || issueCode == 'locked_out_triggered') {
-    hints.add('Wait for the cooldown to finish, or clear the lockout from PIN Registry.');
+    hints.add(
+      'Wait for the cooldown to finish, or clear the lockout from PIN Registry.',
+    );
     hints.add('Use recovery only if the user needs help right now.');
   }
   if (issueCode == 'primary_missing_recovery_available') {
-    hints.add('Use the latest recovery PIN, then set a fresh primary PIN after unlock.');
-    hints.add('Keep the recovery PIN temporary so the user returns to a normal primary PIN.');
+    hints.add(
+      'Use the latest recovery PIN, then set a fresh primary PIN after unlock.',
+    );
+    hints.add(
+      'Keep the recovery PIN temporary so the user returns to a normal primary PIN.',
+    );
   }
-  if (issueCode == 'pin_mismatch' || lowerReason.contains('pin did not match')) {
-    hints.add('Check the primary PIN for this user, or use the latest recovery PIN if one exists.');
+  if (issueCode == 'pin_mismatch' ||
+      lowerReason.contains('pin did not match')) {
+    hints.add(
+      'Check the primary PIN for this user, or use the latest recovery PIN if one exists.',
+    );
     hints.add('Open PIN Registry to confirm the current local PIN state.');
   }
   if (lowerReason.contains('trust must be at least level')) {
@@ -8037,7 +8056,9 @@ List<String> buildUsersDevicesBlockedHints({
     if (requiredTrust != null) {
       hints.add('Required trust floor: T$requiredTrust.');
     }
-    hints.add('Choose a higher-trust device, or raise trust during onboarding.');
+    hints.add(
+      'Choose a higher-trust device, or raise trust during onboarding.',
+    );
     hints.add('Open Device Onboarding to review the pairing history.');
   }
   if (lowerReason.contains('missing required permission')) {
@@ -8049,7 +8070,8 @@ List<String> buildUsersDevicesBlockedHints({
     );
     hints.add('Check the selected role for the expected capability.');
   }
-  if (issueCode == 'approval_required' || lowerReason.contains('requires approval')) {
+  if (issueCode == 'approval_required' ||
+      lowerReason.contains('requires approval')) {
     hints.add('This action waits for a reviewer before the route can open.');
     hints.add('Open the Approval Queue and review the pending request.');
     hints.add('A trusted reviewer needs to approve this action first.');

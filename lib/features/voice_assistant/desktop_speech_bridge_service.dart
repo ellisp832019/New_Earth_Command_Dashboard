@@ -56,10 +56,7 @@ class DesktopSpeechBridgeDiagnostics {
 }
 
 class DesktopSpeechBridgeJob {
-  const DesktopSpeechBridgeJob({
-    required this.result,
-    required this.cancel,
-  });
+  const DesktopSpeechBridgeJob({required this.result, required this.cancel});
 
   final Future<DesktopSpeechBridgeCapture?> result;
   final VoidCallback cancel;
@@ -81,21 +78,20 @@ class DesktopSpeechBridgeService {
   DesktopSpeechBridgeService();
 
   static bool get isSupported =>
-      !kIsWeb && Platform.isWindows && Platform.environment['FLUTTER_TEST'] != 'true';
+      !kIsWeb &&
+      Platform.isWindows &&
+      Platform.environment['FLUTTER_TEST'] != 'true';
 
   Future<DesktopSpeechBridgeCapture?> captureOnce({
     Duration timeout = const Duration(seconds: 120),
     int durationSeconds = 8,
   }) async {
-    final job = await _startBridgeCapture(
-      [
-        'listen-once',
-        '--json',
-        '--duration',
-        durationSeconds.toString(),
-      ],
-      timeout: timeout,
-    );
+    final job = await _startBridgeCapture([
+      'listen-once',
+      '--json',
+      '--duration',
+      durationSeconds.toString(),
+    ], timeout: timeout);
     return job.result;
   }
 
@@ -142,11 +138,7 @@ class DesktopSpeechBridgeService {
     Process? process;
 
     try {
-      process = await Process.start(
-        python.command,
-        args,
-        runInShell: true,
-      );
+      process = await Process.start(python.command, args, runInShell: true);
 
       final stdoutDone = process.stdout
           .transform(utf8.decoder)
@@ -201,18 +193,15 @@ class DesktopSpeechBridgeService {
       );
     }
 
-    return _startBridgeCapture(
-      [
-        'transcribe-file',
-        '--json',
-        trimmedPath,
-        if (draftOutputPath != null && draftOutputPath.trim().isNotEmpty)
-          '--draft-output',
-        if (draftOutputPath != null && draftOutputPath.trim().isNotEmpty)
-          draftOutputPath.trim(),
-      ],
-      timeout: timeout,
-    );
+    return _startBridgeCapture([
+      'transcribe-file',
+      '--json',
+      trimmedPath,
+      if (draftOutputPath != null && draftOutputPath.trim().isNotEmpty)
+        '--draft-output',
+      if (draftOutputPath != null && draftOutputPath.trim().isNotEmpty)
+        draftOutputPath.trim(),
+    ], timeout: timeout);
   }
 
   Future<DesktopSpeechBridgeJob> _startBridgeCapture(
@@ -242,11 +231,7 @@ class DesktopSpeechBridgeService {
       );
     }
 
-    final args = <String>[
-      ...python.args,
-      script.path,
-      ...commandArgs,
-    ];
+    final args = <String>[...python.args, script.path, ...commandArgs];
 
     final stdoutBuffer = StringBuffer();
     final stderrBuffer = StringBuffer();
@@ -255,18 +240,16 @@ class DesktopSpeechBridgeService {
 
     Future<DesktopSpeechBridgeCapture?> resultFuture() async {
       try {
-        process = await Process.start(
-          python.command,
-          args,
-          runInShell: true,
-        );
+        process = await Process.start(python.command, args, runInShell: true);
 
         final stdoutDone = process!.stdout
             .transform(utf8.decoder)
-            .listen(stdoutBuffer.write).asFuture<void>();
+            .listen(stdoutBuffer.write)
+            .asFuture<void>();
         final stderrDone = process!.stderr
             .transform(utf8.decoder)
-            .listen(stderrBuffer.write).asFuture<void>();
+            .listen(stderrBuffer.write)
+            .asFuture<void>();
 
         final exitCode = await process!.exitCode.timeout(
           timeout,
@@ -301,8 +284,9 @@ class DesktopSpeechBridgeService {
         return DesktopSpeechBridgeCapture(
           transcript: transcript,
           model: decoded['model']?.toString(),
-          durationSeconds:
-              int.tryParse(decoded['duration_seconds']?.toString() ?? ''),
+          durationSeconds: int.tryParse(
+            decoded['duration_seconds']?.toString() ?? '',
+          ),
           segments: _parseSegments(decoded['segments']),
         );
       } catch (_) {
@@ -355,11 +339,10 @@ class DesktopSpeechBridgeService {
 
     for (final candidate in commands) {
       try {
-        final result = await Process.run(
-          candidate.command,
-          <String>[...candidate.args, '--version'],
-          runInShell: true,
-        );
+        final result = await Process.run(candidate.command, <String>[
+          ...candidate.args,
+          '--version',
+        ], runInShell: true);
         if (result.exitCode == 0) {
           return candidate;
         }
@@ -400,10 +383,7 @@ class DesktopSpeechBridgeService {
 }
 
 class _PythonCommand {
-  const _PythonCommand({
-    required this.command,
-    required this.args,
-  });
+  const _PythonCommand({required this.command, required this.args});
 
   final String command;
   final List<String> args;

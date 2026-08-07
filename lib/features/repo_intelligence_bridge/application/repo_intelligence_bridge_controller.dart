@@ -40,9 +40,7 @@ class RepoIntelligenceBridgeController {
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
   }
 
-  Future<void> updateState({
-    required RepoIntelligenceBridgeState state,
-  }) async {
+  Future<void> updateState({required RepoIntelligenceBridgeState state}) async {
     await _service.saveState(state);
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
   }

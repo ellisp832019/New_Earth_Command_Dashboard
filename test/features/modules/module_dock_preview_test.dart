@@ -25,9 +25,7 @@ void main() {
       enabled: true,
       dockable: true,
       defaultDockPosition: DockPosition.right,
-      permissions: [
-        ModulePermission(type: ModulePermissionType.fileRead),
-      ],
+      permissions: [ModulePermission(type: ModulePermissionType.fileRead)],
       installPath: 'modules/alpha_module',
       omegaOsPath: 'OMEGA_OS/MODULES/ALPHA_MODULE',
       health: ModuleHealthSnapshot(

@@ -108,8 +108,5 @@ Map<String, String> _resolvedVoiceEnvironment() {
   final usbEnvironment = VoiceUsbConfigDiscovery.discoverOllamaEnvironment(
     environment: platformEnvironment,
   );
-  return <String, String>{
-    ...usbEnvironment,
-    ...platformEnvironment,
-  };
+  return <String, String>{...usbEnvironment, ...platformEnvironment};
 }

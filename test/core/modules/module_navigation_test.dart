@@ -67,18 +67,17 @@ void main() {
     );
   });
 
-  test('module launch route falls back to package when no home route exists', () {
-    final module = _module(
-      id: 'beta',
-      name: 'Beta',
-      routes: const [],
-    );
+  test(
+    'module launch route falls back to package when no home route exists',
+    () {
+      final module = _module(id: 'beta', name: 'Beta', routes: const []);
 
-    expect(
-      moduleLaunchRoute(module, ModuleLaunchTarget.home),
-      RouteNames.modulePackage('beta'),
-    );
-  });
+      expect(
+        moduleLaunchRoute(module, ModuleLaunchTarget.home),
+        RouteNames.modulePackage('beta'),
+      );
+    },
+  );
 
   test('module path matching recognizes nested module routes', () {
     final modules = [

@@ -10,33 +10,36 @@ import 'package:new_earth_command_dashboard/features/launchpad/data/launchpad_mo
 import 'package:new_earth_command_dashboard/features/launchpad/data/launchpad_repository.dart';
 
 void main() {
-  test('loadWorkspace imports the MicroGrow seed campaign and exports markdown', () async {
-    final tempRoot = await Directory.systemTemp.createTemp(
-      'launchpad_repo_test_',
-    );
-    addTearDown(() async {
-      if (await tempRoot.exists()) {
-        await tempRoot.delete(recursive: true);
-      }
-    });
+  test(
+    'loadWorkspace imports the MicroGrow seed campaign and exports markdown',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'launchpad_repo_test_',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
 
-    await _writeLaunchpadSeedPack(tempRoot);
+      await _writeLaunchpadSeedPack(tempRoot);
 
-    final repository = LaunchpadRepository(workingDirectory: tempRoot);
-    final workspace = await repository.loadWorkspace();
+      final repository = LaunchpadRepository(workingDirectory: tempRoot);
+      final workspace = await repository.loadWorkspace();
 
-    expect(workspace.campaigns, isNotEmpty);
-    final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
-    expect(campaign, isNotNull);
-    expect(campaign!.rewards, hasLength(2));
-    expect(campaign.readinessItems, isNotEmpty);
-    expect(campaign.phase2Records, isNotEmpty);
+      expect(workspace.campaigns, isNotEmpty);
+      final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
+      expect(campaign, isNotNull);
+      expect(campaign!.rewards, hasLength(2));
+      expect(campaign.readinessItems, isNotEmpty);
+      expect(campaign.phase2Records, isNotEmpty);
 
-    final exportPath = await repository.exportStoryMarkdown(campaign.id);
-    final exportText = await File(exportPath).readAsString();
-    expect(exportText, contains('# MicroGrow Kickstarter 2026'));
-    expect(exportText, contains('Campaign Summary'));
-  });
+      final exportPath = await repository.exportStoryMarkdown(campaign.id);
+      final exportText = await File(exportPath).readAsString();
+      expect(exportText, contains('# MicroGrow Kickstarter 2026'));
+      expect(exportText, contains('Campaign Summary'));
+    },
+  );
 
   test('exportCampaignPack writes a complete campaign pack', () async {
     final tempRoot = await Directory.systemTemp.createTemp(
@@ -65,95 +68,102 @@ void main() {
     expect(await File(p.join(packPath, 'phase2.json')).exists(), isTrue);
     expect(await File(p.join(packPath, 'finance.json')).exists(), isTrue);
 
-    final manifest = await File(p.join(packPath, 'pack-manifest.md')).readAsString();
+    final manifest = await File(
+      p.join(packPath, 'pack-manifest.md'),
+    ).readAsString();
     expect(manifest, contains('MicroGrow Kickstarter 2026 Pack'));
     expect(manifest, contains('Phase 2 Sections'));
   });
 
-  test('loadWorkspace merges missing Phase 2 seed records into runtime state', () async {
-    final tempRoot = await Directory.systemTemp.createTemp(
-      'launchpad_merge_test_',
-    );
-    addTearDown(() async {
-      if (await tempRoot.exists()) {
-        await tempRoot.delete(recursive: true);
-      }
-    });
+  test(
+    'loadWorkspace merges missing Phase 2 seed records into runtime state',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'launchpad_merge_test_',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
 
-    await _writeLaunchpadSeedPack(tempRoot);
-    await _writeRuntimeStateWithoutPhase2(tempRoot);
+      await _writeLaunchpadSeedPack(tempRoot);
+      await _writeRuntimeStateWithoutPhase2(tempRoot);
 
-    final repository = LaunchpadRepository(workingDirectory: tempRoot);
-    final workspace = await repository.loadWorkspace();
-    final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
+      final repository = LaunchpadRepository(workingDirectory: tempRoot);
+      final workspace = await repository.loadWorkspace();
+      final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
 
-    expect(campaign, isNotNull);
-    expect(campaign!.phase2Records, isNotEmpty);
-    expect(
-      campaign.phase2Records.any((record) => record.section == 'launch-checklist'),
-      isTrue,
-    );
-  });
+      expect(campaign, isNotNull);
+      expect(campaign!.phase2Records, isNotEmpty);
+      expect(
+        campaign.phase2Records.any(
+          (record) => record.section == 'launch-checklist',
+        ),
+        isTrue,
+      );
+    },
+  );
 
-  test('repository resolves the workspace root instead of the current folder', () async {
-    final tempRoot = await Directory.systemTemp.createTemp(
-      'launchpad_root_test_',
-    );
-    addTearDown(() async {
-      if (await tempRoot.exists()) {
-        await tempRoot.delete(recursive: true);
-      }
-    });
+  test(
+    'repository resolves the workspace root instead of the current folder',
+    () async {
+      final tempRoot = await Directory.systemTemp.createTemp(
+        'launchpad_root_test_',
+      );
+      addTearDown(() async {
+        if (await tempRoot.exists()) {
+          await tempRoot.delete(recursive: true);
+        }
+      });
 
-    await _writeLaunchpadSeedPack(tempRoot);
+      await _writeLaunchpadSeedPack(tempRoot);
 
-    final nestedWorkingDir = Directory(
-      p.join(
+      final nestedWorkingDir = Directory(
+        p.join(tempRoot.path, 'apps', 'launchpad', 'scratch'),
+      );
+      await nestedWorkingDir.create(recursive: true);
+
+      final previousCurrent = Directory.current;
+      Directory.current = nestedWorkingDir;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+      });
+
+      final repository = LaunchpadRepository();
+      final workspace = await repository.loadWorkspace();
+      final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
+      expect(campaign, isNotNull);
+
+      await repository.updateCampaign(
+        campaign!.copyWith(
+          fundingGoalGbp: 50000,
+          finance: campaign.finance.copyWith(fundingGoalGbp: 50000),
+        ),
+      );
+
+      final runtimePath = p.join(
         tempRoot.path,
-        'apps',
-        'launchpad',
-        'scratch',
-      ),
-    );
-    await nestedWorkingDir.create(recursive: true);
+        'modules',
+        'new_earth_launchpad_module',
+        'dashboard_module',
+        'data',
+        'runtime',
+        'launchpad_state.json',
+      );
+      expect(await File(runtimePath).exists(), isTrue);
 
-    final previousCurrent = Directory.current;
-    Directory.current = nestedWorkingDir;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-    });
-
-    final repository = LaunchpadRepository();
-    final workspace = await repository.loadWorkspace();
-    final campaign = workspace.campaignById('MICROGROW_KICKSTARTER_2026');
-    expect(campaign, isNotNull);
-
-    await repository.updateCampaign(
-      campaign!.copyWith(
-        fundingGoalGbp: 50000,
-        finance: campaign.finance.copyWith(fundingGoalGbp: 50000),
-      ),
-    );
-
-    final runtimePath = p.join(
-      tempRoot.path,
-      'modules',
-      'new_earth_launchpad_module',
-      'dashboard_module',
-      'data',
-      'runtime',
-      'launchpad_state.json',
-    );
-    expect(await File(runtimePath).exists(), isTrue);
-
-    final runtimeJson = jsonDecode(await File(runtimePath).readAsString()) as Map<String, dynamic>;
-    final savedCampaigns = (runtimeJson['campaigns'] as List).cast<Map>();
-    final savedCampaign = savedCampaigns.cast<Map<String, dynamic>>().firstWhere(
-      (entry) => entry['id'] == 'MICROGROW_KICKSTARTER_2026',
-    );
-    expect(savedCampaign['funding_goal_gbp'], 50000);
-    expect(savedCampaign['finance']['funding_goal_gbp'], 50000);
-  });
+      final runtimeJson =
+          jsonDecode(await File(runtimePath).readAsString())
+              as Map<String, dynamic>;
+      final savedCampaigns = (runtimeJson['campaigns'] as List).cast<Map>();
+      final savedCampaign = savedCampaigns
+          .cast<Map<String, dynamic>>()
+          .firstWhere((entry) => entry['id'] == 'MICROGROW_KICKSTARTER_2026');
+      expect(savedCampaign['funding_goal_gbp'], 50000);
+      expect(savedCampaign['finance']['funding_goal_gbp'], 50000);
+    },
+  );
 
   test('financial and readiness calculators return calm launch summaries', () {
     final campaign = LaunchpadCampaignRecord(
@@ -264,7 +274,9 @@ void main() {
       ),
     );
 
-    final readiness = calculateLaunchpadReadinessSummary(campaign.readinessItems);
+    final readiness = calculateLaunchpadReadinessSummary(
+      campaign.readinessItems,
+    );
     final finance = calculateLaunchpadFinancialSummary(campaign);
 
     expect(readiness.overallPercent, greaterThan(0));
@@ -331,14 +343,16 @@ Future<void> _writeLaunchpadSeedPack(Directory root) async {
     ]),
   );
 
-  await File(p.join(campaignDir.path, 'readiness.csv')).writeAsString('''category,title,status,notes
+  await File(p.join(campaignDir.path, 'readiness.csv')).writeAsString(
+    '''category,title,status,notes
 Hardware,One ESP32 node demo,In Progress,Frankenstein prototype box
 Firmware,Live /data endpoint,Done,Current firmware foundation
 Software,Flutter dashboard reads node,Done,Existing app foundation
 Manufacturing,PCB V0.1 plan,Draft,Low-voltage dev-board carrier
 Documentation,Risk disclosure drafted,Todo,Especially delivery/certification
 Marketing,3-5 minute demo video,Todo,Kickstarter proof asset
-''');
+''',
+  );
 
   await File(p.join(campaignDir.path, 'phase2.json')).writeAsString(
     jsonEncode([

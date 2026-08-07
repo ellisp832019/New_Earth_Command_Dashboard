@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "module_dependencies": [
+    {"module": "dashboard", "depends_on": ["tasks", "planner", "projects", "assets", "treasury", "meeting_system", "voice_intelligence"]},
+    {"module": "assets", "depends_on": ["projects", "treasury"]},
+    {"module": "treasury", "depends_on": ["dashboard", "projects"]},
+    {"module": "meeting_system", "depends_on": ["voice_intelligence", "projects"]},
+    {"module": "voice_intelligence", "depends_on": ["voice_assistant", "meeting_system"]},
+    {"module": "omega_knowledge_engine", "depends_on": ["knowledge_library", "repo_research_engine"]},
+    {"module": "omega_engineering_studio", "depends_on": ["omega_knowledge_engine", "projects"]},
+    {"module": "launchpad", "depends_on": ["projects", "content"]},
+    {"module": "users_devices_control", "depends_on": ["security", "settings"]},
+    {"module": "education_learning_hub", "depends_on": ["learning", "content"]},
+    {"module": "repo_intelligence_bridge", "depends_on": ["projects", "knowledge_library"]},
+    {"module": "project_intelligence", "depends_on": ["projects", "repo_intelligence_bridge"]}
+  ],
+  "shared_service_dependencies": [
+    {"service": "routing", "used_by": ["dashboard", "projects", "tasks", "journal", "learning", "content", "business", "wellbeing", "assets", "treasury", "meeting_system", "voice_intelligence", "systems"]},
+    {"service": "local_database", "used_by": ["tasks", "journal", "learning", "content", "business", "wellbeing", "assets", "treasury", "users_devices_control", "security"]},
+    {"service": "filesystem", "used_by": ["launchpad", "meeting_system", "knowledge_library", "repo_intelligence_bridge", "repo_research_engine", "omega_engineering_studio"]},
+    {"service": "window_manager", "used_by": ["dashboard", "voice_assistant", "security"]}
+  ],
+  "database_dependencies": [
+    {"module": "tasks", "database": "app_database"},
+    {"module": "journal", "database": "app_database"},
+    {"module": "learning", "database": "app_database"},
+    {"module": "content", "database": "app_database"},
+    {"module": "business", "database": "app_database"},
+    {"module": "wellbeing", "database": "app_database"},
+    {"module": "assets", "database": "app_database"},
+    {"module": "users_devices_control", "database": "app_database"},
+    {"module": "security", "database": "app_database"}
+  ],
+  "file_system_dependencies": [
+    {"module": "launchpad", "paths": ["modules/new_earth_launchpad_module"]},
+    {"module": "meeting_system", "paths": ["modules/meeting_system"]},
+    {"module": "repo_intelligence_bridge", "paths": ["modules/project_repo_bridge"]},
+    {"module": "omega_engineering_studio", "paths": ["modules/01_OMEGA_ENGINEERING_STUDIO_MODULE"]},
+    {"module": "project_control", "paths": ["project_control"]}
+  ],
+  "voice_dependencies": [
+    {"module": "voice_intelligence", "depends_on": ["voice_assistant"]},
+    {"module": "voice_assistant", "depends_on": ["speech_to_text", "desktop windowing"]}
+  ],
+  "hardware_dependencies": [
+    {"module": "voice_assistant", "depends_on": ["microphone", "audio input"]},
+    {"module": "visual_capture", "depends_on": ["screen capture"]},
+    {"module": "users_devices_control", "depends_on": ["pin entry hardware or keyboard"]}
+  ],
+  "windows_only_dependencies": [
+    {"module": "voice_assistant", "depends_on": ["window_manager", "tray_manager"]},
+    {"module": "systems", "depends_on": ["desktop windowing"]}
+  ],
+  "optional_dependencies": [
+    {"module": "voice_assistant", "depends_on": ["voice hardware"]},
+    {"module": "repo_research_engine", "depends_on": ["git remote access"]},
+    {"module": "omega_knowledge_engine", "depends_on": ["repository intelligence bridge"]}
+  ],
+  "blocking_dependencies": [
+    {"module": "dashboard", "blocked_by": []},
+    {"module": "voice_intelligence", "blocked_by": ["voice_assistant"]},
+    {"module": "omega_knowledge_engine", "blocked_by": ["repo_research_engine"]}
+  ],
+  "observations": [
+    "Core dashboard startup should remain available without optional voice hardware.",
+    "Modules should not reach directly into another module's storage layer.",
+    "Repository intelligence work should stay repository-relative and avoid machine-specific paths."
+  ]
+}

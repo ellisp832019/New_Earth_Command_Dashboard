@@ -15,7 +15,10 @@ void main() {
     ];
 
     final offenders = <String>[];
-    await for (final entity in repoRoot.list(recursive: true, followLinks: false)) {
+    await for (final entity in repoRoot.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is! File) {
         continue;
       }

@@ -18,17 +18,15 @@ class LowStockScreen extends ConsumerWidget {
     final repository = ref.watch(assetRegisterRepositoryProvider);
 
     return workspace.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) => _LowStockError(
         onReload: () => ref.invalidate(assetWorkspaceProvider),
       ),
       data: (workspaceData) {
         return parts.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, stackTrace) => _LowStockError(
             onReload: () => ref.invalidate(assetPartsRegisterProvider),
           ),
@@ -235,7 +233,8 @@ class _LowStockHeader extends StatelessWidget {
               _InfoChip(label: '$lowStockCount low stock'),
               _InfoChip(label: '$reorderCount reorder needed'),
               _InfoChip(
-                label: 'Spend ${NumberFormat.decimalPattern().format(estimatedSpend)}',
+                label:
+                    'Spend ${NumberFormat.decimalPattern().format(estimatedSpend)}',
               ),
             ],
           );
@@ -254,10 +253,7 @@ class _LowStockHeader extends StatelessWidget {
               const SizedBox(width: 20),
               SizedBox(
                 width: 420,
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: chips,
-                ),
+                child: Align(alignment: Alignment.topRight, child: chips),
               ),
             ],
           );
@@ -382,8 +378,8 @@ class _LowStockCard extends StatelessWidget {
     final accent = status == 'wishlist'
         ? AppColours.darkPurple
         : status == 'reorder_needed'
-            ? AppColours.darkSecondary
-            : AppColours.darkAmber;
+        ? AppColours.darkSecondary
+        : AppColours.darkAmber;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -403,9 +399,9 @@ class _LowStockCard extends StatelessWidget {
                       ? row['name']!.trim()
                       : 'Unnamed part',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _StatusPill(
@@ -427,9 +423,9 @@ class _LowStockCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'Qty ${row['quantity'] ?? '0'}  •  Min ${row['min_quantity'] ?? '0'}  •  Need $needed',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkMutedText,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
           ),
         ],
       ),
@@ -487,7 +483,9 @@ class _ReorderHintCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final quantity = int.tryParse((row['quantity'] ?? '').trim()) ?? 0;
     final minQuantity = int.tryParse((row['min_quantity'] ?? '').trim()) ?? 0;
-    final quantityNeeded = minQuantity - quantity > 0 ? minQuantity - quantity : 1;
+    final quantityNeeded = minQuantity - quantity > 0
+        ? minQuantity - quantity
+        : 1;
     final lastCost = double.tryParse((row['last_cost'] ?? '').trim()) ?? 0;
     final estimatedCost = quantityNeeded * lastCost;
 
@@ -509,16 +507,16 @@ class _ReorderHintCard extends StatelessWidget {
                       ? row['name']!.trim()
                       : 'Unnamed part',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColours.darkText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: AppColours.darkText,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Need $quantityNeeded more • Project ${row['project'] ?? 'No project'}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColours.darkMutedText,
-                      ),
+                    color: AppColours.darkMutedText,
+                  ),
                 ),
               ],
             ),
@@ -527,9 +525,9 @@ class _ReorderHintCard extends StatelessWidget {
           Text(
             'Est ${NumberFormat.decimalPattern().format(estimatedCost)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColours.darkSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkSecondary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -549,7 +547,9 @@ class _LowStockFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Row(
         children: [
@@ -558,9 +558,9 @@ class _LowStockFooter extends StatelessWidget {
           Expanded(
             child: Text(
               '$itemCount parts are in the current register. Keep the list short, useful, and easy to act on.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
             ),
           ),
         ],
@@ -593,19 +593,17 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            isCurrency
-                ? NumberFormat.decimalPattern().format(value)
-                : '$value',
+            isCurrency ? NumberFormat.decimalPattern().format(value) : '$value',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColours.darkText,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColours.darkText,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -662,9 +660,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -688,9 +686,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -714,9 +712,9 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+          color: accent,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

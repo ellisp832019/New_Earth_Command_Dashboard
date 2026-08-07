@@ -125,14 +125,7 @@ extension OmegaExperimentCategoryLabel on OmegaExperimentCategory {
   }
 }
 
-enum OmegaExperimentEvidenceType {
-  note,
-  data,
-  log,
-  image,
-  screenshot,
-  file,
-}
+enum OmegaExperimentEvidenceType { note, data, log, image, screenshot, file }
 
 extension OmegaExperimentEvidenceTypeLabel on OmegaExperimentEvidenceType {
   String get label {
@@ -210,21 +203,28 @@ class OmegaExperimentConfig {
   }
 
   bool isSafePath(String rawPath) {
-    if (rawPath.trim().isEmpty) {
+    final normalized = _normalizeComparablePath(rawPath);
+    if (normalized.isEmpty) {
       return false;
     }
 
-    final normalized = p.normalize(rawPath);
     return approvedRoots.any((root) {
-      if (root.trim().isEmpty) {
+      final rootNormalized = _normalizeComparablePath(root);
+      if (rootNormalized.isEmpty) {
         return false;
       }
-      final rootNormalized = p.normalize(root);
-      if (normalized.toLowerCase() == rootNormalized.toLowerCase()) {
-        return true;
-      }
-      return p.isWithin(rootNormalized, normalized);
+      return normalized == rootNormalized ||
+          normalized.startsWith('$rootNormalized/');
     });
+  }
+
+  static String _normalizeComparablePath(String value) {
+    final collapsed = value.trim().replaceAll('\\', '/');
+    if (collapsed.isEmpty) {
+      return '';
+    }
+
+    return collapsed.replaceAll(RegExp(r'/+'), '/').toLowerCase();
   }
 }
 
@@ -277,17 +277,15 @@ class OmegaExperimentRecord {
       measurements: _parseStringList(data['measurements']),
       softwareUsed: _parseStringList(data['software_used']),
       hardwareUsed: _parseStringList(data['hardware_used']),
-      results: _string(
-        data,
-        const ['results', 'results_summary'],
-        fallback: '',
-      ),
+      results: _string(data, const [
+        'results',
+        'results_summary',
+      ], fallback: ''),
       conclusion: _string(data, const ['conclusion'], fallback: ''),
-      lessonLearned: _string(
-        data,
-        const ['lesson_learned', 'lessons_learned'],
-        fallback: '',
-      ),
+      lessonLearned: _string(data, const [
+        'lesson_learned',
+        'lessons_learned',
+      ], fallback: ''),
       nextActions: _parseStringList(data['next_actions']),
       relatedRepoCommits: _parseStringList(data['related_repo_commits']),
       relatedGithubIssues: _parseStringList(data['related_github_issues']),
@@ -478,8 +476,9 @@ class OmegaExperimentWorkspace {
 
   int get experimentCount => experiments.length;
 
-  int get activeExperimentCount =>
-      experiments.where((experiment) => experiment.status.isActiveLifecycle).length;
+  int get activeExperimentCount => experiments
+      .where((experiment) => experiment.status.isActiveLifecycle)
+      .length;
 
   int get evidenceReadyCount =>
       experiments.where((experiment) => experiment.hasEvidence).length;
@@ -541,9 +540,7 @@ class OmegaExperimentRepository {
       ..._loadSampleExperiments(),
       ..._loadStorageExperiments(),
     ];
-    experiments.sort(
-      (a, b) => a.experimentId.compareTo(b.experimentId),
-    );
+    experiments.sort((a, b) => a.experimentId.compareTo(b.experimentId));
 
     return OmegaExperimentWorkspace(
       config: config,
@@ -621,22 +618,21 @@ class OmegaExperimentRepository {
   }
 
   List<OmegaExperimentRecord> loadExperiments() {
-    return [
-      ..._loadSampleExperiments(),
-      ..._loadStorageExperiments(),
-    ]..sort((a, b) => a.experimentId.compareTo(b.experimentId));
+    return [..._loadSampleExperiments(), ..._loadStorageExperiments()]
+      ..sort((a, b) => a.experimentId.compareTo(b.experimentId));
   }
 
   List<OmegaExperimentRecord> _loadSampleExperiments() {
-    final baseDir = Directory(p.join(moduleRootPath, 'sample_data', 'experiments'));
+    final baseDir = Directory(
+      p.join(moduleRootPath, 'sample_data', 'experiments'),
+    );
     if (!baseDir.existsSync()) {
       return const [];
     }
 
     final records = <OmegaExperimentRecord>[];
-    for (final directory in baseDir
-        .listSync(followLinks: false)
-        .whereType<Directory>()) {
+    for (final directory
+        in baseDir.listSync(followLinks: false).whereType<Directory>()) {
       final file = File(p.join(directory.path, 'experiment.json'));
       if (!file.existsSync()) {
         continue;
@@ -665,9 +661,10 @@ class OmegaExperimentRepository {
     }
 
     final records = <OmegaExperimentRecord>[];
-    for (final file in baseDir
-        .listSync(recursive: true, followLinks: false)
-        .whereType<File>()) {
+    for (final file
+        in baseDir
+            .listSync(recursive: true, followLinks: false)
+            .whereType<File>()) {
       if (!p.extension(file.path).toLowerCase().endsWith('.json')) {
         continue;
       }

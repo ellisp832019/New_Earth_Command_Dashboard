@@ -8,5 +8,5 @@ final omegaExperimentRepositoryProvider = Provider<OmegaExperimentRepository>(
 
 final omegaExperimentWorkspaceProvider =
     FutureProvider<OmegaExperimentWorkspace>((ref) {
-  return ref.read(omegaExperimentRepositoryProvider).loadWorkspace();
-});
+      return ref.read(omegaExperimentRepositoryProvider).loadWorkspace();
+    });

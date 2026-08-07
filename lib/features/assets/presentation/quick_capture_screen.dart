@@ -12,8 +12,7 @@ class QuickCaptureScreen extends ConsumerStatefulWidget {
   const QuickCaptureScreen({super.key});
 
   @override
-  ConsumerState<QuickCaptureScreen> createState() =>
-      _QuickCaptureScreenState();
+  ConsumerState<QuickCaptureScreen> createState() => _QuickCaptureScreenState();
 }
 
 class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
@@ -102,8 +101,9 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
       ),
       data: (workspaceData) {
         final statusOptions = _statusOptionsFor(_kind);
-        final selectedStatus =
-            statusOptions.contains(_status) ? _status : statusOptions.first;
+        final selectedStatus = statusOptions.contains(_status)
+            ? _status
+            : statusOptions.first;
 
         return WorkspaceShell(
           title: 'Quick Capture',
@@ -127,7 +127,8 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
                       const SizedBox(height: 20),
                       if (workspaceData.assetsRootPath == null) ...[
                         _UnavailableNotice(
-                          onReload: () => ref.invalidate(assetWorkspaceProvider),
+                          onReload: () =>
+                              ref.invalidate(assetWorkspaceProvider),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -147,7 +148,8 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
                               const SizedBox(height: 10),
                               Text(
                                 'Capture the essentials now. You can refine the record later in the register.',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
                                       color: AppColours.darkMutedText,
                                       height: 1.4,
                                     ),
@@ -194,7 +196,9 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
                               DropdownButtonFormField<String>(
                                 key: ValueKey<String>('status-${_kind.name}'),
                                 initialValue: selectedStatus,
-                                decoration: const InputDecoration(labelText: 'Status'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Status',
+                                ),
                                 items: statusOptions
                                     .map(
                                       (value) => DropdownMenuItem<String>(
@@ -232,10 +236,9 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
                 right: 20,
                 bottom: 20,
                 child: FloatingActionButton.extended(
-                  onPressed:
-                      _isSaving || workspaceData.assetsRootPath == null
-                          ? null
-                          : _save,
+                  onPressed: _isSaving || workspaceData.assetsRootPath == null
+                      ? null
+                      : _save,
                   icon: _isSaving
                       ? const SizedBox(
                           width: 16,
@@ -274,45 +277,39 @@ class _QuickCaptureScreenState extends ConsumerState<QuickCaptureScreen> {
       final timestamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
 
       if (_kind == _QuickCaptureKind.equipment) {
-        await repository.appendEquipmentRecord(
-          assetsRootPath,
-          {
-            'asset_id': 'NE-EQ-$timestamp',
-            'name': _nameController.text.trim(),
-            'type': _typeController.text.trim(),
-            'project': _projectController.text.trim(),
-            'owner': '',
-            'location': _locationController.text.trim(),
-            'condition': _equipmentConditionFor(_status),
-            'status': _status,
-            'purchase_date': '',
-            'purchase_cost': '',
-            'replacement_value': '',
-            'serial_number': '',
-            'receipt_link': '',
-            'warranty_until': '',
-            'notes': _notesController.text.trim(),
-          },
-        );
+        await repository.appendEquipmentRecord(assetsRootPath, {
+          'asset_id': 'NE-EQ-$timestamp',
+          'name': _nameController.text.trim(),
+          'type': _typeController.text.trim(),
+          'project': _projectController.text.trim(),
+          'owner': '',
+          'location': _locationController.text.trim(),
+          'condition': _equipmentConditionFor(_status),
+          'status': _status,
+          'purchase_date': '',
+          'purchase_cost': '',
+          'replacement_value': '',
+          'serial_number': '',
+          'receipt_link': '',
+          'warranty_until': '',
+          'notes': _notesController.text.trim(),
+        });
       } else {
-        await repository.appendPartRecord(
-          assetsRootPath,
-          {
-            'part_id': 'NE-PART-$timestamp',
-            'name': _nameController.text.trim(),
-            'category': _typeController.text.trim(),
-            'project': _projectController.text.trim(),
-            'quantity': '0',
-            'min_quantity': '0',
-            'location': _locationController.text.trim(),
-            'supplier': '',
-            'last_ordered': '',
-            'last_cost': '',
-            'status': _status,
-            'datasheet_link': '',
-            'notes': _notesController.text.trim(),
-          },
-        );
+        await repository.appendPartRecord(assetsRootPath, {
+          'part_id': 'NE-PART-$timestamp',
+          'name': _nameController.text.trim(),
+          'category': _typeController.text.trim(),
+          'project': _projectController.text.trim(),
+          'quantity': '0',
+          'min_quantity': '0',
+          'location': _locationController.text.trim(),
+          'supplier': '',
+          'last_ordered': '',
+          'last_cost': '',
+          'status': _status,
+          'datasheet_link': '',
+          'notes': _notesController.text.trim(),
+        });
       }
 
       if (!mounted) {
@@ -466,7 +463,13 @@ class _QuickCaptureHeader extends StatelessWidget {
           if (!wide) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [copy, const SizedBox(height: 16), chips, const SizedBox(height: 16), actions],
+              children: [
+                copy,
+                const SizedBox(height: 16),
+                chips,
+                const SizedBox(height: 16),
+                actions,
+              ],
             );
           }
 
@@ -479,11 +482,7 @@ class _QuickCaptureHeader extends StatelessWidget {
                 width: 420,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    chips,
-                    const SizedBox(height: 16),
-                    actions,
-                  ],
+                  children: [chips, const SizedBox(height: 16), actions],
                 ),
               ),
             ],
@@ -513,9 +512,9 @@ class _UnavailableNotice extends StatelessWidget {
             child: Text(
               'The external asset folder is not linked yet, so quick capture cannot save until that path is available.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColours.darkMutedText,
-                    height: 1.4,
-                  ),
+                color: AppColours.darkMutedText,
+                height: 1.4,
+              ),
             ),
           ),
           TextButton.icon(
@@ -543,17 +542,17 @@ class _SectionLabel extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColours.darkSecondary,
-                fontWeight: FontWeight.w700,
-              ),
+            color: AppColours.darkSecondary,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           hint,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-                height: 1.35,
-              ),
+            color: AppColours.darkMutedText,
+            height: 1.35,
+          ),
         ),
       ],
     );
@@ -577,10 +576,7 @@ class _Field extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-      ),
+      decoration: InputDecoration(labelText: label, hintText: hintText),
       validator: validator,
     );
   }
@@ -601,9 +597,9 @@ class _PanelTitle extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColours.darkText,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColours.darkText),
         ),
       ],
     );
@@ -627,9 +623,9 @@ class _InfoChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColours.darkMutedText,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

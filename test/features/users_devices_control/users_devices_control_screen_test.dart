@@ -22,7 +22,7 @@ class FakeUsersDevicesControlRepository extends UsersDevicesControlRepository {
   loadMigrationHealth() async {
     return const UsersDevicesControlMigrationHealthSnapshot(
       usingDatabase: true,
-      schemaVersion: 15,
+      schemaVersion: 16,
       databasePath: 'C:/Users/test/Documents/new_earth_command_dashboard.db',
       databaseFileExists: true,
       seedFiles: [
@@ -277,7 +277,7 @@ void main() {
           pinId: 'pin_peter_primary',
           userId: 'user_peter_owner',
           label: 'Primary PIN',
-          pinCode: '4434',
+          pinCode: '****',
           status: 'active',
           sourceLabel: 'Local admin',
           createdAt: DateTime(2026, 6, 26),
@@ -287,7 +287,7 @@ void main() {
           pinId: 'pin_hayley_recovery',
           userId: 'user_hayley_finance',
           label: 'Recovery PIN',
-          pinCode: '112233',
+          pinCode: '******',
           status: 'recovery',
           sourceLabel: 'Local admin',
           createdAt: DateTime(2026, 6, 26),
@@ -454,87 +454,90 @@ void main() {
     expect(find.textContaining('Security Lock'), findsOneWidget);
   });
 
-  test(
-    'route gate explains blocked trust, role, and approval guidance clearly',
-    () {
-      final trustHints = buildUsersDevicesBlockedHints(
-        reason: 'Device trust must be at least level 4.',
-        nextStep: 'Use a higher-trust device or raise the device trust level.',
-        userId: 'user_hayley_finance',
-        deviceId: 'device_phone_scanner',
-        issueCode: 'trust_floor',
-        selectedUserRole: 'Co-founder',
-        selectedDeviceTrustLevel: 2,
-        selectedDeviceStatus: 'registered',
-      );
-      expect(trustHints, contains('Selected device trust: T2.'));
-      expect(trustHints, contains('Required trust floor: T4.'));
-      expect(
-        trustHints,
-        contains('Choose a higher-trust device, or raise trust during onboarding.'),
-      );
+  test('route gate explains blocked trust, role, and approval guidance clearly', () {
+    final trustHints = buildUsersDevicesBlockedHints(
+      reason: 'Device trust must be at least level 4.',
+      nextStep: 'Use a higher-trust device or raise the device trust level.',
+      userId: 'user_hayley_finance',
+      deviceId: 'device_phone_scanner',
+      issueCode: 'trust_floor',
+      selectedUserRole: 'Co-founder',
+      selectedDeviceTrustLevel: 2,
+      selectedDeviceStatus: 'registered',
+    );
+    expect(trustHints, contains('Selected device trust: T2.'));
+    expect(trustHints, contains('Required trust floor: T4.'));
+    expect(
+      trustHints,
+      contains(
+        'Choose a higher-trust device, or raise trust during onboarding.',
+      ),
+    );
 
-      final approvalHints = buildUsersDevicesBlockedHints(
-        reason: 'Action requires approval.',
-        nextStep: 'Open the Approval Queue and wait for a reviewer to approve it.',
-        userId: 'user_guest_ops',
-        deviceId: 'device_guest_tablet',
-        issueCode: 'approval_required',
-        selectedUserRole: 'Operator',
-        selectedDeviceTrustLevel: 3,
-        selectedDeviceStatus: 'registered',
-      );
-      expect(
-        approvalHints,
-        contains('This action waits for a reviewer before the route can open.'),
-      );
-      expect(
-        approvalHints,
-        contains('Open the Approval Queue and review the pending request.'),
-      );
-      expect(
-        approvalHints,
-        contains('A trusted reviewer needs to approve this action first.'),
-      );
+    final approvalHints = buildUsersDevicesBlockedHints(
+      reason: 'Action requires approval.',
+      nextStep:
+          'Open the Approval Queue and wait for a reviewer to approve it.',
+      userId: 'user_guest_ops',
+      deviceId: 'device_guest_tablet',
+      issueCode: 'approval_required',
+      selectedUserRole: 'Operator',
+      selectedDeviceTrustLevel: 3,
+      selectedDeviceStatus: 'registered',
+    );
+    expect(
+      approvalHints,
+      contains('This action waits for a reviewer before the route can open.'),
+    );
+    expect(
+      approvalHints,
+      contains('Open the Approval Queue and review the pending request.'),
+    );
+    expect(
+      approvalHints,
+      contains('A trusted reviewer needs to approve this action first.'),
+    );
 
-      final roleHints = buildUsersDevicesBlockedHints(
-        reason: 'Missing required permission: finance.edit.',
-        nextStep: 'Grant the missing permission or switch to a role that already has it.',
-        userId: 'user_guest_ops',
-        deviceId: 'device_guest_tablet',
-        issueCode: 'missing_permission',
-        selectedUserRole: 'Operator',
-        selectedDeviceTrustLevel: 3,
-        selectedDeviceStatus: 'registered',
-      );
-      expect(roleHints, contains('Selected role: Operator.'));
-      expect(
-        roleHints,
-        contains(
-          'Grant the missing permission from the Access Matrix or switch to a role that already has it.',
-        ),
-      );
+    final roleHints = buildUsersDevicesBlockedHints(
+      reason: 'Missing required permission: finance.edit.',
+      nextStep:
+          'Grant the missing permission or switch to a role that already has it.',
+      userId: 'user_guest_ops',
+      deviceId: 'device_guest_tablet',
+      issueCode: 'missing_permission',
+      selectedUserRole: 'Operator',
+      selectedDeviceTrustLevel: 3,
+      selectedDeviceStatus: 'registered',
+    );
+    expect(roleHints, contains('Selected role: Operator.'));
+    expect(
+      roleHints,
+      contains(
+        'Grant the missing permission from the Access Matrix or switch to a role that already has it.',
+      ),
+    );
 
-      final pinHints = buildUsersDevicesBlockedHints(
-        reason: 'Local PIN did not match the selected identity.',
-        nextStep: 'Check the PIN Registry or set a fresh primary PIN.',
-        userId: 'user_peter_owner',
-        deviceId: 'device_new_earth_dev',
-        issueCode: 'pin_mismatch',
-        selectedUserRole: 'Owner',
-        selectedDeviceTrustLevel: 5,
-        selectedDeviceStatus: 'trusted',
-      );
-      expect(
-        pinHints,
-        contains('Check the primary PIN for this user, or use the latest recovery PIN if one exists.'),
-      );
-      expect(
-        pinHints,
-        contains('Open PIN Registry to confirm the current local PIN state.'),
-      );
-    },
-  );
+    final pinHints = buildUsersDevicesBlockedHints(
+      reason: 'Local PIN did not match the selected identity.',
+      nextStep: 'Check the PIN Registry or set a fresh primary PIN.',
+      userId: 'user_peter_owner',
+      deviceId: 'device_new_earth_dev',
+      issueCode: 'pin_mismatch',
+      selectedUserRole: 'Owner',
+      selectedDeviceTrustLevel: 5,
+      selectedDeviceStatus: 'trusted',
+    );
+    expect(
+      pinHints,
+      contains(
+        'Check the primary PIN for this user, or use the latest recovery PIN if one exists.',
+      ),
+    );
+    expect(
+      pinHints,
+      contains('Open PIN Registry to confirm the current local PIN state.'),
+    );
+  });
 
   testWidgets('device onboarding shows the guided user readiness workspace', (
     tester,
@@ -596,10 +599,7 @@ void main() {
     expect(find.text('Open Devices'), findsWidgets);
     expect(find.text('Open audit'), findsWidgets);
     expect(find.text('Approved'), findsWidgets);
-    expect(
-      find.textContaining('This device is quarantined'),
-      findsWidgets,
-    );
+    expect(find.textContaining('This device is quarantined'), findsWidgets);
   });
 
   testWidgets(

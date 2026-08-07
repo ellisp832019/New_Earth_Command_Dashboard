@@ -23,9 +23,10 @@ class VoiceModulePreferencesRepository {
   static const String _preferenceId = 'voice-module-preferences';
 
   Future<VoiceModulePreferencesSnapshot?> loadPreferences() async {
-    final row = await (_database.select(
-      _database.voiceModulePreferences,
-    )..where((table) => table.preferenceId.equals(_preferenceId))).getSingleOrNull();
+    final row =
+        await (_database.select(_database.voiceModulePreferences)
+              ..where((table) => table.preferenceId.equals(_preferenceId)))
+            .getSingleOrNull();
 
     if (row == null) {
       return null;

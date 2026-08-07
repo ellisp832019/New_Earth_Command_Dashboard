@@ -20,7 +20,8 @@ class RepoIntelligenceBridgeSettingsScreen extends ConsumerStatefulWidget {
 class _RepoIntelligenceBridgeSettingsScreenState
     extends ConsumerState<RepoIntelligenceBridgeSettingsScreen> {
   final TextEditingController _exportRootController = TextEditingController();
-  final TextEditingController _obsidianVaultController = TextEditingController();
+  final TextEditingController _obsidianVaultController =
+      TextEditingController();
   final TextEditingController _moduleHomeController = TextEditingController();
   String? _selectedProfileFile;
   bool _hydrated = false;
@@ -37,7 +38,8 @@ class _RepoIntelligenceBridgeSettingsScreenState
     required String title,
     required Future<RepoIntelligenceBridgeSyncResult> Function(
       void Function(String line) onOutputLine,
-    ) run,
+    )
+    run,
     required VoidCallback openLog,
   }) async {
     await showRepoIntelligenceBridgeSyncTerminalDialog(
@@ -87,10 +89,7 @@ class _RepoIntelligenceBridgeSettingsScreenState
         error: (error, stackTrace) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              error.toString(),
-              textAlign: TextAlign.center,
-            ),
+            child: Text(error.toString(), textAlign: TextAlign.center),
           ),
         ),
         data: (workspace) {
@@ -101,17 +100,20 @@ class _RepoIntelligenceBridgeSettingsScreenState
             children: [
               _SettingsHeroCard(
                 workspace: workspace,
-                onOpenBridge: () => context.go(RouteNames.repoIntelligenceBridge),
+                onOpenBridge: () =>
+                    context.go(RouteNames.repoIntelligenceBridge),
                 onOpenProfiles: () => ref
                     .read(repoIntelligenceBridgeControllerProvider)
                     .openProfilesFolder(),
                 onOpenModuleHome: () => ref
                     .read(repoIntelligenceBridgeControllerProvider)
                     .openModuleHome(),
-                onOpenSyncLog: () =>
-                    ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
-                onOpenStateFile: () =>
-                    ref.read(repoIntelligenceBridgeControllerProvider).openStateFile(),
+                onOpenSyncLog: () => ref
+                    .read(repoIntelligenceBridgeControllerProvider)
+                    .openSyncLog(),
+                onOpenStateFile: () => ref
+                    .read(repoIntelligenceBridgeControllerProvider)
+                    .openStateFile(),
               ),
               const SizedBox(height: 16),
               _BridgeSectionCard(
@@ -121,8 +123,9 @@ class _RepoIntelligenceBridgeSettingsScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DropdownButtonFormField<String>(
-                      initialValue:
-                          workspace.profiles.isEmpty ? null : _selectedProfileFile,
+                      initialValue: workspace.profiles.isEmpty
+                          ? null
+                          : _selectedProfileFile,
                       decoration: const InputDecoration(
                         labelText: 'Active profile',
                         prefixIcon: Icon(Icons.list_alt_outlined),
@@ -157,8 +160,8 @@ class _RepoIntelligenceBridgeSettingsScreenState
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final rule in workspace.activeProfile.lockedRules
-                            .take(4))
+                        for (final rule
+                            in workspace.activeProfile.lockedRules.take(4))
                           _InlineTag(
                             label: rule,
                             accent: AppColours.darkSurfaceRaised,
@@ -215,8 +218,9 @@ class _RepoIntelligenceBridgeSettingsScreenState
                         run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
                             .runValidateConfig(onOutputLine: onLine),
-                        openLog: () =>
-                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                        openLog: () => ref
+                            .read(repoIntelligenceBridgeControllerProvider)
+                            .openSyncLog(),
                       ),
                       icon: const Icon(Icons.verified_outlined),
                       label: const Text('Validate'),
@@ -227,8 +231,9 @@ class _RepoIntelligenceBridgeSettingsScreenState
                         run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
                             .runObsidianSync(onOutputLine: onLine),
-                        openLog: () =>
-                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                        openLog: () => ref
+                            .read(repoIntelligenceBridgeControllerProvider)
+                            .openSyncLog(),
                       ),
                       icon: const Icon(Icons.book_outlined),
                       label: const Text('Sync Obsidian'),
@@ -239,8 +244,9 @@ class _RepoIntelligenceBridgeSettingsScreenState
                         run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
                             .runDashboardSync(onOutputLine: onLine),
-                        openLog: () =>
-                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                        openLog: () => ref
+                            .read(repoIntelligenceBridgeControllerProvider)
+                            .openSyncLog(),
                       ),
                       icon: const Icon(Icons.dashboard_outlined),
                       label: const Text('Sync Dashboard'),
@@ -251,8 +257,9 @@ class _RepoIntelligenceBridgeSettingsScreenState
                         run: (onLine) => ref
                             .read(repoIntelligenceBridgeControllerProvider)
                             .runFullSync(onOutputLine: onLine),
-                        openLog: () =>
-                            ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                        openLog: () => ref
+                            .read(repoIntelligenceBridgeControllerProvider)
+                            .openSyncLog(),
                       ),
                       icon: const Icon(Icons.play_arrow_outlined),
                       label: const Text('Run full sync'),
@@ -279,13 +286,14 @@ class _RepoIntelligenceBridgeSettingsScreenState
                             .updateState(
                               state: RepoIntelligenceBridgeState(
                                 activeProfileFile: selectedProfile.fileName,
-                                dashboardExportRoot:
-                                    _exportRootController.text.trim(),
-                                obsidianVaultPath:
-                                    _obsidianVaultController.text.trim(),
-                                moduleHomePath:
-                                    _moduleHomeController.text.trim(),
-                                lastSyncAt: workspace.lastSyncTime?.toIso8601String(),
+                                dashboardExportRoot: _exportRootController.text
+                                    .trim(),
+                                obsidianVaultPath: _obsidianVaultController.text
+                                    .trim(),
+                                moduleHomePath: _moduleHomeController.text
+                                    .trim(),
+                                lastSyncAt: workspace.lastSyncTime
+                                    ?.toIso8601String(),
                               ),
                             );
                         if (!context.mounted) {
@@ -303,7 +311,8 @@ class _RepoIntelligenceBridgeSettingsScreenState
                     TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          _selectedProfileFile = workspace.activeProfile.fileName;
+                          _selectedProfileFile =
+                              workspace.activeProfile.fileName;
                           _exportRootController.text =
                               workspace.state.dashboardExportRoot.isNotEmpty
                               ? workspace.state.dashboardExportRoot

@@ -62,7 +62,8 @@ LaunchpadFinancialSummary calculateLaunchpadFinancialSummary(
   final vatReserveGbp = grossFundingGbp * finance.vatPercent / 100;
   final contingencyReserveGbp =
       grossFundingGbp * finance.contingencyPercent / 100;
-  final netAvailableFundsGbp = grossFundingGbp -
+  final netAvailableFundsGbp =
+      grossFundingGbp -
       platformFeesGbp -
       paymentFeesGbp -
       vatReserveGbp -
@@ -89,12 +90,10 @@ LaunchpadFinancialSummary calculateLaunchpadFinancialSummary(
       'The plan is underfunded by £${netAvailableFundsGbp.abs().toStringAsFixed(0)}.',
     if (finance.contingencyPercent < 10)
       'Contingency is below the safer 10% buffer.',
-    if (finance.vatPercent <= 0)
-      'VAT reserve has not been configured yet.',
+    if (finance.vatPercent <= 0) 'VAT reserve has not been configured yet.',
     if (averageContribution > 0 && averageContribution < 20)
       'Average reward margin is thin.',
-    if (breakEvenBackers > 500)
-      'Break-even depends on a large backer count.',
+    if (breakEvenBackers > 500) 'Break-even depends on a large backer count.',
     if (finance.shippingGbp > finance.manufacturingCostsGbp * 0.4)
       'Shipping is a significant share of manufacturing cost.',
   ];
@@ -130,7 +129,7 @@ LaunchpadReadinessSummary calculateLaunchpadReadinessSummary(
       return 0;
     }
 
-  final total = categoryItems.fold<double>(
+    final total = categoryItems.fold<double>(
       0.0,
       (sum, item) => sum + _statusScore(item.status),
     );
@@ -156,7 +155,7 @@ LaunchpadReadinessSummary calculateLaunchpadReadinessSummary(
   final overallPercent = nonZeroValues.isEmpty
       ? 0.0
       : nonZeroValues.fold<double>(0, (sum, value) => sum + value) /
-          nonZeroValues.length;
+            nonZeroValues.length;
 
   return LaunchpadReadinessSummary(
     hardwarePercent: hardwarePercent,

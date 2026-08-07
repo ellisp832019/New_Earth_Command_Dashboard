@@ -14,7 +14,8 @@ import '../application/treasury_wizard_draft_controller.dart';
 import '../data/treasury_folder_service.dart';
 import '../data/treasury_wizard_flow.dart';
 
-const _treasuryWeeklyPackPdfPath = 'output/pdf/treasury_weekly_reference_pack.pdf';
+const _treasuryWeeklyPackPdfPath =
+    'output/pdf/treasury_weekly_reference_pack.pdf';
 
 const _treasuryUnavailableSnapshot = TreasuryWorkspaceSnapshot(
   configPath: 'config/local_paths.json',

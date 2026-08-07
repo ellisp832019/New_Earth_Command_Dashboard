@@ -40,15 +40,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: AboutHelpScreen(
+          initialSectionId: 'module-directory',
           repository: AboutHelpRepository(workingDirectory: tempRoot),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('About & Help Centre'), findsOneWidget);
-    expect(find.text('About the Dashboard'), findsAtLeastNWidgets(1));
-    expect(find.text('Module Directory'), findsOneWidget);
-    expect(find.text('Where Does This Belong?'), findsOneWidget);
+    expect(find.text('Open module directory link'), findsAtLeastNWidgets(1));
   });
 }

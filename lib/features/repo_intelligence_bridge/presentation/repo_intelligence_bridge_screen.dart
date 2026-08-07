@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -30,9 +30,8 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
         ),
         IconButton(
           tooltip: 'Bridge settings',
-          onPressed: () => context.push(
-            RouteNames.repoIntelligenceBridgeSettings,
-          ),
+          onPressed: () =>
+              context.push(RouteNames.repoIntelligenceBridgeSettings),
           icon: const Icon(Icons.settings_outlined),
         ),
       ],
@@ -40,7 +39,8 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _BridgeError(
           error: error,
-          onRetry: () => ref.invalidate(repoIntelligenceBridgeWorkspaceProvider),
+          onRetry: () =>
+              ref.invalidate(repoIntelligenceBridgeWorkspaceProvider),
         ),
         data: (workspace) {
           final bundle = workspace.bundle;
@@ -61,21 +61,21 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
                 workspace: workspace,
                 onOpenSettings: () =>
                     context.push(RouteNames.repoIntelligenceBridgeSettings),
-                onOpenExports: () =>
-                    ref
-                        .read(repoIntelligenceBridgeControllerProvider)
-                        .openExportsFolder(workspace.activeProfile),
-                onOpenObsidian: () =>
-                    ref
-                        .read(repoIntelligenceBridgeControllerProvider)
-                        .openObsidianVault(workspace.activeProfile),
-                onOpenModuleHome: () =>
-                    ref.read(repoIntelligenceBridgeControllerProvider).openModuleHome(),
+                onOpenExports: () => ref
+                    .read(repoIntelligenceBridgeControllerProvider)
+                    .openExportsFolder(workspace.activeProfile),
+                onOpenObsidian: () => ref
+                    .read(repoIntelligenceBridgeControllerProvider)
+                    .openObsidianVault(workspace.activeProfile),
+                onOpenModuleHome: () => ref
+                    .read(repoIntelligenceBridgeControllerProvider)
+                    .openModuleHome(),
                 onOpenProfiles: () => ref
                     .read(repoIntelligenceBridgeControllerProvider)
                     .openProfilesFolder(),
-                onOpenSyncLog: () =>
-                    ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+                onOpenSyncLog: () => ref
+                    .read(repoIntelligenceBridgeControllerProvider)
+                    .openSyncLog(),
                 onRunFullSync: () => _runBridgeSyncTerminal(
                   context,
                   ref,
@@ -115,7 +115,8 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
                             .map(
                               (item) => _ActionRow(
                                 title: item.title,
-                                subtitle: item.priority.isNotEmpty ||
+                                subtitle:
+                                    item.priority.isNotEmpty ||
                                         item.status.isNotEmpty
                                     ? '${item.priority.isEmpty ? 'Priority n/a' : item.priority} / ${item.status.isEmpty ? 'Status n/a' : item.status}'
                                     : '',
@@ -217,10 +218,7 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
                   if (!wide) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...firstColumn,
-                        ...secondColumn,
-                      ],
+                      children: [...firstColumn, ...secondColumn],
                     );
                   }
 
@@ -303,9 +301,9 @@ class RepoIntelligenceBridgeDashboardCard extends ConsumerWidget {
             Expanded(
               child: Text(
                 'Repo Intelligence Bridge could not load right now.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColours.darkMutedText,
+                ),
               ),
             ),
           ],
@@ -340,10 +338,11 @@ class RepoIntelligenceBridgeDashboardCard extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           'Repo Intelligence Bridge',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppColours.darkText,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: AppColours.darkText,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                       _InlineTag(
@@ -421,16 +420,14 @@ class RepoIntelligenceBridgeDashboardCard extends ConsumerWidget {
                 alignment: WrapAlignment.start,
                 children: [
                   FilledButton.icon(
-                    onPressed: () => context.push(
-                      RouteNames.repoIntelligenceBridgeSettings,
-                    ),
+                    onPressed: () =>
+                        context.push(RouteNames.repoIntelligenceBridgeSettings),
                     icon: const Icon(Icons.settings_outlined),
                     label: const Text('Settings'),
                   ),
                   FilledButton.tonalIcon(
-                    onPressed: () => context.push(
-                      RouteNames.repoIntelligenceBridge,
-                    ),
+                    onPressed: () =>
+                        context.push(RouteNames.repoIntelligenceBridge),
                     icon: const Icon(Icons.open_in_new),
                     label: const Text('Open bridge'),
                   ),
@@ -452,11 +449,7 @@ class RepoIntelligenceBridgeDashboardCard extends ConsumerWidget {
               if (!wide) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    overview,
-                    const SizedBox(height: 16),
-                    actions,
-                  ],
+                  children: [overview, const SizedBox(height: 16), actions],
                 );
               }
 
@@ -610,11 +603,7 @@ class _BridgeHeroCard extends StatelessWidget {
           if (!wide) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                overview,
-                const SizedBox(height: 18),
-                actions,
-              ],
+              children: [overview, const SizedBox(height: 18), actions],
             );
           }
 
@@ -816,9 +805,9 @@ class _RepoHealthContent extends StatelessWidget {
         if (repoHealth!.checks.isEmpty)
           Text(
             'No health checks were exported.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           )
         else
           Wrap(
@@ -862,10 +851,7 @@ class _AiContextContent extends StatelessWidget {
         _DetailRow(label: 'Source', value: aiContext!.sourceOfTruth),
         _DetailRow(label: 'Generated', value: aiContext!.generatedAt),
         const SizedBox(height: 8),
-        _PermissionBlock(
-          title: 'Locked rules',
-          values: aiContext!.lockedRules,
-        ),
+        _PermissionBlock(title: 'Locked rules', values: aiContext!.lockedRules),
         const SizedBox(height: 10),
         _PermissionBlock(
           title: 'Safe permissions',
@@ -908,9 +894,9 @@ class _PermissionBlock extends StatelessWidget {
         if (values.isEmpty)
           Text(
             'None.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColours.darkMutedText,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
           )
         else
           Wrap(
@@ -931,10 +917,7 @@ class _PermissionBlock extends StatelessWidget {
 }
 
 class _SyncLogContent extends StatelessWidget {
-  const _SyncLogContent({
-    required this.lines,
-    required this.lastSyncTime,
-  });
+  const _SyncLogContent({required this.lines, required this.lastSyncTime});
 
   final List<String> lines;
   final DateTime? lastSyncTime;
@@ -982,10 +965,7 @@ class _SyncLogContent extends StatelessWidget {
 }
 
 class _ActionList extends StatelessWidget {
-  const _ActionList({
-    required this.items,
-    required this.emptyLabel,
-  });
+  const _ActionList({required this.items, required this.emptyLabel});
 
   final List<_ActionRow> items;
   final String emptyLabel;
@@ -1005,21 +985,14 @@ class _ActionList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final item in items.take(8)) ...[
-          item,
-          const SizedBox(height: 10),
-        ],
+        for (final item in items.take(8)) ...[item, const SizedBox(height: 10)],
       ],
     );
   }
 }
 
 class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.title,
-    this.subtitle = '',
-    this.detail = '',
-  });
+  const _ActionRow({required this.title, this.subtitle = '', this.detail = ''});
 
   final String title;
   final String subtitle;
@@ -1033,7 +1006,9 @@ class _ActionRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColours.darkSurfaceAlt.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColours.darkOutline.withValues(alpha: 0.9)),
+        border: Border.all(
+          color: AppColours.darkOutline.withValues(alpha: 0.9),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1231,9 +1206,9 @@ class _BridgeError extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               error.toString(),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColours.darkMutedText,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColours.darkMutedText),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -1255,13 +1230,15 @@ Future<void> _runBridgeSyncTerminal(
   required String title,
   required Future<RepoIntelligenceBridgeSyncResult> Function(
     void Function(String line) onOutputLine,
-  ) run,
+  )
+  run,
 }) async {
   await showRepoIntelligenceBridgeSyncTerminalDialog(
     context: context,
     title: title,
     run: run,
-    onOpenLog: () => ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
+    onOpenLog: () =>
+        ref.read(repoIntelligenceBridgeControllerProvider).openSyncLog(),
   );
   if (context.mounted) {
     ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
@@ -1344,7 +1321,3 @@ class _InlineTag extends StatelessWidget {
     );
   }
 }
-
-
-
-

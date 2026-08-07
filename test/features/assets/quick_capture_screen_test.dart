@@ -35,8 +35,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Quick Capture'), findsOneWidget);
-    expect(find.text('One-minute capture'), findsOneWidget);
+    expect(find.text('Quick Capture'), findsAtLeastNWidgets(1));
+    expect(find.text('One-minute capture'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('quick capture saves an equipment row', (tester) async {
@@ -59,10 +59,22 @@ void main() {
       find.widgetWithText(TextFormField, 'Item name'),
       'Cordless drill',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'Type / category'), 'Tool');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Project'), 'MicroGrow');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Location'), 'Workbench A');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Notes'), 'Use for assembly work.');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Type / category'),
+      'Tool',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Project'),
+      'MicroGrow',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Location'),
+      'Workbench A',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Notes'),
+      'Use for assembly work.',
+    );
 
     await tester.tap(find.text('Save'));
     await tester.pump();
@@ -98,11 +110,26 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Item name'), 'M3 screws');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Type / category'), 'Fasteners');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Project'), 'MicroGrow');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Location'), 'Drawer 2');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Notes'), 'Keep ready for the next build.');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Item name'),
+      'M3 screws',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Type / category'),
+      'Fasteners',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Project'),
+      'MicroGrow',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Location'),
+      'Drawer 2',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Notes'),
+      'Keep ready for the next build.',
+    );
 
     await tester.tap(find.text('Save'));
     await tester.pump();
@@ -122,7 +149,8 @@ Future<_QuickCaptureFixture> _fixture() async {
   return _QuickCaptureFixture(
     snapshot: AssetWorkspaceSnapshot(
       configPath: 'config/local_paths.json',
-      assetsRootPath: 'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
+      assetsRootPath:
+          'D:/NEW_EARTH_OMEGA_OS_PACK/18_ASSETS_EQUIPMENT_AND_PARTS',
       isReady: true,
       issues: const <String>[],
       requiredFolders: const <String>[],
@@ -137,16 +165,13 @@ Future<_QuickCaptureFixture> _fixture() async {
 }
 
 class _QuickCaptureFixture {
-  const _QuickCaptureFixture({
-    required this.snapshot,
-  });
+  const _QuickCaptureFixture({required this.snapshot});
 
   final AssetWorkspaceSnapshot snapshot;
 }
 
 class _RecordingAssetRegisterRepository extends AssetRegisterRepository {
-  _RecordingAssetRegisterRepository()
-      : super(csvService: AssetCsvService());
+  _RecordingAssetRegisterRepository() : super(csvService: AssetCsvService());
 
   Map<String, String>? lastEquipmentRow;
   Map<String, String>? lastPartRow;

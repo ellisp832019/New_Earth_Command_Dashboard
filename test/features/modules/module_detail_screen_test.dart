@@ -60,7 +60,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-    expect(find.text('Overview'), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
       expect(
         find.text('Calm local control for the alpha workflow.'),
         findsWidgets,

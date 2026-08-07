@@ -3,10 +3,7 @@ import 'dart:io';
 import 'asset_change_journal.dart';
 
 class AssetCsvTable {
-  const AssetCsvTable({
-    required this.headers,
-    required this.rows,
-  });
+  const AssetCsvTable({required this.headers, required this.rows});
 
   final List<String> headers;
   final List<Map<String, String>> rows;
@@ -81,10 +78,7 @@ class AssetCsvService {
     List<Map<String, String>> rows, {
     List<String> expectedHeaders = const <String>[],
   }) async {
-    final existing = await readTable(
-      file,
-      expectedHeaders: expectedHeaders,
-    );
+    final existing = await readTable(file, expectedHeaders: expectedHeaders);
     final table = AssetCsvTable(
       headers: _mergeHeaders(existing.headers, rows),
       rows: rows,
@@ -98,14 +92,8 @@ class AssetCsvService {
     Map<String, String> row, {
     List<String> expectedHeaders = const <String>[],
   }) async {
-    final existing = await readTable(
-      file,
-      expectedHeaders: expectedHeaders,
-    );
-    final rows = <Map<String, String>>[
-      ...existing.rows,
-      row,
-    ];
+    final existing = await readTable(file, expectedHeaders: expectedHeaders);
+    final rows = <Map<String, String>>[...existing.rows, row];
     final table = AssetCsvTable(
       headers: _mergeHeaders(existing.headers, rows),
       rows: rows,

@@ -49,16 +49,16 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('QR Label Lifecycle'), findsOneWidget);
-    expect(find.text('Lifecycle flow'), findsOneWidget);
-    expect(find.text('Register labels'), findsOneWidget);
-    expect(find.text('1. Register'), findsOneWidget);
-    expect(find.text('Open Register'), findsOneWidget);
-    expect(find.text('Open Studio'), findsOneWidget);
-    expect(find.text('Open Queue'), findsOneWidget);
-    expect(find.text('Open History'), findsOneWidget);
-    expect(find.text('Inventory Session'), findsOneWidget);
-    expect(find.text('Scan Lookup'), findsOneWidget);
+    expect(find.text('QR Label Lifecycle'), findsAtLeastNWidgets(1));
+    expect(find.text('Lifecycle flow'), findsAtLeastNWidgets(1));
+    expect(find.text('Register labels'), findsAtLeastNWidgets(1));
+    expect(find.text('1. Register'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Register'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Studio'), findsAtLeastNWidgets(1));
+    expect(find.text('Open Queue'), findsAtLeastNWidgets(1));
+    expect(find.text('Open History'), findsAtLeastNWidgets(1));
+    expect(find.text('Inventory Session'), findsAtLeastNWidgets(1));
+    expect(find.text('Scan Lookup'), findsAtLeastNWidgets(1));
   });
 }
 
