@@ -33,7 +33,8 @@ This repository now uses a simple CI split:
   - `flutter pub get`
   - `dart run tool/project_control.dart doctor`
   - `dart run tool/project_control.dart scan`
-  - generated-state drift check via `git status --short`
+  - inspect the refreshed generated evidence snapshots via `git status --short`
+  - fail only if the canonical project-control YAML changes during validation
   - `dart run tool/project_control.dart validate`
   - `dart run tool/project_control.dart report`
   - `dart run tool/project_control.dart release-readiness`

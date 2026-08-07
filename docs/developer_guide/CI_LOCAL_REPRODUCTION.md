@@ -27,7 +27,7 @@ dart run tool/project_control.dart release-readiness
 Notes:
 
 - `release-readiness` may legitimately report `not_ready` while `R-003` remains open.
-- The drift check should fail if `scan` produces uncommitted generated changes.
+- `scan` refreshes the timestamped generated evidence snapshots, so the workflow treats those files as reviewable output and only fails if the canonical project-control YAML changes.
 
 ## Windows Release Build
 

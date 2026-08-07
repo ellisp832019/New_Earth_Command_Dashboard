@@ -43,6 +43,7 @@
 - Full test suite passed.
 - Windows release build passed.
 - Project-control `release-readiness` remained `not_ready` because `R-003` is still open.
+- `project_control scan` refreshes timestamped generated evidence snapshots, so the CI validation workflow inspects those files and only fails on unexpected canonical YAML drift.
 
 ## Generated-Code Policy
 

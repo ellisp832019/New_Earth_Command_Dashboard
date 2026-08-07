@@ -40,17 +40,17 @@ jobs:
       - name: Run project-control scan
         run: dart run tool/project_control.dart scan
 
-      - name: Fail on generated drift
+      - name: Inspect scan output
         shell: bash
         run: |
           set -euo pipefail
-          status="$(git status --short -- project_control/generated docs/project_control/evidence)"
-          if [[ -n "$status" ]]; then
-            printf '%s\n' "$status"
-            echo "Project-control generated state is stale."
-            echo "Run:"
-            echo "dart run tool/project_control.dart scan"
-            echo "and commit the refreshed generated files."
+          echo "Generated project-control state after scan:"
+          git status --short -- project_control/generated docs/project_control/evidence
+
+          canonical_status="$(git status --short -- project_control/platform_manifest.yaml project_control/module_registry.yaml project_control/risk_register.yaml project_control/verification_registry.yaml)"
+          if [[ -n "$canonical_status" ]]; then
+            printf '%s\n' "$canonical_status"
+            echo "Canonical project-control sources changed during validation."
             exit 1
           fi
 
