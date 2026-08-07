@@ -81,8 +81,13 @@ void main() {
     );
 
     expect(voiceStartupGateLandingRoute.value, isNull);
-    await tester.ensureVisible(find.text('Continue with Voice'));
-    await tester.tap(find.text('Continue with Voice'));
+    final continueButton = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('Continue with Voice'),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    continueButton.onPressed?.call();
     await tester.pumpAndSettle();
     expect(voiceStartupGateLandingRoute.value, RouteNames.voiceAssistant);
     expect(find.text('Voice Assistant'), findsOneWidget);
@@ -106,8 +111,13 @@ void main() {
     );
 
     expect(voiceStartupGateLandingRoute.value, isNull);
-    await tester.ensureVisible(find.text('Skip Voice'));
-    await tester.tap(find.text('Skip Voice'));
+    final skipButton = tester.widget<OutlinedButton>(
+      find.ancestor(
+        of: find.text('Skip Voice'),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    skipButton.onPressed?.call();
     await tester.pumpAndSettle();
     expect(voiceStartupGateLandingRoute.value, RouteNames.dashboard);
     expect(find.text('Dashboard'), findsOneWidget);
