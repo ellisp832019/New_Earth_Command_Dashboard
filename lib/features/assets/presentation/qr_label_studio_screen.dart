@@ -2430,25 +2430,49 @@ class _PrinterProfilesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const _SectionTitle(
-                title: 'Printer profiles',
-                icon: Icons.print_outlined,
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: onAddProfile,
-                icon: const Icon(Icons.add),
-                label: const Text('Add'),
-              ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: onAddPm260Preset,
-                icon: const Icon(Icons.print_outlined),
-                label: const Text('PM260 preset'),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 620;
+
+              final actionButtons = [
+                TextButton.icon(
+                  onPressed: onAddProfile,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add'),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: onAddPm260Preset,
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('PM260 preset'),
+                ),
+              ];
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _SectionTitle(
+                      title: 'Printer profiles',
+                      icon: Icons.print_outlined,
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(spacing: 8, runSpacing: 8, children: actionButtons),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  const _SectionTitle(
+                    title: 'Printer profiles',
+                    icon: Icons.print_outlined,
+                  ),
+                  const Spacer(),
+                  ...actionButtons,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 10),
           Text(

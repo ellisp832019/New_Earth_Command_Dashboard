@@ -651,22 +651,26 @@ void main() {
     await tester.tap(find.text('More').first);
     await pumpUntilIdle(tester);
 
-    await tester.scrollUntilVisible(
-      find.text('Journal'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    final moreScreenList = find.byKey(const Key('moreScreenList'));
+
+    for (var i = 0; i < 6 && find.text('Journal').evaluate().isEmpty; i++) {
+      await tester.drag(moreScreenList, const Offset(0, -480));
+      await pumpUntilIdle(tester);
+    }
     await tester.pump();
     expect(find.text('Journal'), findsAtLeastNWidgets(1));
     expect(find.text('Learning'), findsAtLeastNWidgets(1));
     expect(find.text('Content'), findsAtLeastNWidgets(1));
     expect(find.text('Business'), findsAtLeastNWidgets(1));
 
-    await tester.scrollUntilVisible(
-      find.text('Voice Assistant'),
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
+    for (
+      var i = 0;
+      i < 6 && find.text('Voice Assistant').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(moreScreenList, const Offset(0, -480));
+      await pumpUntilIdle(tester);
+    }
     await tester.pump();
 
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
@@ -2713,11 +2717,16 @@ void main() {
     await tester.tap(find.text('More').first);
     await pumpUntilIdle(tester);
 
-    await tester.scrollUntilVisible(
-      find.text('Voice Assistant'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    final moreScreenList = find.byKey(const Key('moreScreenList'));
+
+    for (
+      var i = 0;
+      i < 6 && find.text('Voice Assistant').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(moreScreenList, const Offset(0, -480));
+      await pumpUntilIdle(tester);
+    }
     await pumpUntilIdle(tester);
 
     expect(find.text('Voice Assistant'), findsAtLeastNWidgets(1));

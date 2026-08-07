@@ -1696,6 +1696,7 @@ class _DashboardTab extends StatelessWidget {
     );
 
     return ListView(
+      key: const Key('educationLessonLibraryScrollView'),
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
         _Panel(

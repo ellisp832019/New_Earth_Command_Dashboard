@@ -519,6 +519,7 @@ class _AlexaVoiceGatewayScreenState extends State<AlexaVoiceGatewayScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: ListView(
+        key: const Key('alexaVoiceGatewayList'),
         padding: const EdgeInsets.all(20),
         children: [
           _HeaderCard(status: status, theme: theme, modulePath: _modulePath),
@@ -1262,6 +1263,7 @@ class _AdapterModeGuideCard extends StatelessWidget {
               'Current real commands: `dashboard.summary.today`, `dashboard.project.status.read`, and `dashboard.tasks.next`.',
             ],
             codeTitle: 'Config',
+            codeKey: Key('alexaVoiceGatewaySqliteCommands'),
             code:
                 'dashboard:\n  mode: sqlite\n  sqlite_db_path: D:\\path\\to\\new_earth.db',
           ),
@@ -1279,12 +1281,14 @@ class _ModeGuideTile extends StatelessWidget {
     required this.codeTitle,
     required this.code,
     required this.accent,
+    this.codeKey,
   });
 
   final String title;
   final String subtitle;
   final List<String> bullets;
   final String codeTitle;
+  final Key? codeKey;
   final String code;
   final Color accent;
 
@@ -1354,7 +1358,7 @@ class _ModeGuideTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          _CodeBlock(title: codeTitle, value: code),
+          _CodeBlock(key: codeKey, title: codeTitle, value: code),
         ],
       ),
     );
@@ -1362,7 +1366,7 @@ class _ModeGuideTile extends StatelessWidget {
 }
 
 class _CodeBlock extends StatelessWidget {
-  const _CodeBlock({required this.title, required this.value});
+  const _CodeBlock({super.key, required this.title, required this.value});
 
   final String title;
   final String value;

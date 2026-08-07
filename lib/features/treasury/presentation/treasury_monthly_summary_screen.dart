@@ -61,6 +61,7 @@ class TreasuryMonthlySummaryScreen extends ConsumerWidget {
           ),
           body: SafeArea(
             child: ListView(
+              key: const Key('treasuryMonthlySummaryScrollView'),
               padding: const EdgeInsets.all(20),
               children: [
                 _MonthlySummaryHeroCard(summary: summary),
