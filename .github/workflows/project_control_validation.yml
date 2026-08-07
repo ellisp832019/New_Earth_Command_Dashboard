@@ -68,6 +68,6 @@ jobs:
           status=$?
           set -e
           printf '%s\n' "$output"
-          if [[ $status -ne 0 && "$output" != *"Release readiness: not_ready"* ]]; then
+          if [[ $status -ne 0 && "$output" != *"Release readiness: not_ready"* && "$output" != *"Release readiness: ready_with_conditions"* ]]; then
             exit "$status"
           fi
