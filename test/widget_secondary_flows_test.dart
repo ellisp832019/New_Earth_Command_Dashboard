@@ -21,6 +21,9 @@ import 'package:new_earth_command_dashboard/features/settings/data/settings_repo
 import 'package:new_earth_command_dashboard/features/tasks/data/task_repository.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/application/voice_startup_gate_controller.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_startup_gate_service.dart';
+import 'package:new_earth_command_dashboard/features/voice_intelligence/application/voice_startup_coordinator.dart';
+
+import 'support/voice_startup_test_support.dart';
 import 'package:new_earth_command_dashboard/features/wellbeing/data/wellbeing_repository.dart';
 
 class _TestUnlockedSecuritySessionNotifier extends SecuritySessionNotifier {
@@ -88,6 +91,7 @@ Widget buildDatabaseBackedTestApp(AppDatabase database, {Widget? child}) {
           devices: <VoiceInputDevice>[],
         ),
       ),
+      voiceStartupProbeProvider.overrideWithValue(TestVoiceStartupProbe()),
       settingsSnapshotProvider.overrideWith((ref) async {
         final snapshot = await SettingsRepository(database).getSettings();
         return SettingsSnapshot(

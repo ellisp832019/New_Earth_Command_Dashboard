@@ -6,7 +6,7 @@
   "repository_url": "https://github.com/ellisp832019/New_Earth_Command_Dashboard",
   "repository_root_hint": ".",
   "current_branch": "feature/new-earth-dashboard-platform-control-hardening-2026-08-06",
-  "current_commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+  "current_commit": "pending_voice_hardening_commit",
   "application_version": "1.0.0+1",
   "platform_maturity": "beta",
   "supported_platforms": ["windows", "desktop", "local-development"],
@@ -24,7 +24,7 @@
     "docs/project_control/MODULE_STATUS_GUIDE.md",
     "docs/project_control/RISK_AND_READINESS_GUIDE.md"
   ],
-  "last_verified_commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
+  "last_verified_commit": "pending_voice_hardening_commit",
   "last_verified_date": "2026-08-06",
   "last_verified_build": {
     "windows_executable": "build/windows/x64/runner/Release/new_earth_command_dashboard.exe",
@@ -34,7 +34,7 @@
   "last_scan": {
     "scan_id": "baseline-2026-08-06",
     "date": "2026-08-06",
-    "commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d"
+    "commit": "pending_voice_hardening_commit"
   },
   "release_readiness": "not_ready",
   "known_limitations": [

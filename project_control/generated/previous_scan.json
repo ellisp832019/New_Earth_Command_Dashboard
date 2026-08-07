@@ -1,9 +1,9 @@
 {
   "application_version": "1.0.0+1",
-  "branch": "feature/new-earth-dashboard-platform-control-hardening-2026-08-06",
+  "branch": "fix/dashboard-non-blocking-voice-startup-2026-08-06",
   "ci_status": "missing",
-  "commit": "15014ef94c355c3c478f2d3ae505a5871d2a331d",
-  "database_schema_version": "15",
+  "commit": "72ff6958832d2339da884f496e44d0a37968c84e",
+  "database_schema_version": "16",
   "documentation_counts": {
     "missing": 2,
     "partial": 31
@@ -13,11 +13,14 @@
     "docs\\architecture\\TREASURY_ARCHITECTURE_OVERVIEW.md",
     "docs\\architecture\\TREASURY_SECURITY_AND_PRIVACY.md",
     "docs\\architecture\\architecture_decisions.md",
+    "docs\\architecture\\decisions\\ADR-NON-BLOCKING-VOICE-STARTUP.md",
     "docs\\architecture\\module_gallery\\README.md",
     "docs\\architecture\\module_hub\\README.md",
     "docs\\architecture\\module_hub\\knowledge_fabric_sync_architecture.md",
     "docs\\architecture\\module_hub\\module_hub_architecture.md",
     "docs\\architecture\\visual_index.md",
+    "docs\\architecture\\voice\\VOICE_FAILURE_STATES.md",
+    "docs\\architecture\\voice\\VOICE_STARTUP_CONTRACT.md",
     "docs\\assets\\asset_index.md",
     "docs\\codex_tasks\\CODEX_MASTER_TASK__BUILD_TREASURY_TAB.md",
     "docs\\codex_tasks\\CODEX_TASK_01__CONFIG_AND_PATH_SERVICE.md",
@@ -85,6 +88,7 @@
     "docs\\developer_guide\\ADDING_A_MODULE_TO_PROJECT_CONTROL.md",
     "docs\\developer_guide\\PROJECT_CONTROL_CLI_GUIDE.md",
     "docs\\developer_guide\\RECORDING_VERIFICATION_EVIDENCE.md",
+    "docs\\developer_guide\\VOICE_STARTUP_TESTING.md",
     "docs\\developer_guide\\build_strategy.md",
     "docs\\developer_guide\\codex_workflow.md",
     "docs\\developer_guide\\developer_workflow_toolkit.md",
@@ -161,9 +165,17 @@
     "docs\\project_control\\evidence\\2026-08-06\\BASELINE_RUNTIME_SMOKE_TEST.md",
     "docs\\project_control\\evidence\\2026-08-06\\BASELINE_TEST_RESULTS.md",
     "docs\\project_control\\evidence\\2026-08-06\\BASELINE_VERIFICATION.md",
+    "docs\\project_control\\evidence\\2026-08-06\\CANONICAL_REGISTRY_REVIEW.md",
+    "docs\\project_control\\evidence\\2026-08-06\\MODULE_INVENTORY_SUMMARY.md",
+    "docs\\project_control\\evidence\\2026-08-06\\PIN_SECURITY_PREFLIGHT.md",
     "docs\\project_control\\evidence\\2026-08-06\\PREFLIGHT_STATE.md",
+    "docs\\project_control\\evidence\\2026-08-06\\PROJECT_CONTROL_CLI_VERIFICATION.md",
+    "docs\\project_control\\evidence\\2026-08-06\\RELEASE_READINESS_BASELINE.md",
     "docs\\project_control\\evidence\\2026-08-06\\TEST_RECONCILIATION_PREFLIGHT.md",
     "docs\\project_control\\evidence\\2026-08-06\\TEST_RECONCILIATION_REPORT.md",
+    "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_DATA_FLOW_AUDIT.md",
+    "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_HARDENING_VERIFICATION.md",
+    "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_PREFLIGHT.md",
     "docs\\roadmap\\README.md",
     "docs\\roadmap\\ai_10_task_roadmap.md",
     "docs\\roadmap\\app_roadmap.md",
@@ -215,6 +227,7 @@
     "docs\\tasks\\VOICE_BRIDGE_TASK.md",
     "docs\\testing\\test_plan.md",
     "docs\\treasury_guide_assets\\README.md",
+    "docs\\user_guide\\VOICE_STATUS_AND_TROUBLESHOOTING.md",
     "docs\\user_guide\\app_function_reference.md",
     "docs\\user_guide\\getting_started.md",
     "docs\\user_guide\\voice_assistant_guide.md",
@@ -319,7 +332,6 @@
   "repository_health_warnings": [
     "Working tree is dirty.",
     "No GitHub workflows were detected.",
-    "Open P0 risk remains.",
     "Some modules lack documentation."
   ],
   "risk_totals": {
@@ -332,7 +344,8 @@
     "by_status": {
       "deferred": 1,
       "mitigating": 2,
-      "open": 3
+      "open": 2,
+      "resolved": 1
     },
     "total": 6
   },
@@ -371,8 +384,8 @@
     "/security-lock",
     "/more/repo-research-engine"
   ],
-  "scan_id": "scan-2026-08-06T13:19:06.707400Z",
-  "scan_timestamp": "2026-08-06T13:19:06.709914Z",
+  "scan_id": "scan-2026-08-06T15:47:56.756423Z",
+  "scan_timestamp": "2026-08-06T15:47:56.758425Z",
   "status_definition_version": "1",
   "test_files_found": [
     "test\\core\\modules\\module_event_bus_test.dart",
@@ -506,11 +519,13 @@
     "test\\features\\voice_assistant\\voice_startup_gate_service_test.dart",
     "test\\features\\voice_intelligence\\voice_audit_logger_test.dart",
     "test\\features\\voice_intelligence\\voice_conversation_thread_repository_test.dart",
+    "test\\features\\voice_intelligence\\voice_startup_coordinator_test.dart",
     "test\\features\\wellbeing\\wellbeing_repository_test.dart",
     "test\\flutter_test_config.dart",
     "test\\funding_grants_smoke_test.dart",
     "test\\policies\\no_golden_visuals_test.dart",
     "test\\project_control\\project_control_cli_test.dart",
+    "test\\support\\voice_startup_test_support.dart",
     "test\\voice_intelligence\\voice_module_test.dart",
     "test\\widget_secondary_flows_test.dart",
     "test\\widget_test.dart",
@@ -521,6 +536,7 @@
   },
   "verification_registry_counts": {
     "failed": 1,
+    "not_ready": 1,
     "passed": 4
   },
   "version_contradictions": [],

@@ -17,6 +17,7 @@ import 'features/knowledge_library/presentation/knowledge_library_dock_host.dart
 import 'features/treasury/presentation/treasury_dock_host.dart';
 import 'features/system_backup/presentation/backup_guardian_dock_host.dart';
 import 'features/security/presentation/security_session_activity_tracker.dart';
+import 'features/voice_intelligence/presentation/voice_startup_status_chip.dart';
 import 'features/voice_assistant/widgets/voice_conversation_dock.dart';
 import 'features/voice_assistant/widgets/voice_handsfree_layer.dart';
 import 'features/voice_assistant/widgets/voice_presence_chip.dart';
@@ -197,6 +198,11 @@ class NewEarthCommandDashboardApp extends ConsumerWidget {
                         (appSettings?.showVoicePresenceChip ?? false),
                   ),
                 ),
+              ),
+              Positioned(
+                top: 126,
+                right: 16,
+                child: SafeArea(child: VoiceStartupStatusChip(compact: true)),
               ),
               if ((appSettings?.showDockOverlays ?? false) &&
                   (appSettings?.showVoiceConversationDock ?? false) &&

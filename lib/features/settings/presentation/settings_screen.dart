@@ -10,6 +10,7 @@ import '../../security/application/security_session_controller.dart';
 import '../../security/presentation/security_locked_notice_card.dart';
 import '../application/settings_controller.dart';
 import '../../voice_assistant/voice_speech_service.dart';
+import '../../voice_intelligence/presentation/voice_startup_status_chip.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -133,7 +134,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const _SettingsNote(
                         icon: Icons.volume_up_outlined,
                         text:
-                            'Voice replies, Voice Assistant, and the optional startup voice gate can be controlled separately.',
+                            'Voice replies, Voice Assistant, and the optional voice-first startup mode can be controlled separately.',
                       ),
                       const SizedBox(height: 6),
                       const _SettingsNote(
@@ -448,9 +449,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       SwitchListTile(
                         key: const Key('settingsVoiceStartupGateToggle'),
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Show Voice Startup Gate'),
+                        title: const Text('Enable Voice-First Startup'),
                         subtitle: const Text(
-                          'Ask for the headset check after the security lock before opening the dashboard.',
+                          'Use the optional voice-first flow only when you want startup to check voice readiness after the shell is available.',
                         ),
                         value: voiceStartupGateEnabled,
                         onChanged: (value) {
@@ -464,6 +465,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               );
                         },
                       ),
+                      const SizedBox(height: 8),
+                      const VoiceStartupStatusChip(),
+                      const SizedBox(height: 8),
                       SwitchListTile(
                         key: const Key('settingsVoiceRepliesToggle'),
                         contentPadding: EdgeInsets.zero,
@@ -496,12 +500,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   }
                                 : null,
                             icon: const Icon(Icons.headset_mic_outlined),
-                            label: const Text('Open Voice Startup Gate'),
+                            label: const Text('Open Voice-First Mode'),
                           ),
                           Text(
                             voiceStartupGateEnabled
-                                ? 'The voice gate is available and can run after the security lock.'
-                                : 'Turn on the voice startup gate if you want the headset check available at startup.',
+                                ? 'Voice-first mode is enabled, but the dashboard still opens first and voice checks run in the background.'
+                                : 'Turn on voice-first mode if you want the optional headset check available after the dashboard shell appears.',
                             style: theme.textTheme.bodySmall,
                           ),
                         ],

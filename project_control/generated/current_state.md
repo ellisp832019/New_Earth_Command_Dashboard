@@ -1,8 +1,8 @@
 # Current State
 
-- Scan ID: scan-2026-08-06T13:21:03.835246Z
-- Branch: feature/new-earth-dashboard-platform-control-hardening-2026-08-06
-- Commit: 15014ef94c355c3c478f2d3ae505a5871d2a331d
+- Scan ID: scan-2026-08-06T15:50:42.358219Z
+- Branch: fix/dashboard-non-blocking-voice-startup-2026-08-06
+- Commit: 72ff6958832d2339da884f496e44d0a37968c84e
 - Working tree: dirty
 - Modules: 33
 - Risks: 6

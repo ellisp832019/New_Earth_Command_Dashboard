@@ -38,6 +38,9 @@ import 'package:new_earth_command_dashboard/features/voice_assistant/voice_comma
 import 'package:new_earth_command_dashboard/features/voice_assistant/voice_command_service.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/widgets/command_history_list.dart';
 import 'package:new_earth_command_dashboard/features/voice_assistant/widgets/voice_briefing_review_surface.dart';
+import 'package:new_earth_command_dashboard/features/voice_intelligence/application/voice_startup_coordinator.dart';
+
+import 'support/voice_startup_test_support.dart';
 
 class _TestUnlockedSecuritySessionNotifier extends SecuritySessionNotifier {
   @override
@@ -124,6 +127,7 @@ void main() {
     bool voiceAssistantEnabled = false,
     bool voiceStartupGateEnabled = false,
     bool showDockOverlays = false,
+    TestVoiceStartupProbe? voiceStartupProbe,
     List<CommandDeckActionLogEntry>? recentActions,
   }) {
     final overrides = [
@@ -140,6 +144,9 @@ void main() {
               message: 'Test harness bypasses the voice startup gate.',
               devices: <VoiceInputDevice>[],
             ),
+      ),
+      voiceStartupProbeProvider.overrideWithValue(
+        voiceStartupProbe ?? TestVoiceStartupProbe(),
       ),
       dashboardSnapshotProvider.overrideWith(
         (ref) async => DashboardSnapshot(
@@ -460,6 +467,7 @@ void main() {
             devices: <VoiceInputDevice>[],
           ),
         ),
+        voiceStartupProbeProvider.overrideWithValue(TestVoiceStartupProbe()),
         settingsSnapshotProvider.overrideWith((ref) async {
           final snapshot = await SettingsRepository(database).getSettings();
           return SettingsSnapshot(
@@ -2719,6 +2727,69 @@ void main() {
       ),
       findsAtLeastNWidgets(1),
     );
+  });
+
+  testWidgets('dashboard renders before voice startup becomes ready', (
+    WidgetTester tester,
+  ) async {
+    final probe = TestVoiceStartupProbe(
+      enabledState: const VoiceStartupState.ready(message: 'Voice is ready.'),
+    );
+
+    await tester.pumpWidget(
+      buildTestApp(voiceAssistantEnabled: true, voiceStartupProbe: probe),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(NewEarthCommandDashboardApp).first),
+      listen: false,
+    );
+    await container.read(settingsSnapshotProvider.future);
+
+    expect(find.text('Dashboard'), findsAtLeastNWidgets(1));
+    await tester.pump(const Duration(milliseconds: 1));
+
+    expect(
+      container.read(voiceStartupCoordinatorProvider).status,
+      VoiceStartupStatus.initializing,
+    );
+    await pumpUntilIdle(tester);
+  });
+
+  testWidgets('voice startup status exposes retry after a failure', (
+    WidgetTester tester,
+  ) async {
+    final probe = TestVoiceStartupProbe(
+      enabledState: const VoiceStartupState.failed(
+        message: 'Voice startup failed.',
+      ),
+    );
+
+    await tester.pumpWidget(
+      buildTestApp(voiceAssistantEnabled: true, voiceStartupProbe: probe),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(NewEarthCommandDashboardApp).first),
+      listen: false,
+    );
+    await container.read(settingsSnapshotProvider.future);
+    await tester.pump(const Duration(milliseconds: 1));
+
+    expect(
+      container.read(voiceStartupCoordinatorProvider).status,
+      VoiceStartupStatus.initializing,
+    );
+
+    probe.enabledState = const VoiceStartupState.ready(
+      message: 'Voice is ready.',
+    );
+    await container.read(voiceStartupCoordinatorProvider.notifier).retry();
+    await tester.pump(const Duration(milliseconds: 1));
+
+    expect(
+      container.read(voiceStartupCoordinatorProvider).status,
+      VoiceStartupStatus.initializing,
+    );
+    await pumpUntilIdle(tester);
   });
 
   testWidgets('voice startup gate can be bypassed for a headset-like device', (
