@@ -143,7 +143,7 @@ New Earth Command Dashboard
 
 ## GAIA Dependency Ref
 
-`cd889be8e7f10a4c7105b6f72d52361aea33b31b`
+`9bbfa978e7d5a1c2cb30be27128691ce187e758f`
 
 ## External GAIA Repository Status
 

@@ -34,7 +34,7 @@ void main() {
       expect(snapshot.platform.dashboardVersion, '1.0.0+1');
       expect(
         snapshot.platform.gaiaDependencyRef,
-        'cd889be8e7f10a4c7105b6f72d52361aea33b31b',
+        '9bbfa978e7d5a1c2cb30be27128691ce187e758f',
       );
       expect(snapshot.repository.dirtyState, ProjectContextDirtyState.clean);
       expect(snapshot.repository.protectedBranch.requiredChecks, [
@@ -290,7 +290,7 @@ Map<String, dynamic> _minimalSnapshotJson({
     'dashboardVersion': '1.0.0+1',
     'dashboardMaturity': 'beta',
     'gaiaIntegrationVersion': '0.7.0',
-    'gaiaDependencyRef': 'cd889be8e7f10a4c7105b6f72d52361aea33b31b',
+    'gaiaDependencyRef': '9bbfa978e7d5a1c2cb30be27128691ce187e758f',
   };
   if (includeOptionalFields) {
     platform['liveStateLabel'] = 'read-only embedded operations workspace';
@@ -314,7 +314,7 @@ Map<String, dynamic> _minimalSnapshotJson({
     'maturity': 'beta',
     'verificationStatus': 'passed',
     'documentationStatus': 'partial',
-    'lastVerifiedCommit': 'cd889be8e7f10a4c7105b6f72d52361aea33b31b',
+    'lastVerifiedCommit': '9bbfa978e7d5a1c2cb30be27128691ce187e758f',
     'dependencies': <String>[
       'gaia_integration_client',
       'gaia_dashboard_module',
