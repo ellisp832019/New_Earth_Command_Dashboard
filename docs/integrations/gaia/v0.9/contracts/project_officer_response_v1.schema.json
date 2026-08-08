@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project_officer_response_v1.schema.json",
+  "title": "Project Officer Response V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "responseId",
+    "generatedAt",
+    "question",
+    "answer",
+    "recommendation",
+    "evidence",
+    "provenance",
+    "freshness",
+    "warnings",
+    "dataQuality"
+  ],
+  "properties": {
+    "contractVersion": { "const": "v1" },
+    "responseId": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "question": { "type": "string", "minLength": 1 },
+    "answer": { "type": "string", "minLength": 1 },
+    "recommendation": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidenceItem" }
+    },
+    "provenance": { "$ref": "#/$defs/provenanceContext" },
+    "freshness": { "$ref": "#/$defs/freshnessContext" },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "dataQuality": { "$ref": "#/$defs/dataQualityContext" }
+  },
+  "$defs": {
+    "evidenceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "source", "locator"],
+      "properties": {
+        "label": { "type": "string" },
+        "source": { "type": "string" },
+        "locator": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "provenanceContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceClass", "sourceIds"],
+      "properties": {
+        "sourceClass": {
+          "type": "string",
+          "enum": ["live", "checkpoint", "derived", "historical"]
+        },
+        "sourceIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "freshnessContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["live", "checkpoint", "derived", "historical", "stale", "unknown"]
+        },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "validForCommit": { "type": "string" }
+      }
+    },
+    "dataQualityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "warnings"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["good", "degraded", "stale", "conflicting", "missing"]
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "missingFields": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

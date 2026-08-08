@@ -1,0 +1,50 @@
+{
+  "contractVersion": "v1",
+  "responseId": "por-2026-08-07T12:00:00Z-001",
+  "generatedAt": "2026-08-07T12:00:00Z",
+  "question": "What is currently blocking release readiness?",
+  "answer": "Release readiness is still shaped by recorded checkpoint semantics and historical evidence, so the current explanation must distinguish live Git state from recorded Project Control state.",
+  "recommendation": "Review the live-versus-recorded semantic model first, then refresh the evidence note and any downstream summary that depends on it.",
+  "evidence": [
+    {
+      "label": "Live main head",
+      "source": "git rev-parse origin/main",
+      "locator": "8d9b361df8a25142c3a50fab14ec7e456b675735",
+      "note": "Observed live protected main commit."
+    },
+    {
+      "label": "Recorded checkpoint manifest",
+      "source": "project_control/platform_manifest.yaml",
+      "locator": "current_branch/current_commit fields",
+      "note": "Recorded checkpoint state, not live truth."
+    }
+  ],
+  "provenance": {
+    "sourceClass": "checkpoint",
+    "sourceIds": [
+      "project_control/platform_manifest.yaml",
+      "git rev-parse origin/main",
+      "docs/project_control/evidence/2026-08-07/SOURCE_OF_TRUTH_VERSION_RECONCILIATION.md"
+    ],
+    "notes": [
+      "The response is read-only.",
+      "No shell or GitHub write capability is implied."
+    ]
+  },
+  "freshness": {
+    "status": "checkpoint",
+    "observedAt": "2026-08-07T12:00:00Z",
+    "validForCommit": "8d9b361df8a25142c3a50fab14ec7e456b675735"
+  },
+  "warnings": [
+    "Recorded checkpoint values may differ from live HEAD after later merges.",
+    "Historical evidence should not be treated as current state."
+  ],
+  "dataQuality": {
+    "status": "degraded",
+    "warnings": [
+      "Some evidence is historical by design."
+    ],
+    "missingFields": []
+  }
+}
