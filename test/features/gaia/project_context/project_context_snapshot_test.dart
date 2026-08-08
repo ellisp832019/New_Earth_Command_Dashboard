@@ -98,6 +98,30 @@ void main() {
       );
     });
 
+    test('round-trips a detached HEAD snapshot without a branch name', () {
+      final snapshot = ProjectContextParser().parse(
+        _minimalSnapshotJson(
+          includeOptionalFields: true,
+          includeObservedBranch: false,
+        ),
+      );
+
+      expect(snapshot.repository.observedBranch, isNull);
+
+      final encoded = snapshot.toJson();
+      expect(
+        (encoded['repository'] as Map<String, dynamic>).containsKey(
+          'observedBranch',
+        ),
+        isFalse,
+      );
+
+      final roundTrip = ProjectContextSnapshot.fromJson(
+        jsonDecode(jsonEncode(encoded)) as Map<String, dynamic>,
+      );
+      expect(roundTrip.repository.observedBranch, isNull);
+    });
+
     test('preserves immutability against external list mutation', () {
       final sourceChecks = <String>['Flutter Quality'];
       final branch = ProjectContextProtectedBranchContext(
@@ -266,13 +290,13 @@ void main() {
 Map<String, dynamic> _minimalSnapshotJson({
   String contractVersion = 'v1',
   bool includeOptionalFields = true,
+  bool includeObservedBranch = true,
 }) {
   final repository = <String, dynamic>{
     'repositoryId': 'ellisp832019/New_Earth_Command_Dashboard',
     'repositoryName': 'New Earth Command Dashboard',
     'remoteIdentity': 'origin',
     'defaultBranch': 'main',
-    'observedBranch': 'main',
     'observedCommit': 'a0880a136db7e9a6714e016d054e2a887e3f9475',
     'protectedBranch': <String, dynamic>{
       'name': 'main',
@@ -282,6 +306,9 @@ Map<String, dynamic> _minimalSnapshotJson({
     'dirtyState': 'clean',
     'observedAt': '2026-08-08T12:00:00Z',
   };
+  if (includeObservedBranch) {
+    repository['observedBranch'] = 'main';
+  }
   if (includeOptionalFields) {
     repository['aheadBehind'] = <String, dynamic>{'ahead': 0, 'behind': 0};
   }

@@ -97,7 +97,6 @@ class ProjectContextParser {
             'repositoryName',
             'remoteIdentity',
             'defaultBranch',
-            'observedBranch',
             'observedCommit',
             'protectedBranch',
             'dirtyState',
