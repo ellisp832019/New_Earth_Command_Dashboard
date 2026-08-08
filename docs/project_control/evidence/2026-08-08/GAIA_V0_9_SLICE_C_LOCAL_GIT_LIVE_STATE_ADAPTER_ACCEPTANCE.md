@@ -44,6 +44,24 @@ Focused adapter tests:
 - reports status failures as unknown working tree state
 - rejects repository root mismatches
 
+## CI Verification
+
+PR: `#15`
+
+Latest head SHA: `31b737f6e4ca2634fb144f6e5d5c23e05fe92f52`
+
+Verified GitHub Actions runs on that exact head:
+
+- `Flutter Quality`
+  - Run: `31255211317`
+  - Status: pass
+- `Project Control Validation`
+  - Run: `31255211331`
+  - Status: pass
+- `Windows Release Build`
+  - Run: `31255211335`
+  - Status: pass
+
 ## Notes
 
 - The generated Flutter plugin registrant files were inspected after local validation.
