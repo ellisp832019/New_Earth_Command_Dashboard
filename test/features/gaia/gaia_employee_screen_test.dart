@@ -79,6 +79,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('GAIA integration surface'), findsOneWidget);
+    expect(find.text('Project Officer'), findsWidgets);
+    await tester.tap(find.text('Project Officer').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Portfolio health'), findsOneWidget);
+    expect(find.textContaining('review in GAIA Control Centre'), findsWidgets);
     expect(find.text('Read only'), findsWidgets);
     expect(find.textContaining('standalone GAIA Control Centre'), findsWidgets);
   });
@@ -105,10 +110,19 @@ void main() {
     expect(find.byType(GaiaDashboardView), findsOneWidget);
     expect(find.byType(TabBar), findsOneWidget);
     expect(find.text('Capabilities'), findsWidgets);
+    expect(find.text('Project Officer'), findsWidgets);
     expect(find.text('Trust'), findsWidgets);
     expect(find.text('Execution'), findsNothing);
     expect(find.text('Rollback'), findsNothing);
     expect(find.text('Retention apply'), findsNothing);
+    await tester.tap(find.text('Project Officer').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Portfolio health'), findsOneWidget);
+    expect(find.text('Highest-priority recommendations'), findsOneWidget);
+    expect(find.textContaining('review in GAIA Control Centre'), findsWidgets);
+    expect(find.text('Approve'), findsNothing);
+    expect(find.text('Reject'), findsNothing);
+    expect(find.text('Handoff'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -264,6 +278,149 @@ MockClient _compatibleClient() {
             'receipt_content_hash': 'content-1',
             'verification_status': 'valid',
           }),
+          200,
+        );
+      case '/integration/v1/project-officer/capabilities':
+        return http.Response(
+          jsonEncode({
+            'capability_version': '0.9.0',
+            'capabilities': [
+              'project_officer_portfolio',
+              'project_officer_work_packages',
+            ],
+          }),
+          200,
+        );
+      case '/integration/v1/project-officer/portfolio':
+        return http.Response(
+          jsonEncode({
+            'generated_at': '2026-08-06T00:00:00Z',
+            'enabled_project_count': 1,
+            'counts_by_status': {
+              'healthy': 1,
+              'attention': 0,
+              'blocked': 0,
+              'unknown': 0,
+            },
+            'projects': [
+              {
+                'project_id': 'project-alpha',
+                'project_name': 'Project Alpha',
+                'normalized_status': 'healthy',
+                'evidence_freshness': 'fresh',
+                'reason_codes': ['fresh_evidence'],
+                'latest_snapshot': {
+                  'normalized_payload': {
+                    'git_state': {
+                      'branch': 'main',
+                      'commit_sha': '0123456789abcdef',
+                      'is_clean': true,
+                    },
+                    'configured_evidence': {
+                      'evidence_freshness': {'state': 'fresh'},
+                    },
+                  },
+                },
+              },
+            ],
+          }),
+          200,
+        );
+      case '/integration/v1/project-officer/recommendations/portfolio':
+        return http.Response(
+          jsonEncode({
+            'recommendation_queue': [
+              {
+                'priority_tier': 'P1',
+                'deterministic_score': '0.97',
+                'project_id': 'project-alpha',
+                'title': 'First recommendation',
+                'concise_summary': 'Keep the latest evidence current.',
+                'why_it_matters': 'Read-only command-centre summary.',
+                'evidence_freshness': 'fresh',
+                'lifecycle_state': 'active',
+              },
+            ],
+            'projects': [
+              {
+                'project_id': 'project-alpha',
+                'project_name': 'Project Alpha',
+                'latest_lifecycle_state': 'blocked',
+                'blocked_recommendation_count': 1,
+                'latest_recommendations': [
+                  {
+                    'blockers': [
+                      {'blocker_description': 'Waiting on human review'},
+                    ],
+                  },
+                ],
+              },
+            ],
+          }),
+          200,
+        );
+      case '/integration/v1/project-officer/changes/portfolio':
+        return http.Response(
+          jsonEncode({
+            'projects': [
+              {
+                'project_id': 'project-alpha',
+                'project_name': 'Project Alpha',
+                'latest_health_status': 'attention',
+                'latest_comparison_id': 'cmp-1',
+                'latest_comparison_freshness': 'fresh',
+                'stale_evidence': false,
+              },
+            ],
+          }),
+          200,
+        );
+      case '/integration/v1/project-officer/work-packages':
+        if (request.url.query.contains('approval_state=under_review')) {
+          return http.Response(
+            jsonEncode([
+              {
+                'project_id': 'project-alpha',
+                'work_package_id': 'package-1',
+                'title': 'Pending approval package',
+                'current_revision_number': 3,
+                'risk_classification': 'moderate',
+                'approval_state': 'under_review',
+                'staleness_state': 'fresh',
+              },
+            ]),
+            200,
+          );
+        }
+        if (request.url.query.contains('approval_state=completed')) {
+          return http.Response(
+            jsonEncode([
+              {
+                'project_id': 'project-alpha',
+                'work_package_id': 'package-1',
+                'title': 'Completed package',
+                'current_revision_number': 3,
+                'risk_classification': 'moderate',
+                'approval_state': 'completed',
+                'staleness_state': 'fresh',
+              },
+            ]),
+            200,
+          );
+        }
+        return http.Response(jsonEncode([]), 200);
+      case '/integration/v1/project-officer/work-packages/package-1/outcomes':
+        return http.Response(
+          jsonEncode([
+            {
+              'project_id': 'project-alpha',
+              'work_package_id': 'package-1',
+              'revision_number': 3,
+              'outcome': 'completed',
+              'recorded_at': '2026-08-06T12:10:00Z',
+              'evidence_fingerprint': 'sha256:abcd',
+            },
+          ]),
           200,
         );
       case '/action-templates':
