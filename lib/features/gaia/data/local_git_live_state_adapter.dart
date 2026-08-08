@@ -254,7 +254,20 @@ class LocalGitLiveStateAdapter {
   }
 
   static bool _samePath(String left, String right) {
-    return path.equals(left, right);
+    final normalizedLeft = _canonicalPath(left);
+    final normalizedRight = _canonicalPath(right);
+    if (Platform.isWindows) {
+      return normalizedLeft.toLowerCase() == normalizedRight.toLowerCase();
+    }
+    return path.equals(normalizedLeft, normalizedRight);
+  }
+
+  static String _canonicalPath(String value) {
+    try {
+      return Directory(value).resolveSymbolicLinksSync();
+    } on FileSystemException {
+      return path.normalize(path.absolute(value));
+    }
   }
 
   static String _redactRemoteUrl(String url) {
