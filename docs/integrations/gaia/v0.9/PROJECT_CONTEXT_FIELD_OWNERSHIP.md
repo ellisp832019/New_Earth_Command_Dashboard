@@ -6,7 +6,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `platform.applicationVersion` | Dashboard package version | `pubspec.yaml` | `lib/core/constants/app_build_info.dart` | No | Until version changes | Yes | No | file path + version |
 | `platform.maturity` | Product maturity | `project_control/platform_manifest.yaml` | `README.md` if needed for human context | No | Until reviewed | Yes | No | file path + record date |
-| `repository.observedBranch` | Live branch name | `git branch --show-current` | none | Yes | Immediate | No | Yes | git ref + commit |
+| `repository.observedBranch` | Live branch name; omitted for detached HEAD | `git branch --show-current` | none | Yes | Immediate | No | Yes | git ref + commit |
 | `repository.observedCommit` | Live HEAD SHA | `git rev-parse HEAD` | none | Yes | Immediate | No | Yes | git SHA |
 | `repository.defaultBranch` | Protected default branch | GitHub branch metadata | local branch config | Yes when GitHub is available | Immediate | Yes | No | GitHub ref |
 | `baseline.tagName` | Controlled checkpoint tag | Git tag `dashboard-controlled-baseline-2026-08-07` | none | No | Until retagged, which should not happen | Yes | No | git tag + target SHA |

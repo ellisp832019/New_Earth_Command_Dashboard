@@ -205,7 +205,7 @@ class ProjectContextRepositoryContext {
     required this.repositoryName,
     required this.remoteIdentity,
     required this.defaultBranch,
-    required this.observedBranch,
+    this.observedBranch,
     required this.observedCommit,
     required this.protectedBranch,
     required this.dirtyState,
@@ -217,7 +217,7 @@ class ProjectContextRepositoryContext {
   final String repositoryName;
   final String remoteIdentity;
   final String defaultBranch;
-  final String observedBranch;
+  final String? observedBranch;
   final String observedCommit;
   final ProjectContextProtectedBranchContext protectedBranch;
   final ProjectContextDirtyState dirtyState;
@@ -248,7 +248,6 @@ class ProjectContextRepositoryContext {
         'repositoryName',
         'remoteIdentity',
         'defaultBranch',
-        'observedBranch',
         'observedCommit',
         'protectedBranch',
         'dirtyState',
@@ -276,11 +275,13 @@ class ProjectContextRepositoryContext {
         'defaultBranch',
         path: path,
       ),
-      observedBranch: _ProjectContextJson.requiredString(
-        data,
-        'observedBranch',
-        path: path,
-      ),
+      observedBranch: data.containsKey('observedBranch')
+          ? _ProjectContextJson.optionalString(
+              data,
+              'observedBranch',
+              path: path,
+            )
+          : null,
       observedCommit: _ProjectContextJson.requiredString(
         data,
         'observedCommit',
@@ -330,12 +331,14 @@ class ProjectContextRepositoryContext {
       'repositoryName': repositoryName,
       'remoteIdentity': remoteIdentity,
       'defaultBranch': defaultBranch,
-      'observedBranch': observedBranch,
       'observedCommit': observedCommit,
       'protectedBranch': protectedBranch.toJson(),
       'dirtyState': dirtyState.jsonValue,
       'observedAt': observedAt.toUtc().toIso8601String(),
     };
+    if (observedBranch != null) {
+      json['observedBranch'] = observedBranch;
+    }
     if (aheadBehind != null) {
       json['aheadBehind'] = aheadBehind!.toJson();
     }

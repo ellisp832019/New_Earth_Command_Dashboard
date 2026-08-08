@@ -41,6 +41,7 @@ Top-level fields:
 - Missing fields should be represented as unknown or omitted, not invented.
 - Recorded checkpoint values must never silently overwrite live observations.
 - Historical evidence may be attached, but it must remain labeled as historical.
+- `repository.observedBranch` may be omitted when the live Git state is on a detached HEAD.
 
 ## Contract Boundaries
 
