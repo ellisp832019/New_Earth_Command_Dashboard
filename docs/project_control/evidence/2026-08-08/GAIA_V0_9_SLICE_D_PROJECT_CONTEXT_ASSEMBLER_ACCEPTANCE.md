@@ -13,6 +13,7 @@ Date: 2026-08-08
 - Starting protected main SHA: `0bdc51a90996568a9e22175a62547c095c3c809f`
 - Slice D branch: `feature/gaia-v0.9-project-context-assembler-2026-08-08`
 - Current worktree branch: `feature/gaia-v0.9-project-context-assembler-2026-08-08`
+- Current PR head SHA: `a048867826b09412acc55f90ef3f7d9e66b83641`
 
 ## Contract Representability
 
@@ -154,6 +155,16 @@ Date: 2026-08-08
 - Windows release SHA-256:
   - `6976962B67AD57E7B0E3AA3D16531556617F05AAE7C5BC032FAA06CA8C9B331E`
 
+## Exact-Head CI
+
+- PR: `#16`
+- Flutter Quality: `pass`
+  - Run ID: `31257513419`
+- Project Control Validation: `pass`
+  - Run ID: `31257513418`
+- Windows Release Build: `pass`
+  - Run ID: `31257513415`
+
 ## Targeted Tests
 
 - `test/features/gaia/project_context/project_context_assembler_test.dart`
@@ -178,7 +189,6 @@ Date: 2026-08-08
 
 ## Known Limitations
 
-- CI run IDs and exact PR head SHA will be appended after the branch is pushed and GitHub Actions finish on the exact head.
 - The assembler currently records the minimum required provenance and freshness semantics for this slice; response composition remains a future slice.
 
 ## Slice E Readiness
