@@ -79,12 +79,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('GAIA integration surface'), findsOneWidget);
-    expect(find.text('Project Officer'), findsWidgets);
-    await tester.tap(find.text('Project Officer').first);
+    expect(find.text('Operations'), findsOneWidget);
+    expect(find.text('Programme intelligence'), findsOneWidget);
+    expect(find.text('Connected'), findsOneWidget);
+    await tester.tap(find.text('Programme intelligence').first);
     await tester.pumpAndSettle();
-    expect(find.text('Portfolio health'), findsOneWidget);
-    expect(find.textContaining('review in GAIA Control Centre'), findsWidgets);
-    expect(find.text('Read only'), findsWidgets);
+    expect(find.text('Programme summary'), findsOneWidget);
+    expect(find.text('Projects'), findsOneWidget);
+    expect(find.text('Trust alerts'), findsOneWidget);
     expect(find.textContaining('standalone GAIA Control Centre'), findsWidgets);
   });
 
@@ -108,7 +110,9 @@ void main() {
 
     expect(find.text('GAIA integration surface'), findsOneWidget);
     expect(find.byType(GaiaDashboardView), findsOneWidget);
-    expect(find.byType(TabBar), findsOneWidget);
+    expect(find.byType(TabBar), findsAtLeastNWidgets(2));
+    expect(find.text('Operations'), findsOneWidget);
+    expect(find.text('Programme intelligence'), findsOneWidget);
     expect(find.text('Capabilities'), findsWidgets);
     expect(find.text('Project Officer'), findsWidgets);
     expect(find.text('Trust'), findsWidgets);
@@ -119,10 +123,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Portfolio health'), findsOneWidget);
     expect(find.text('Highest-priority recommendations'), findsOneWidget);
-    expect(find.textContaining('review in GAIA Control Centre'), findsWidgets);
     expect(find.text('Approve'), findsNothing);
     expect(find.text('Reject'), findsNothing);
     expect(find.text('Handoff'), findsNothing);
+    await tester.tap(find.text('Programme intelligence').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Programme summary'), findsOneWidget);
+    expect(find.text('Release trains'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -146,8 +153,10 @@ void main() {
 
     expect(find.text('GAIA integration surface'), findsOneWidget);
     expect(find.byType(GaiaDashboardView), findsOneWidget);
-    expect(find.text('Connection issue'), findsOneWidget);
-    expect(find.text('Stale cache'), findsOneWidget);
+    expect(find.text('Operations'), findsOneWidget);
+    expect(find.text('Programme intelligence'), findsOneWidget);
+    expect(find.text('Unavailable'), findsWidgets);
+    expect(find.text('Programme error'), findsOneWidget);
     expect(find.text('Open GAIA Control Centre'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
@@ -172,8 +181,50 @@ void main() {
 
     expect(find.text('GAIA integration surface'), findsOneWidget);
     expect(find.byType(GaiaDashboardView), findsOneWidget);
+    expect(find.text('Operations'), findsOneWidget);
+    expect(find.text('Programme intelligence'), findsOneWidget);
     expect(find.text('Open GAIA Control Centre'), findsWidgets);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('GAIA workspace remains responsive at supported desktop sizes', (
+    tester,
+  ) async {
+    final sizes = <Size>[
+      const Size(1280, 720),
+      const Size(1366, 768),
+      const Size(1600, 900),
+      const Size(1920, 1080),
+    ];
+
+    for (final size in sizes) {
+      await tester.binding.setSurfaceSize(size);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gaiaEmployeeFeatureEnabledProvider.overrideWithValue(true),
+            gaiaEmployeeHttpClientProvider.overrideWithValue(
+              _compatibleClient(),
+            ),
+          ],
+          child: const MaterialApp(home: GaiaEmployeeScreen()),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('GAIA integration surface'), findsOneWidget);
+      expect(find.text('Operations'), findsOneWidget);
+      expect(find.text('Programme intelligence'), findsOneWidget);
+      expect(find.text('Connected'), findsOneWidget);
+      await tester.tap(find.text('Programme intelligence').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Programme summary'), findsOneWidget);
+      expect(find.text('Projects'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
   });
 }
 
@@ -288,6 +339,88 @@ MockClient _compatibleClient() {
               'project_officer_portfolio',
               'project_officer_work_packages',
             ],
+          }),
+          200,
+        );
+      case '/integration/v1/programme/summary':
+        return http.Response(
+          jsonEncode({
+            'generated_at': '2026-08-06T12:00:00Z',
+            'selected_project_id': 'project-alpha',
+            'selected_project': {
+              'project_id': 'project-alpha',
+              'project_name': 'Project Alpha',
+            },
+            'summary': {
+              'project_count': 1,
+              'health_status_counts': {'healthy': 1},
+              'change_severity_counts': {'high': 1},
+              'recommendation_state_counts': {'active': 1},
+              'roadmap_state_counts': {'NOW': 1},
+              'release_train_readiness_counts': {'READY': 1},
+              'package_state_counts': {'approved': 1},
+              'architecture_entity_count': 1,
+              'architecture_relationship_count': 1,
+              'cycle_count': 0,
+              'unresolved_dependency_count': 0,
+              'shared_dependency_count': 0,
+              'orphan_count': 0,
+              'trust_alert_count': 1,
+              'provenance_manifest_count': 1,
+              'stale_evidence_projects': const [],
+            },
+            'portfolio': {
+              'health_portfolio': {
+                'counts_by_status': {'healthy': 1},
+              },
+              'change_portfolio': {
+                'counts_by_severity': {'high': 1},
+              },
+              'recommendation_portfolio': {
+                'counts_by_state': {'active': 1},
+              },
+            },
+            'architecture_registry': {
+              'entities': [
+                {
+                  'entity_id': 'entity-1',
+                  'kind': 'package',
+                  'name': 'Shared Library',
+                },
+              ],
+              'relationships': [
+                {
+                  'relationship_id': 'rel-1',
+                  'source_entity_id': 'entity-1',
+                  'target_entity_id': 'entity-2',
+                },
+              ],
+            },
+            'dependency_graph': {
+              'snapshot': {'node_count': 1, 'edge_count': 1},
+              'cycles': const [],
+              'shared_dependencies': const [],
+              'orphans': const [],
+              'unresolved_findings': const [],
+            },
+            'impact_analysis': {
+              'analyses': const [],
+              'selected_analysis': null,
+              'selected_change_findings': const [],
+            },
+            'change_proposals': {'recommendations': const []},
+            'roadmap': {'roadmap_items': const []},
+            'release_trains': {'release_trains': const []},
+            'programme_packages': {'programme_packages': const []},
+            'decisions': {
+              'selected_work_packages': const [],
+              'selected_contract': null,
+            },
+            'cross_project_evidence': {
+              'provenance_manifests': const [],
+              'selected_project_dependencies': const [],
+              'selected_project_dependents': const [],
+            },
           }),
           200,
         );
@@ -517,6 +650,18 @@ MockClient _incompatibleClient() {
           'deprecation_warnings': const ['unsupported contract version'],
         }),
         200,
+      );
+    }
+    if (path == '/integration/v1/programme/summary') {
+      return http.Response(
+        jsonEncode({'detail': 'programme summary incompatible'}),
+        409,
+      );
+    }
+    if (path == '/integration/v1/project-officer/capabilities') {
+      return http.Response(
+        jsonEncode({'detail': 'project officer unavailable'}),
+        404,
       );
     }
     return http.Response('{}', 200);
