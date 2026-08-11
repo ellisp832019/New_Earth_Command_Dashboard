@@ -1,8 +1,8 @@
 {
   "application_version": "1.0.0+1",
-  "branch": "ci/dashboard-github-actions-and-branch-controls-2026-08-07",
-  "ci_status": "missing",
-  "commit": "4260272fb556ad2a1df3cf642fc38b185a01f5d9",
+  "branch": "integration/dashboard-gaia-controlled-baseline-2026-08-07",
+  "ci_status": "present",
+  "commit": "aeb8dcc38b52316aa53660b9af9523cc1b41eddf",
   "database_schema_version": "16",
   "documentation_counts": {
     "missing": 2,
@@ -86,6 +86,9 @@
     "docs\\contracts\\VOICE_MODULE_API_CONTRACTS.md",
     "docs\\design\\visual_direction.md",
     "docs\\developer_guide\\ADDING_A_MODULE_TO_PROJECT_CONTROL.md",
+    "docs\\developer_guide\\CI_LOCAL_REPRODUCTION.md",
+    "docs\\developer_guide\\GENERATED_CODE_POLICY.md",
+    "docs\\developer_guide\\GITHUB_ACTIONS_AND_BRANCH_PROTECTION.md",
     "docs\\developer_guide\\PROJECT_CONTROL_CLI_GUIDE.md",
     "docs\\developer_guide\\RECORDING_VERIFICATION_EVIDENCE.md",
     "docs\\developer_guide\\VOICE_STARTUP_TESTING.md",
@@ -151,6 +154,7 @@
     "docs\\hayley_treasury\\MONEY_LANGUAGE_GUIDE.md",
     "docs\\hayley_visual_capture\\CALM_5_MINUTE_CAPTURE_SORT.md",
     "docs\\hayley_visual_capture\\HAYLEY_RECEIPT_CAPTURE_GUIDE.md",
+    "docs\\integrations\\gaia\\POST_MERGE_ACCEPTANCE_FIX.md",
     "docs\\modules\\alexa_voice_gateway.md",
     "docs\\peter_assets\\PETER_ASSET_WORKFLOW.md",
     "docs\\peter_assets\\PETER_QR_LABEL_WORKFLOW.md",
@@ -176,7 +180,10 @@
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_DATA_FLOW_AUDIT.md",
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_HARDENING_VERIFICATION.md",
     "docs\\project_control\\evidence\\2026-08-06\\VOICE_STARTUP_PREFLIGHT.md",
+    "docs\\project_control\\evidence\\2026-08-07\\BRANCH_CONTROL_REVIEW.md",
+    "docs\\project_control\\evidence\\2026-08-07\\CI_IMPLEMENTATION.md",
     "docs\\project_control\\evidence\\2026-08-07\\CI_PREFLIGHT.md",
+    "docs\\project_control\\evidence\\2026-08-07\\CI_REMOTE_VERIFICATION.md",
     "docs\\project_control\\evidence\\2026-08-07\\VOICE_STARTUP_FINAL_ACCEPTANCE.md",
     "docs\\roadmap\\README.md",
     "docs\\roadmap\\ai_10_task_roadmap.md",
@@ -253,6 +260,7 @@
     "lib\\features\\education_learning_hub",
     "lib\\features\\experiments",
     "lib\\features\\funding_grants_command_centre",
+    "lib\\features\\gaia",
     "lib\\features\\inbox",
     "lib\\features\\journal",
     "lib\\features\\knowledge_library",
@@ -327,13 +335,11 @@
   "recommended_next_actions": [
     "Resolve readiness blockers before a release attempt.",
     "Fill in the highest-value missing module documentation.",
-    "Track open risks in the canonical risk register.",
-    "Add or verify CI workflows."
+    "Track open risks in the canonical risk register."
   ],
   "release_registry_status": "seeded",
   "repository_health_warnings": [
     "Working tree is dirty.",
-    "No GitHub workflows were detected.",
     "Some modules lack documentation."
   ],
   "risk_totals": {
@@ -346,8 +352,8 @@
     "by_status": {
       "deferred": 1,
       "mitigating": 1,
-      "open": 2,
-      "resolved": 2
+      "open": 1,
+      "resolved": 3
     },
     "total": 6
   },
@@ -386,8 +392,8 @@
     "/security-lock",
     "/more/repo-research-engine"
   ],
-  "scan_id": "scan-2026-08-07T07:16:50.133472Z",
-  "scan_timestamp": "2026-08-07T07:16:50.135480Z",
+  "scan_id": "scan-2026-08-07T11:18:20.365702Z",
+  "scan_timestamp": "2026-08-07T11:18:20.367706Z",
   "status_definition_version": "1",
   "test_files_found": [
     "test\\core\\modules\\module_event_bus_test.dart",
@@ -447,6 +453,7 @@
     "test\\features\\education_learning_hub\\education_learning_hub_repository_test.dart",
     "test\\features\\education_learning_hub\\education_learning_hub_screen_test.dart",
     "test\\features\\experiments\\omega_experiment_repository_test.dart",
+    "test\\features\\gaia\\gaia_employee_screen_test.dart",
     "test\\features\\inbox\\inbox_controller_test.dart",
     "test\\features\\inbox\\inbox_repository_test.dart",
     "test\\features\\journal\\journal_repository_test.dart",
@@ -539,7 +546,7 @@
   "verification_registry_counts": {
     "failed": 1,
     "not_ready": 2,
-    "passed": 5
+    "passed": 6
   },
   "version_contradictions": [],
   "working_tree_state": "dirty"

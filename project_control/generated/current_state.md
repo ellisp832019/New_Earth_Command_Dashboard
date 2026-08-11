@@ -1,8 +1,8 @@
 # Current State
 
-- Scan ID: scan-2026-08-07T11:18:20.365702Z
-- Branch: integration/dashboard-gaia-controlled-baseline-2026-08-07
-- Commit: aeb8dcc38b52316aa53660b9af9523cc1b41eddf
+- Scan ID: scan-2026-08-11T15:53:20.318517Z
+- Branch: feature/gaia-v0.10-c7-programme-summary
+- Commit: 96c1d09c94f790a27afa4d5f593ae76d3a808ddf
 - Working tree: dirty
 - Modules: 33
 - Risks: 6

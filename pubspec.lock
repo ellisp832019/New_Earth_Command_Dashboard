@@ -348,20 +348,20 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/gaia_dashboard_module"
-      ref: "9bbfa978e7d5a1c2cb30be27128691ce187e758f"
-      resolved-ref: "9bbfa978e7d5a1c2cb30be27128691ce187e758f"
+      ref: "3a7d316f66aabf9cd677200c55fd5be05a4d6afe"
+      resolved-ref: "3a7d316f66aabf9cd677200c55fd5be05a4d6afe"
       url: "https://github.com/ellisp832019/New-Earth-AI-Employee.git"
     source: git
-    version: "0.8.0"
+    version: "0.9.0"
   gaia_integration_client:
     dependency: "direct main"
     description:
       path: "packages/gaia_integration_client"
-      ref: "9bbfa978e7d5a1c2cb30be27128691ce187e758f"
-      resolved-ref: "9bbfa978e7d5a1c2cb30be27128691ce187e758f"
+      ref: "3a7d316f66aabf9cd677200c55fd5be05a4d6afe"
+      resolved-ref: "3a7d316f66aabf9cd677200c55fd5be05a4d6afe"
       url: "https://github.com/ellisp832019/New-Earth-AI-Employee.git"
     source: git
-    version: "0.8.0"
+    version: "0.9.0"
   glob:
     dependency: transitive
     description:
