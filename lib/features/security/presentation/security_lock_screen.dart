@@ -155,209 +155,235 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       _latestAuditEventId = null;
     });
 
-    final enteredPin = _pinController.text.trim();
-    if (enteredPin.isEmpty) {
-      setState(() {
-        _busy = false;
-        _status = 'Locked';
-        _detail = 'Enter the local PIN to unlock the session.';
-        _auditSummary = 'PIN check was not completed.';
-        _latestAuditEventId = null;
-      });
-      return;
-    }
-
-    final repository = ref.read(usersDevicesControlRepositoryProvider);
-    final pinRegistry = ref.read(usersDevicesPinRegistryProvider);
-    final snapshot = await ref.read(usersDevicesControlSnapshotProvider.future);
-    final userId =
-        _selectedUserId ??
-        (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
-    final selectedUser = snapshot.users.isEmpty
-        ? null
-        : snapshot.users.firstWhere(
-            (user) => user.id == userId,
-            orElse: () => snapshot.users.first,
-          );
-    final pairedDevices = selectedUser == null
-        ? snapshot.devices
-        : snapshot.devices
-              .where(
-                (device) =>
-                    selectedUser.linkedDevices.contains(device.id) ||
-                    device.ownerId == selectedUser.id,
-              )
-              .toList(growable: false);
-    final deviceId =
-        _selectedDeviceId ??
-        (pairedDevices.isNotEmpty ? pairedDevices.first.id : '');
-    final selectedDevice = pairedDevices.isNotEmpty
-        ? pairedDevices.firstWhere(
-            (device) => device.id == deviceId,
-            orElse: () => pairedDevices.first,
-          )
-        : snapshot.devices.isEmpty
-        ? null
-        : snapshot.devices.firstWhere(
-            (device) => device.id == deviceId,
-            orElse: () => snapshot.devices.first,
-          );
-    if (userId.isEmpty || deviceId.isEmpty) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _status = 'Locked';
-        _detail = 'Pick a local user and device before unlocking.';
-        _auditSummary =
-            'No access check was written because the gate was incomplete.';
-        _latestAuditEventId = null;
-      });
-      return;
-    }
-
-    final pinDecision = await pinRegistry.validatePinForUser(
-      userId,
-      enteredPin,
-    );
-    if (!pinDecision.allowed) {
-      UsersDevicesControlAuditEvent? pinAuditEvent;
-      if (userId.isNotEmpty) {
-        pinAuditEvent = await repository.createAuditEvent(
-          actorId: userId,
-          deviceId: deviceId,
-          eventType: switch (pinDecision.issueCode) {
-            'missing_pin' => 'pin_check_missing',
-            'primary_missing_recovery_available' => 'pin_check_primary_missing',
-            'locked_out_triggered' => 'pin_lockout_triggered',
-            'locked_out_active' => 'pin_lockout_active',
-            _ => 'pin_check_failed',
-          },
-          targetModule: '01_USERS_AND_DEVICES_CONTROL',
-          action: 'unlock_with_pin',
-          result: 'denied',
-          reason: pinDecision.nextStep.isEmpty
-              ? pinDecision.reason
-              : '${pinDecision.reason} ${pinDecision.nextStep}',
-        );
-      }
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _status = switch (pinDecision.issueCode) {
-          'locked_out_triggered' => 'Cooldown started',
-          'locked_out_active' => 'Cooldown active',
-          _ => 'Locked',
-        };
-        _detail = pinDecision.reason.isNotEmpty
-            ? pinDecision.reason
-            : 'The local PIN was not accepted.';
-        if (pinDecision.nextStep.isNotEmpty) {
-          _detail = '$_detail ${pinDecision.nextStep}';
+    try {
+      final enteredPin = _pinController.text.trim();
+      if (enteredPin.isEmpty) {
+        if (!mounted) {
+          return;
         }
-        _auditSummary = switch (pinDecision.issueCode) {
-          'missing_pin' =>
-            'No PIN check ran because this user has no local PIN yet.',
-          'primary_missing_recovery_available' =>
-            'Primary PIN is missing. Recovery path is available in PIN Registry.',
-          'locked_out_triggered' =>
-            'Too many PIN attempts were made. Cooldown started and the event was written to the audit trail.',
-          'locked_out_active' =>
-            'Too many PIN attempts were made. Unlock is paused until the cooldown ends.',
-          _ => 'PIN check failed before access control.',
-        };
-        _latestAuditEventId = pinAuditEvent?.eventId;
-      });
-      return;
-    }
-
-    final decision = await repository.canOpenModule(
-      userId,
-      deviceId,
-      '01_USERS_AND_DEVICES_CONTROL',
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    if (decision.allowed) {
-      if (pinDecision.issueCode == 'recovery_allowed') {
-        await repository.createAuditEvent(
-          actorId: userId,
-          deviceId: deviceId,
-          eventType: 'pin_recovery_used',
-          targetModule: '01_USERS_AND_DEVICES_CONTROL',
-          action: 'unlock_with_recovery_pin',
-          result: 'allowed',
-          reason:
-              'Recovery PIN was used to unlock the local session and should now be rotated.',
-        );
+        setState(() {
+          _busy = false;
+          _status = 'Locked';
+          _detail = 'Enter the local PIN to unlock the session.';
+          _auditSummary = 'PIN check was not completed.';
+          _latestAuditEventId = null;
+        });
+        return;
       }
 
-      final updatedSnapshot = await ref.read(
-        usersDevicesControlSnapshotProvider.future,
-      );
-      _rememberedUserId = userId;
-      _rememberedDeviceId = deviceId;
-      ref
-          .read(securitySessionProvider.notifier)
-          .unlock(
-            activeUserLabel: selectedUser?.displayName,
-            activeDeviceLabel: selectedDevice?.name,
-            activeUserOnline: selectedUser?.status == 'active',
+      final repository = ref.read(usersDevicesControlRepositoryProvider);
+      final pinRegistry = ref.read(usersDevicesPinRegistryProvider);
+      final snapshot = await ref
+          .read(usersDevicesControlSnapshotProvider.future)
+          .timeout(const Duration(seconds: 10));
+      final userId =
+          _selectedUserId ??
+          (snapshot.users.isNotEmpty ? snapshot.users.first.id : '');
+      final selectedUser = snapshot.users.isEmpty
+          ? null
+          : snapshot.users.firstWhere(
+              (user) => user.id == userId,
+              orElse: () => snapshot.users.first,
+            );
+      final pairedDevices = selectedUser == null
+          ? snapshot.devices
+          : snapshot.devices
+                .where(
+                  (device) =>
+                      selectedUser.linkedDevices.contains(device.id) ||
+                      device.ownerId == selectedUser.id,
+                )
+                .toList(growable: false);
+      final deviceId =
+          _selectedDeviceId ??
+          (pairedDevices.isNotEmpty ? pairedDevices.first.id : '');
+      final selectedDevice = pairedDevices.isNotEmpty
+          ? pairedDevices.firstWhere(
+              (device) => device.id == deviceId,
+              orElse: () => pairedDevices.first,
+            )
+          : snapshot.devices.isEmpty
+          ? null
+          : snapshot.devices.firstWhere(
+              (device) => device.id == deviceId,
+              orElse: () => snapshot.devices.first,
+            );
+      if (userId.isEmpty || deviceId.isEmpty) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _busy = false;
+          _status = 'Locked';
+          _detail = 'Pick a local user and device before unlocking.';
+          _auditSummary =
+              'No access check was written because the gate was incomplete.';
+          _latestAuditEventId = null;
+        });
+        return;
+      }
+
+      final pinDecision = await pinRegistry
+          .validatePinForUser(userId, enteredPin)
+          .timeout(const Duration(seconds: 10));
+      if (!pinDecision.allowed) {
+        UsersDevicesControlAuditEvent? pinAuditEvent;
+        if (userId.isNotEmpty) {
+          pinAuditEvent = await repository.createAuditEvent(
+            actorId: userId,
+            deviceId: deviceId,
+            eventType: switch (pinDecision.issueCode) {
+              'missing_pin' => 'pin_check_missing',
+              'primary_missing_recovery_available' =>
+                'pin_check_primary_missing',
+              'locked_out_triggered' => 'pin_lockout_triggered',
+              'locked_out_active' => 'pin_lockout_active',
+              _ => 'pin_check_failed',
+            },
+            targetModule: '01_USERS_AND_DEVICES_CONTROL',
+            action: 'unlock_with_pin',
+            result: 'denied',
+            reason: pinDecision.nextStep.isEmpty
+                ? pinDecision.reason
+                : '${pinDecision.reason} ${pinDecision.nextStep}',
           );
+        }
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _busy = false;
+          _status = switch (pinDecision.issueCode) {
+            'locked_out_triggered' => 'Cooldown started',
+            'locked_out_active' => 'Cooldown active',
+            _ => 'Locked',
+          };
+          _detail = pinDecision.reason.isNotEmpty
+              ? pinDecision.reason
+              : 'The local PIN was not accepted.';
+          if (pinDecision.nextStep.isNotEmpty) {
+            _detail = '$_detail ${pinDecision.nextStep}';
+          }
+          _auditSummary = switch (pinDecision.issueCode) {
+            'missing_pin' =>
+              'No PIN check ran because this user has no local PIN yet.',
+            'primary_missing_recovery_available' =>
+              'Primary PIN is missing. Recovery path is available in PIN Registry.',
+            'locked_out_triggered' =>
+              'Too many PIN attempts were made. Cooldown started and the event was written to the audit trail.',
+            'locked_out_active' =>
+              'Too many PIN attempts were made. Unlock is paused until the cooldown ends.',
+            _ => 'PIN check failed before access control.',
+          };
+          _latestAuditEventId = pinAuditEvent?.eventId;
+        });
+        return;
+      }
+
+      final decision = await repository
+          .canOpenModule(userId, deviceId, '01_USERS_AND_DEVICES_CONTROL')
+          .timeout(const Duration(seconds: 10));
+
+      if (!mounted) {
+        return;
+      }
+
+      if (decision.allowed) {
+        if (pinDecision.issueCode == 'recovery_allowed') {
+          await repository.createAuditEvent(
+            actorId: userId,
+            deviceId: deviceId,
+            eventType: 'pin_recovery_used',
+            targetModule: '01_USERS_AND_DEVICES_CONTROL',
+            action: 'unlock_with_recovery_pin',
+            result: 'allowed',
+            reason:
+                'Recovery PIN was used to unlock the local session and should now be rotated.',
+          );
+        }
+
+        final updatedSnapshot = await ref
+            .read(usersDevicesControlSnapshotProvider.future)
+            .timeout(const Duration(seconds: 10));
+        _rememberedUserId = userId;
+        _rememberedDeviceId = deviceId;
+        ref
+            .read(securitySessionProvider.notifier)
+            .unlock(
+              activeUserLabel: selectedUser?.displayName,
+              activeDeviceLabel: selectedDevice?.name,
+              activeUserOnline: selectedUser?.status == 'active',
+            );
+        final latestAudit = updatedSnapshot.auditLog.isNotEmpty
+            ? updatedSnapshot.auditLog.last
+            : null;
+        setState(() {
+          _busy = false;
+          _canContinue = voiceStartupGateEnabled;
+          _status = 'Unlocked locally';
+          _detail = decision.nextStep.isNotEmpty
+              ? '${decision.reason} ${decision.nextStep}'
+              : decision.reason;
+          _latestAuditEventId = latestAudit?.eventId;
+          _auditSummary = latestAudit == null
+              ? (pinDecision.issueCode == 'recovery_allowed'
+                    ? 'Recovery PIN matched and the access check passed locally.'
+                    : 'The access check passed and was recorded locally.')
+              : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          if (kDebugMode) {
+            debugPrint(
+              'Security unlock handoff -> ${_routeAfterUnlock(context: context)}',
+            );
+          }
+          appRouter.go(_routeAfterUnlock(context: context));
+        });
+        return;
+      }
+
+      final updatedSnapshot = await ref
+          .read(usersDevicesControlSnapshotProvider.future)
+          .timeout(const Duration(seconds: 10));
       final latestAudit = updatedSnapshot.auditLog.isNotEmpty
           ? updatedSnapshot.auditLog.last
           : null;
       setState(() {
         _busy = false;
-        _canContinue = voiceStartupGateEnabled;
-        _status = 'Unlocked locally';
+        _status = decision.requiresApproval ? 'Approval needed' : 'Locked';
         _detail = decision.nextStep.isNotEmpty
             ? '${decision.reason} ${decision.nextStep}'
             : decision.reason;
         _latestAuditEventId = latestAudit?.eventId;
         _auditSummary = latestAudit == null
-            ? (pinDecision.issueCode == 'recovery_allowed'
-                  ? 'Recovery PIN matched and the access check passed locally.'
-                  : 'The access check passed and was recorded locally.')
+            ? 'The access check was denied and should be reviewed.'
             : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-        if (kDebugMode) {
-          debugPrint(
-            'Security unlock handoff -> ${_routeAfterUnlock(context: context)}',
-          );
-        }
-        appRouter.go(_routeAfterUnlock(context: context));
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Security unlock failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _status = 'Locked';
+        _detail =
+            'Security check could not complete. Please try again or reset the demo data.';
+        _auditSummary = 'The local access check hit an unexpected error.';
       });
-      return;
+    } finally {
+      if (mounted && _busy) {
+        setState(() {
+          _busy = false;
+        });
+      }
     }
-
-    final updatedSnapshot = await ref.read(
-      usersDevicesControlSnapshotProvider.future,
-    );
-    final latestAudit = updatedSnapshot.auditLog.isNotEmpty
-        ? updatedSnapshot.auditLog.last
-        : null;
-    setState(() {
-      _busy = false;
-      _status = decision.requiresApproval ? 'Approval needed' : 'Locked';
-      _detail = decision.nextStep.isNotEmpty
-          ? '${decision.reason} ${decision.nextStep}'
-          : decision.reason;
-      _latestAuditEventId = latestAudit?.eventId;
-      _auditSummary = latestAudit == null
-          ? 'The access check was denied and should be reviewed.'
-          : '${latestAudit.eventType} - ${latestAudit.result} - ${latestAudit.reason}';
-    });
   }
 
   @override

@@ -244,6 +244,7 @@ class UsersDevicesPinRegistryService {
   int _pinIdSequence = 0;
 
   Future<UsersDevicesPinRegistrySnapshot> loadSnapshot() async {
+    await _ensurePinRecordSchema();
     return UsersDevicesPinRegistrySnapshot(
       records: await _readPins(),
       lockouts: await _readAllLockoutStates(),
@@ -530,6 +531,94 @@ class UsersDevicesPinRegistryService {
 
     await _writePins(records);
     await file.delete();
+  }
+
+  Future<void> _ensurePinRecordSchema() async {
+    final db = database;
+    if (db == null) {
+      throw StateError('UsersDevicesPinRegistryService requires a database.');
+    }
+
+    final columns = await db
+        .customSelect('PRAGMA table_info(users_devices_control_pin_records)')
+        .get();
+    final columnNames = {for (final row in columns) row.read<String>('name')};
+
+    final missingColumns = <String>[
+      if (!columnNames.contains('pin_length')) 'pin_length',
+      if (!columnNames.contains('pin_secret_algorithm')) 'pin_secret_algorithm',
+      if (!columnNames.contains('pin_secret_salt')) 'pin_secret_salt',
+      if (!columnNames.contains('pin_secret_hash')) 'pin_secret_hash',
+    ];
+
+    if (missingColumns.isEmpty) {
+      return;
+    }
+
+    if (!columnNames.contains('pin_length')) {
+      await db.customStatement(
+        'ALTER TABLE users_devices_control_pin_records '
+        'ADD COLUMN pin_length INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+
+    if (!columnNames.contains('pin_secret_algorithm')) {
+      await db.customStatement(
+        "ALTER TABLE users_devices_control_pin_records "
+        "ADD COLUMN pin_secret_algorithm TEXT NOT NULL DEFAULT ''",
+      );
+    }
+
+    if (!columnNames.contains('pin_secret_salt')) {
+      await db.customStatement(
+        "ALTER TABLE users_devices_control_pin_records "
+        "ADD COLUMN pin_secret_salt TEXT NOT NULL DEFAULT ''",
+      );
+    }
+
+    if (!columnNames.contains('pin_secret_hash')) {
+      await db.customStatement(
+        "ALTER TABLE users_devices_control_pin_records "
+        "ADD COLUMN pin_secret_hash TEXT NOT NULL DEFAULT ''",
+      );
+    }
+
+    final legacyRows = await db
+        .customSelect(
+          'SELECT pin_id, pin_code, pin_length, pin_secret_algorithm, pin_secret_salt, pin_secret_hash '
+          'FROM users_devices_control_pin_records',
+        )
+        .get();
+    for (final row in legacyRows) {
+      final pinId = row.read<String>('pin_id');
+      final storedPinCode = row.read<String>('pin_code');
+      final pinSecretSalt = row.read<String?>('pin_secret_salt') ?? '';
+      final pinSecretHash = row.read<String?>('pin_secret_hash') ?? '';
+      if (pinSecretSalt.isNotEmpty && pinSecretHash.isNotEmpty) {
+        continue;
+      }
+
+      if (storedPinCode.isEmpty || _looksMaskedDisplay(storedPinCode)) {
+        continue;
+      }
+
+      final secret = await LocalPinSecretCodec.hashPinCode(storedPinCode);
+      await db.customStatement(
+        'UPDATE users_devices_control_pin_records '
+        'SET pin_code = ?, pin_length = ?, pin_secret_algorithm = ?, '
+        'pin_secret_salt = ?, pin_secret_hash = ?, updated_at = ? '
+        'WHERE pin_id = ?',
+        [
+          LocalPinSecretCodec.displayPinFromLength(secret.pinLength),
+          secret.pinLength,
+          secret.algorithm,
+          secret.saltBase64,
+          secret.hashBase64,
+          DateTime.now().toUtc().toIso8601String(),
+          pinId,
+        ],
+      );
+    }
   }
 
   Future<void> _writePins(List<UsersDevicesPinRecord> pins) async {
@@ -856,7 +945,9 @@ class UsersDevicesPinRegistryService {
 
   Future<bool> _matchesPin(UsersDevicesPinRecord record, String pinCode) async {
     if (record.pinSecretHash.isEmpty || record.pinSecretSalt.isEmpty) {
-      return false;
+      return record.pinCode.isNotEmpty &&
+          !_looksMaskedDisplay(record.pinCode) &&
+          record.pinCode == pinCode;
     }
 
     return LocalPinSecretCodec.matchesPinCode(
@@ -864,5 +955,9 @@ class UsersDevicesPinRegistryService {
       saltBase64: record.pinSecretSalt,
       hashBase64: record.pinSecretHash,
     );
+  }
+
+  bool _looksMaskedDisplay(String value) {
+    return value.isNotEmpty && value.runes.every((rune) => rune == 42);
   }
 }
