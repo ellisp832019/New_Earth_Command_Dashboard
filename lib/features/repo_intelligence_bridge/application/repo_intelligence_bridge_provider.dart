@@ -93,32 +93,32 @@ class LegacyRepoIntelligenceBridgeProvider
 
   @override
   Future<void> openModuleHome() {
-    return _service.openModuleHome();
+    return _localProvider.openModuleHome();
   }
 
   @override
   Future<void> openProfilesFolder() {
-    return _service.openProfilesFolder();
+    return _localProvider.openProfilesFolder();
   }
 
   @override
   Future<void> openExportsFolder(RepoIntelligenceBridgeProfile profile) {
-    return _service.openExportsFolder(profile);
+    return _localProvider.openExportsFolder(profile);
   }
 
   @override
   Future<void> openObsidianVault(RepoIntelligenceBridgeProfile profile) {
-    return _service.openObsidianVault(profile);
+    return _localProvider.openObsidianVault(profile);
   }
 
   @override
   Future<void> openSyncLog() {
-    return _service.openSyncLog();
+    return _localProvider.openSyncLog();
   }
 
   @override
   Future<void> openStateFile() {
-    return _service.openStateFile();
+    return _localProvider.openStateFile();
   }
 }
 

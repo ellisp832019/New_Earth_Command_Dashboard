@@ -19,6 +19,18 @@ abstract class LocalRepoBridgeProvider {
   Future<List<String>> loadSyncLogLines({int limit = 20});
 
   Directory moduleRootDirectory();
+
+  Future<void> openModuleHome();
+
+  Future<void> openProfilesFolder();
+
+  Future<void> openExportsFolder(RepoIntelligenceBridgeProfile profile);
+
+  Future<void> openObsidianVault(RepoIntelligenceBridgeProfile profile);
+
+  Future<void> openSyncLog();
+
+  Future<void> openStateFile();
 }
 
 class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
@@ -56,5 +68,35 @@ class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   @override
   Directory moduleRootDirectory() {
     return _service.moduleRootDirectory();
+  }
+
+  @override
+  Future<void> openModuleHome() {
+    return _service.openModuleHome();
+  }
+
+  @override
+  Future<void> openProfilesFolder() {
+    return _service.openProfilesFolder();
+  }
+
+  @override
+  Future<void> openExportsFolder(RepoIntelligenceBridgeProfile profile) {
+    return _service.openExportsFolder(profile);
+  }
+
+  @override
+  Future<void> openObsidianVault(RepoIntelligenceBridgeProfile profile) {
+    return _service.openObsidianVault(profile);
+  }
+
+  @override
+  Future<void> openSyncLog() {
+    return _service.openSyncLog();
+  }
+
+  @override
+  Future<void> openStateFile() {
+    return _service.openStateFile();
   }
 }

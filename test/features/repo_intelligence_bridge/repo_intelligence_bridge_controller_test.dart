@@ -137,6 +137,59 @@ void main() {
     },
   );
 
+  test(
+    'open methods delegate through the local provider seam with unchanged destinations',
+    () async {
+      final service = TrackingRepoIntelligenceBridgeService();
+      final localProvider = FakeLocalRepoBridgeProvider(service: service);
+
+      final container = ProviderContainer(
+        overrides: [
+          repoIntelligenceBridgeServiceProvider.overrideWithValue(service),
+          localRepoBridgeProvider.overrideWithValue(localProvider),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(
+        repoIntelligenceBridgeControllerProvider,
+      );
+      final exportProfile = _trackedProfile('/exports/one', '/vault/one');
+
+      await controller.openModuleHome();
+      await controller.openProfilesFolder();
+      await controller.openExportsFolder(exportProfile);
+      await controller.openObsidianVault(exportProfile);
+      await controller.openSyncLog();
+      await controller.openStateFile();
+
+      expect(localProvider.openModuleHomeCalls, 1);
+      expect(localProvider.openProfilesFolderCalls, 1);
+      expect(localProvider.openExportsFolderCalls, 1);
+      expect(localProvider.openObsidianVaultCalls, 1);
+      expect(localProvider.openSyncLogCalls, 1);
+      expect(localProvider.openStateFileCalls, 1);
+      expect(
+        localProvider.openExportsFolderProfiles.single,
+        same(exportProfile),
+      );
+      expect(
+        localProvider.openObsidianVaultProfiles.single,
+        same(exportProfile),
+      );
+      expect(service.openModuleHomeCalls, 1);
+      expect(service.openProfilesFolderCalls, 1);
+      expect(service.openExportsFolderCalls, 1);
+      expect(service.openObsidianVaultCalls, 1);
+      expect(service.openSyncLogCalls, 1);
+      expect(service.openStateFileCalls, 1);
+      expect(service.openExportsFolderProfiles.single, same(exportProfile));
+      expect(service.openObsidianVaultProfiles.single, same(exportProfile));
+      expect(localProvider.moduleRootDirectoryCalls, 0);
+      expect(service.moduleRootDirectoryCalls, 0);
+    },
+  );
+
   test('workspace export assembly remains semantically identical', () async {
     final service = TrackingRepoIntelligenceBridgeService();
     final localProvider = FakeLocalRepoBridgeProvider();
@@ -166,6 +219,12 @@ void main() {
     expect(localProvider.loadExportsCalls, 1);
     expect(localProvider.loadSyncLogLinesCalls, 1);
     expect(localProvider.moduleRootDirectoryCalls, 0);
+    expect(localProvider.openModuleHomeCalls, 0);
+    expect(localProvider.openProfilesFolderCalls, 0);
+    expect(localProvider.openExportsFolderCalls, 0);
+    expect(localProvider.openObsidianVaultCalls, 0);
+    expect(localProvider.openSyncLogCalls, 0);
+    expect(localProvider.openStateFileCalls, 0);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
     expect(service.loadSyncLogLinesCalls, 0);
@@ -223,6 +282,12 @@ void main() {
     expect(localProvider.loadStateCalls, 2);
     expect(localProvider.loadSyncLogLinesCalls, 2);
     expect(localProvider.moduleRootDirectoryCalls, 0);
+    expect(localProvider.openModuleHomeCalls, 1);
+    expect(localProvider.openProfilesFolderCalls, 1);
+    expect(localProvider.openExportsFolderCalls, 1);
+    expect(localProvider.openObsidianVaultCalls, 1);
+    expect(localProvider.openSyncLogCalls, 1);
+    expect(localProvider.openStateFileCalls, 1);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
     expect(service.loadSyncLogLinesCalls, 0);
@@ -386,6 +451,16 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   int loadSyncLogLinesCalls = 0;
   int moduleRootDirectoryCalls = 0;
   int saveStateCalls = 0;
+  int openModuleHomeCalls = 0;
+  int openProfilesFolderCalls = 0;
+  int openExportsFolderCalls = 0;
+  int openObsidianVaultCalls = 0;
+  int openSyncLogCalls = 0;
+  int openStateFileCalls = 0;
+  final List<RepoIntelligenceBridgeProfile> openExportsFolderProfiles =
+      <RepoIntelligenceBridgeProfile>[];
+  final List<RepoIntelligenceBridgeProfile> openObsidianVaultProfiles =
+      <RepoIntelligenceBridgeProfile>[];
 
   @override
   Future<List<RepoIntelligenceBridgeProfile>> loadProfiles() async {
@@ -428,6 +503,44 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
     savedStates.add(state);
     await service?.saveState(state);
   }
+
+  @override
+  Future<void> openModuleHome() async {
+    openModuleHomeCalls++;
+    await service?.openModuleHome();
+  }
+
+  @override
+  Future<void> openProfilesFolder() async {
+    openProfilesFolderCalls++;
+    await service?.openProfilesFolder();
+  }
+
+  @override
+  Future<void> openExportsFolder(RepoIntelligenceBridgeProfile profile) async {
+    openExportsFolderCalls++;
+    openExportsFolderProfiles.add(profile);
+    await service?.openExportsFolder(profile);
+  }
+
+  @override
+  Future<void> openObsidianVault(RepoIntelligenceBridgeProfile profile) async {
+    openObsidianVaultCalls++;
+    openObsidianVaultProfiles.add(profile);
+    await service?.openObsidianVault(profile);
+  }
+
+  @override
+  Future<void> openSyncLog() async {
+    openSyncLogCalls++;
+    await service?.openSyncLog();
+  }
+
+  @override
+  Future<void> openStateFile() async {
+    openStateFileCalls++;
+    await service?.openStateFile();
+  }
 }
 
 class TrackingRepoIntelligenceBridgeService
@@ -443,6 +556,10 @@ class TrackingRepoIntelligenceBridgeService
   int moduleRootDirectoryCalls = 0;
   final List<RepoIntelligenceBridgeState> savedStates =
       <RepoIntelligenceBridgeState>[];
+  final List<RepoIntelligenceBridgeProfile> openExportsFolderProfiles =
+      <RepoIntelligenceBridgeProfile>[];
+  final List<RepoIntelligenceBridgeProfile> openObsidianVaultProfiles =
+      <RepoIntelligenceBridgeProfile>[];
   int runSyncCalls = 0;
   int openModuleHomeCalls = 0;
   int openProfilesFolderCalls = 0;
@@ -572,11 +689,13 @@ class TrackingRepoIntelligenceBridgeService
   @override
   Future<void> openExportsFolder(RepoIntelligenceBridgeProfile profile) async {
     openExportsFolderCalls++;
+    openExportsFolderProfiles.add(profile);
   }
 
   @override
   Future<void> openObsidianVault(RepoIntelligenceBridgeProfile profile) async {
     openObsidianVaultCalls++;
+    openObsidianVaultProfiles.add(profile);
   }
 
   @override
