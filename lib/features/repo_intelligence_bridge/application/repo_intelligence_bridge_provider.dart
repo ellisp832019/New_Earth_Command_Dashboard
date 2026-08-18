@@ -1,7 +1,6 @@
 import 'package:path/path.dart' as path;
 
 import '../data/repo_intelligence_bridge_models.dart';
-import '../data/repo_intelligence_bridge_service.dart';
 import 'local_repo_bridge_provider.dart';
 
 abstract class RepoIntelligenceBridgeProvider {
@@ -33,12 +32,9 @@ abstract class RepoIntelligenceBridgeProvider {
 class LegacyRepoIntelligenceBridgeProvider
     extends RepoIntelligenceBridgeProvider {
   const LegacyRepoIntelligenceBridgeProvider({
-    required RepoIntelligenceBridgeService service,
     required LocalRepoBridgeProvider localProvider,
-  }) : _service = service,
-       _localProvider = localProvider;
+  }) : _localProvider = localProvider;
 
-  final RepoIntelligenceBridgeService _service;
   final LocalRepoBridgeProvider _localProvider;
 
   @override
@@ -84,7 +80,7 @@ class LegacyRepoIntelligenceBridgeProvider
     required String scriptName,
     void Function(String line)? onOutputLine,
   }) {
-    return _service.runSync(
+    return _localProvider.runSync(
       profile: profile,
       scriptName: scriptName,
       onOutputLine: onOutputLine,

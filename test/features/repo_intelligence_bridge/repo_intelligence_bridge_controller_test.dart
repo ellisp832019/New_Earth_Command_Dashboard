@@ -141,7 +141,11 @@ void main() {
     'open methods delegate through the local provider seam with unchanged destinations',
     () async {
       final service = TrackingRepoIntelligenceBridgeService();
-      final localProvider = FakeLocalRepoBridgeProvider(service: service);
+      final profile = _trackedProfile('/exports/tracked', '/vault/tracked');
+      final localProvider = FakeLocalRepoBridgeProvider(
+        service: service,
+        profiles: <RepoIntelligenceBridgeProfile>[profile],
+      );
 
       final container = ProviderContainer(
         overrides: [
@@ -190,6 +194,53 @@ void main() {
     },
   );
 
+  test(
+    'runSync delegates through the local provider seam with unchanged arguments',
+    () async {
+      final service = TrackingRepoIntelligenceBridgeService();
+      final profile = _trackedProfile('/exports/tracked', '/vault/tracked');
+      final localProvider = FakeLocalRepoBridgeProvider(
+        service: service,
+        profiles: <RepoIntelligenceBridgeProfile>[profile],
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          repoIntelligenceBridgeServiceProvider.overrideWithValue(service),
+          localRepoBridgeProvider.overrideWithValue(localProvider),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(
+        repoIntelligenceBridgeControllerProvider,
+      );
+      final syncLines = <String>[];
+
+      final result = await controller.runFullSync(onOutputLine: syncLines.add);
+
+      expect(result.scriptName, 'sync_all.ps1');
+      expect(result.exitCode, 0);
+      expect(syncLines, contains('sync:sync_all.ps1'));
+      expect(localProvider.runSyncCalls, 1);
+      expect(localProvider.runSyncScriptNames.single, 'sync_all.ps1');
+      expect(localProvider.runSyncProfiles.single, same(profile));
+      expect(service.runSyncCalls, 1);
+      expect(service.runSyncScriptNames.single, 'sync_all.ps1');
+      expect(service.runSyncProfiles.single, same(profile));
+      expect(service.runSyncOutputLines.single, 'sync:sync_all.ps1');
+      expect(localProvider.loadProfilesCalls, 1);
+      expect(localProvider.loadStateCalls, 1);
+      expect(localProvider.loadExportsCalls, 1);
+      expect(localProvider.loadSyncLogLinesCalls, 1);
+      expect(localProvider.moduleRootDirectoryCalls, 0);
+      expect(service.loadProfilesCalls, 0);
+      expect(service.loadStateCalls, 0);
+      expect(service.loadSyncLogLinesCalls, 0);
+      expect(service.moduleRootDirectoryCalls, 0);
+    },
+  );
+
   test('workspace export assembly remains semantically identical', () async {
     final service = TrackingRepoIntelligenceBridgeService();
     final localProvider = FakeLocalRepoBridgeProvider();
@@ -225,6 +276,7 @@ void main() {
     expect(localProvider.openObsidianVaultCalls, 0);
     expect(localProvider.openSyncLogCalls, 0);
     expect(localProvider.openStateFileCalls, 0);
+    expect(localProvider.runSyncCalls, 0);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
     expect(service.loadSyncLogLinesCalls, 0);
@@ -288,6 +340,7 @@ void main() {
     expect(localProvider.openObsidianVaultCalls, 1);
     expect(localProvider.openSyncLogCalls, 1);
     expect(localProvider.openStateFileCalls, 1);
+    expect(localProvider.runSyncCalls, 1);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
     expect(service.loadSyncLogLinesCalls, 0);
@@ -445,6 +498,9 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   final Directory _moduleRootDirectory;
   final List<RepoIntelligenceBridgeState> savedStates =
       <RepoIntelligenceBridgeState>[];
+  final List<RepoIntelligenceBridgeProfile> runSyncProfiles =
+      <RepoIntelligenceBridgeProfile>[];
+  final List<String> runSyncScriptNames = <String>[];
   int loadProfilesCalls = 0;
   int loadStateCalls = 0;
   int loadExportsCalls = 0;
@@ -457,10 +513,12 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   int openObsidianVaultCalls = 0;
   int openSyncLogCalls = 0;
   int openStateFileCalls = 0;
+  int runSyncCalls = 0;
   final List<RepoIntelligenceBridgeProfile> openExportsFolderProfiles =
       <RepoIntelligenceBridgeProfile>[];
   final List<RepoIntelligenceBridgeProfile> openObsidianVaultProfiles =
       <RepoIntelligenceBridgeProfile>[];
+  final List<String> runSyncOutputLines = <String>[];
 
   @override
   Future<List<RepoIntelligenceBridgeProfile>> loadProfiles() async {
@@ -541,6 +599,26 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
     openStateFileCalls++;
     await service?.openStateFile();
   }
+
+  @override
+  Future<RepoIntelligenceBridgeSyncResult> runSync({
+    required RepoIntelligenceBridgeProfile profile,
+    required String scriptName,
+    void Function(String line)? onOutputLine,
+  }) async {
+    runSyncCalls++;
+    runSyncProfiles.add(profile);
+    runSyncScriptNames.add(scriptName);
+    final result = await service!.runSync(
+      profile: profile,
+      scriptName: scriptName,
+      onOutputLine: (line) {
+        runSyncOutputLines.add(line);
+        onOutputLine?.call(line);
+      },
+    );
+    return result;
+  }
 }
 
 class TrackingRepoIntelligenceBridgeService
@@ -556,6 +634,10 @@ class TrackingRepoIntelligenceBridgeService
   int moduleRootDirectoryCalls = 0;
   final List<RepoIntelligenceBridgeState> savedStates =
       <RepoIntelligenceBridgeState>[];
+  final List<RepoIntelligenceBridgeProfile> runSyncProfiles =
+      <RepoIntelligenceBridgeProfile>[];
+  final List<String> runSyncScriptNames = <String>[];
+  final List<String> runSyncOutputLines = <String>[];
   final List<RepoIntelligenceBridgeProfile> openExportsFolderProfiles =
       <RepoIntelligenceBridgeProfile>[];
   final List<RepoIntelligenceBridgeProfile> openObsidianVaultProfiles =
@@ -662,7 +744,10 @@ class TrackingRepoIntelligenceBridgeService
     void Function(String line)? onOutputLine,
   }) async {
     runSyncCalls++;
+    runSyncProfiles.add(profile);
+    runSyncScriptNames.add(scriptName);
     onOutputLine?.call('sync:$scriptName');
+    runSyncOutputLines.add('sync:$scriptName');
     return RepoIntelligenceBridgeSyncResult(
       scriptName: scriptName,
       scriptPath: '/scripts/$scriptName',

@@ -31,6 +31,12 @@ abstract class LocalRepoBridgeProvider {
   Future<void> openSyncLog();
 
   Future<void> openStateFile();
+
+  Future<RepoIntelligenceBridgeSyncResult> runSync({
+    required RepoIntelligenceBridgeProfile profile,
+    required String scriptName,
+    void Function(String line)? onOutputLine,
+  });
 }
 
 class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
@@ -98,5 +104,18 @@ class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   @override
   Future<void> openStateFile() {
     return _service.openStateFile();
+  }
+
+  @override
+  Future<RepoIntelligenceBridgeSyncResult> runSync({
+    required RepoIntelligenceBridgeProfile profile,
+    required String scriptName,
+    void Function(String line)? onOutputLine,
+  }) {
+    return _service.runSync(
+      profile: profile,
+      scriptName: scriptName,
+      onOutputLine: onOutputLine,
+    );
   }
 }
