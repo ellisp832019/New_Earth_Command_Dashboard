@@ -24,7 +24,6 @@ final repoIntelligenceBridgeWorkspaceProvider =
 final repoIntelligenceBridgeProvider = Provider<RepoIntelligenceBridgeProvider>(
   (ref) {
     return LegacyRepoIntelligenceBridgeProvider(
-      service: ref.watch(repoIntelligenceBridgeServiceProvider),
       localProvider: ref.watch(localRepoBridgeProvider),
     );
   },
