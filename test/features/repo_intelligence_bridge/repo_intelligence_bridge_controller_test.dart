@@ -10,7 +10,7 @@ import 'package:new_earth_command_dashboard/features/repo_intelligence_bridge/da
 
 void main() {
   test(
-    'loadProfiles and loadState can be faked through the local provider seam',
+    'loadProfiles, loadState, and loadSyncLogLines can be faked through the local provider seam',
     () async {
       final service = TrackingRepoIntelligenceBridgeService();
       final localProvider = FakeLocalRepoBridgeProvider(
@@ -66,6 +66,7 @@ void main() {
           ),
           syncManifest: null,
         ),
+        syncLogLines: const <String>['2026-08-18T07:45:00Z local sync log'],
       );
 
       final container = ProviderContainer(
@@ -86,9 +87,10 @@ void main() {
       expect(localProvider.loadProfilesCalls, 1);
       expect(localProvider.loadStateCalls, 1);
       expect(localProvider.loadExportsCalls, 1);
+      expect(localProvider.loadSyncLogLinesCalls, 1);
       expect(service.loadProfilesCalls, 0);
       expect(service.loadStateCalls, 0);
-      expect(service.loadSyncLogLinesCalls, 1);
+      expect(service.loadSyncLogLinesCalls, 0);
     },
   );
 
@@ -119,8 +121,10 @@ void main() {
     expect(localProvider.loadProfilesCalls, 1);
     expect(localProvider.loadStateCalls, 1);
     expect(localProvider.loadExportsCalls, 1);
+    expect(localProvider.loadSyncLogLinesCalls, 1);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
+    expect(service.loadSyncLogLinesCalls, 0);
   });
 
   test('non-export methods continue through the legacy service path', () async {
@@ -172,8 +176,10 @@ void main() {
     expect(localProvider.loadExportsCalls, 2);
     expect(localProvider.loadProfilesCalls, 2);
     expect(localProvider.loadStateCalls, 2);
+    expect(localProvider.loadSyncLogLinesCalls, 2);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
+    expect(service.loadSyncLogLinesCalls, 0);
   });
 
   test(
@@ -184,15 +190,18 @@ void main() {
 
       final profiles = await provider.loadProfiles();
       final state = await provider.loadState();
+      final logLines = await provider.loadSyncLogLines();
       final bundle = await provider.loadExportsForProfile(
         _trackedProfile('/exports/tracked', '/vault/tracked'),
       );
 
       expect(profiles.single.fileName, 'tracked.json');
       expect(state.activeProfileFile, 'tracked.json');
+      expect(logLines.single, '2026-08-18T08:00:00Z tracked sync log');
       expect(bundle.projectStatus?.project, 'Tracked Project');
       expect(service.loadProfilesCalls, 1);
       expect(service.loadStateCalls, 1);
+      expect(service.loadSyncLogLinesCalls, 1);
       expect(service.loadExportsCalls, 1);
     },
   );
@@ -250,6 +259,7 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
     List<RepoIntelligenceBridgeProfile>? profiles,
     RepoIntelligenceBridgeState? state,
     RepoIntelligenceBridgeExportBundle? bundle,
+    List<String>? syncLogLines,
   }) : _profiles =
            profiles ??
            <RepoIntelligenceBridgeProfile>[
@@ -307,17 +317,22 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
                humanApprovalRequired: <String>['sync'],
              ),
              syncManifest: null,
-           );
+           ),
+       _syncLogLines =
+           syncLogLines ??
+           const <String>['2026-08-18T08:00:00Z tracked sync log'];
 
   final TrackingRepoIntelligenceBridgeService? service;
   final List<RepoIntelligenceBridgeProfile> _profiles;
   final RepoIntelligenceBridgeState _state;
   final RepoIntelligenceBridgeExportBundle _bundle;
+  final List<String> _syncLogLines;
   final List<RepoIntelligenceBridgeState> savedStates =
       <RepoIntelligenceBridgeState>[];
   int loadProfilesCalls = 0;
   int loadStateCalls = 0;
   int loadExportsCalls = 0;
+  int loadSyncLogLinesCalls = 0;
   int saveStateCalls = 0;
 
   @override
@@ -338,6 +353,15 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   ) async {
     loadExportsCalls++;
     return _bundle;
+  }
+
+  @override
+  Future<List<String>> loadSyncLogLines({int limit = 20}) async {
+    loadSyncLogLinesCalls++;
+    if (_syncLogLines.length <= limit) {
+      return _syncLogLines;
+    }
+    return _syncLogLines.sublist(_syncLogLines.length - limit);
   }
 
   @override

@@ -13,6 +13,8 @@ abstract class LocalRepoBridgeProvider {
   Future<RepoIntelligenceBridgeState> loadState();
 
   Future<void> saveState(RepoIntelligenceBridgeState state);
+
+  Future<List<String>> loadSyncLogLines({int limit = 20});
 }
 
 class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
@@ -40,5 +42,10 @@ class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   @override
   Future<void> saveState(RepoIntelligenceBridgeState state) {
     return _service.saveState(state);
+  }
+
+  @override
+  Future<List<String>> loadSyncLogLines({int limit = 20}) {
+    return _service.loadSyncLogLines(limit: limit);
   }
 }

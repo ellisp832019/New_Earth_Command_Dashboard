@@ -47,7 +47,7 @@ class LegacyRepoIntelligenceBridgeProvider
     final state = await _localProvider.loadState();
     final activeProfile = _resolveEffectiveProfile(profiles, state);
     final bundle = await _localProvider.loadExportsForProfile(activeProfile);
-    final syncLogLines = await _service.loadSyncLogLines();
+    final syncLogLines = await _localProvider.loadSyncLogLines();
     final lastSyncTime = _resolveLastSyncTime(
       state: state,
       bundle: bundle,
