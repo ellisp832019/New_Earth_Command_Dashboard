@@ -66,7 +66,7 @@ class LegacyRepoIntelligenceBridgeProvider
           : activeProfile.dashboardExportPath,
       moduleHomePath: state.moduleHomePath.isNotEmpty
           ? state.moduleHomePath
-          : _service.moduleRootDirectory().path,
+          : _localProvider.moduleRootDirectory().path,
       obsidianVaultPath: state.obsidianVaultPath.isNotEmpty
           ? state.obsidianVaultPath
           : activeProfile.obsidianVaultPath,

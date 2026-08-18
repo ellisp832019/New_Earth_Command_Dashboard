@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../data/repo_intelligence_bridge_models.dart';
 import '../data/repo_intelligence_bridge_service.dart';
 
@@ -15,6 +17,8 @@ abstract class LocalRepoBridgeProvider {
   Future<void> saveState(RepoIntelligenceBridgeState state);
 
   Future<List<String>> loadSyncLogLines({int limit = 20});
+
+  Directory moduleRootDirectory();
 }
 
 class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
@@ -47,5 +51,10 @@ class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   @override
   Future<List<String>> loadSyncLogLines({int limit = 20}) {
     return _service.loadSyncLogLines(limit: limit);
+  }
+
+  @override
+  Directory moduleRootDirectory() {
+    return _service.moduleRootDirectory();
   }
 }

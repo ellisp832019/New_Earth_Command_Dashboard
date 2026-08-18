@@ -88,9 +88,52 @@ void main() {
       expect(localProvider.loadStateCalls, 1);
       expect(localProvider.loadExportsCalls, 1);
       expect(localProvider.loadSyncLogLinesCalls, 1);
+      expect(localProvider.moduleRootDirectoryCalls, 0);
       expect(service.loadProfilesCalls, 0);
       expect(service.loadStateCalls, 0);
       expect(service.loadSyncLogLinesCalls, 0);
+      expect(service.moduleRootDirectoryCalls, 0);
+    },
+  );
+
+  test(
+    'moduleRootDirectory can be faked through the local provider seam',
+    () async {
+      final service = TrackingRepoIntelligenceBridgeService();
+      final localProvider = FakeLocalRepoBridgeProvider(
+        state: const RepoIntelligenceBridgeState(
+          activeProfileFile: 'tracked.json',
+          dashboardExportRoot: '/exports/tracked',
+          obsidianVaultPath: '/vault/tracked',
+          moduleHomePath: '',
+          lastSyncAt: '2026-08-18T08:00:00Z',
+        ),
+        moduleRootDirectoryValue: Directory('/module/root/from-local-seam'),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          repoIntelligenceBridgeServiceProvider.overrideWithValue(service),
+          localRepoBridgeProvider.overrideWithValue(localProvider),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final workspace = await container.read(
+        repoIntelligenceBridgeWorkspaceProvider.future,
+      );
+
+      expect(workspace.moduleHomePath, '/module/root/from-local-seam');
+      expect(localProvider.moduleRootDirectoryCalls, 1);
+      expect(service.moduleRootDirectoryCalls, 0);
+      expect(localProvider.loadProfilesCalls, 1);
+      expect(localProvider.loadStateCalls, 1);
+      expect(localProvider.loadExportsCalls, 1);
+      expect(localProvider.loadSyncLogLinesCalls, 1);
+      expect(service.loadProfilesCalls, 0);
+      expect(service.loadStateCalls, 0);
+      expect(service.loadSyncLogLinesCalls, 0);
+      expect(service.moduleRootDirectoryCalls, 0);
     },
   );
 
@@ -122,9 +165,11 @@ void main() {
     expect(localProvider.loadStateCalls, 1);
     expect(localProvider.loadExportsCalls, 1);
     expect(localProvider.loadSyncLogLinesCalls, 1);
+    expect(localProvider.moduleRootDirectoryCalls, 0);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
     expect(service.loadSyncLogLinesCalls, 0);
+    expect(service.moduleRootDirectoryCalls, 0);
   });
 
   test('non-export methods continue through the legacy service path', () async {
@@ -177,9 +222,11 @@ void main() {
     expect(localProvider.loadProfilesCalls, 2);
     expect(localProvider.loadStateCalls, 2);
     expect(localProvider.loadSyncLogLinesCalls, 2);
+    expect(localProvider.moduleRootDirectoryCalls, 0);
     expect(service.loadProfilesCalls, 0);
     expect(service.loadStateCalls, 0);
     expect(service.loadSyncLogLinesCalls, 0);
+    expect(service.moduleRootDirectoryCalls, 0);
   });
 
   test(
@@ -260,6 +307,7 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
     RepoIntelligenceBridgeState? state,
     RepoIntelligenceBridgeExportBundle? bundle,
     List<String>? syncLogLines,
+    Directory? moduleRootDirectoryValue,
   }) : _profiles =
            profiles ??
            <RepoIntelligenceBridgeProfile>[
@@ -320,19 +368,23 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
            ),
        _syncLogLines =
            syncLogLines ??
-           const <String>['2026-08-18T08:00:00Z tracked sync log'];
+           const <String>['2026-08-18T08:00:00Z tracked sync log'],
+       _moduleRootDirectory =
+           moduleRootDirectoryValue ?? Directory('/module/root/tracked');
 
   final TrackingRepoIntelligenceBridgeService? service;
   final List<RepoIntelligenceBridgeProfile> _profiles;
   final RepoIntelligenceBridgeState _state;
   final RepoIntelligenceBridgeExportBundle _bundle;
   final List<String> _syncLogLines;
+  final Directory _moduleRootDirectory;
   final List<RepoIntelligenceBridgeState> savedStates =
       <RepoIntelligenceBridgeState>[];
   int loadProfilesCalls = 0;
   int loadStateCalls = 0;
   int loadExportsCalls = 0;
   int loadSyncLogLinesCalls = 0;
+  int moduleRootDirectoryCalls = 0;
   int saveStateCalls = 0;
 
   @override
@@ -365,6 +417,12 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   }
 
   @override
+  Directory moduleRootDirectory() {
+    moduleRootDirectoryCalls++;
+    return _moduleRootDirectory;
+  }
+
+  @override
   Future<void> saveState(RepoIntelligenceBridgeState state) async {
     saveStateCalls++;
     savedStates.add(state);
@@ -382,6 +440,7 @@ class TrackingRepoIntelligenceBridgeService
   int loadSyncLogLinesCalls = 0;
   int loadExportsCalls = 0;
   int saveStateCalls = 0;
+  int moduleRootDirectoryCalls = 0;
   final List<RepoIntelligenceBridgeState> savedStates =
       <RepoIntelligenceBridgeState>[];
   int runSyncCalls = 0;
@@ -393,7 +452,10 @@ class TrackingRepoIntelligenceBridgeService
   int openStateFileCalls = 0;
 
   @override
-  Directory moduleRootDirectory() => Directory('/module/root/tracked');
+  Directory moduleRootDirectory() {
+    moduleRootDirectoryCalls++;
+    return Directory('/module/root/tracked');
+  }
 
   @override
   Future<List<RepoIntelligenceBridgeProfile>> loadProfiles() async {
