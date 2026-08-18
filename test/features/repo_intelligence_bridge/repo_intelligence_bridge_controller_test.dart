@@ -125,7 +125,7 @@ void main() {
 
   test('non-export methods continue through the legacy service path', () async {
     final service = TrackingRepoIntelligenceBridgeService();
-    final localProvider = FakeLocalRepoBridgeProvider();
+    final localProvider = FakeLocalRepoBridgeProvider(service: service);
 
     final container = ProviderContainer(
       overrides: [
@@ -197,6 +197,44 @@ void main() {
     },
   );
 
+  test(
+    'saveState delegates through the local provider seam unchanged',
+    () async {
+      final service = TrackingRepoIntelligenceBridgeService();
+      final localProvider = FakeLocalRepoBridgeProvider(service: service);
+
+      final container = ProviderContainer(
+        overrides: [
+          repoIntelligenceBridgeServiceProvider.overrideWithValue(service),
+          localRepoBridgeProvider.overrideWithValue(localProvider),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(
+        repoIntelligenceBridgeControllerProvider,
+      );
+      const state = RepoIntelligenceBridgeState(
+        activeProfileFile: 'saved.json',
+        dashboardExportRoot: '/exports/saved',
+        obsidianVaultPath: '/vault/saved',
+        moduleHomePath: '/module/root/saved',
+        lastSyncAt: '2026-08-18T11:00:00Z',
+      );
+
+      await controller.updateState(state: state);
+
+      expect(localProvider.saveStateCalls, 1);
+      expect(service.saveStateCalls, 1);
+      expect(identical(localProvider.savedStates.single, state), isTrue);
+      expect(identical(service.savedStates.single, state), isTrue);
+      expect(service.savedStates.single.dashboardExportRoot, '/exports/saved');
+      expect(service.savedStates.single.obsidianVaultPath, '/vault/saved');
+      expect(service.savedStates.single.moduleHomePath, '/module/root/saved');
+      expect(service.savedStates.single.lastSyncAt, '2026-08-18T11:00:00Z');
+    },
+  );
+
   test('local provider seam does not import NEOS', () {
     final source = File(
       'lib/features/repo_intelligence_bridge/application/local_repo_bridge_provider.dart',
@@ -208,6 +246,7 @@ void main() {
 
 class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   FakeLocalRepoBridgeProvider({
+    this.service,
     List<RepoIntelligenceBridgeProfile>? profiles,
     RepoIntelligenceBridgeState? state,
     RepoIntelligenceBridgeExportBundle? bundle,
@@ -270,12 +309,16 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
              syncManifest: null,
            );
 
+  final TrackingRepoIntelligenceBridgeService? service;
   final List<RepoIntelligenceBridgeProfile> _profiles;
   final RepoIntelligenceBridgeState _state;
   final RepoIntelligenceBridgeExportBundle _bundle;
+  final List<RepoIntelligenceBridgeState> savedStates =
+      <RepoIntelligenceBridgeState>[];
   int loadProfilesCalls = 0;
   int loadStateCalls = 0;
   int loadExportsCalls = 0;
+  int saveStateCalls = 0;
 
   @override
   Future<List<RepoIntelligenceBridgeProfile>> loadProfiles() async {
@@ -296,6 +339,13 @@ class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
     loadExportsCalls++;
     return _bundle;
   }
+
+  @override
+  Future<void> saveState(RepoIntelligenceBridgeState state) async {
+    saveStateCalls++;
+    savedStates.add(state);
+    await service?.saveState(state);
+  }
 }
 
 class TrackingRepoIntelligenceBridgeService
@@ -308,6 +358,8 @@ class TrackingRepoIntelligenceBridgeService
   int loadSyncLogLinesCalls = 0;
   int loadExportsCalls = 0;
   int saveStateCalls = 0;
+  final List<RepoIntelligenceBridgeState> savedStates =
+      <RepoIntelligenceBridgeState>[];
   int runSyncCalls = 0;
   int openModuleHomeCalls = 0;
   int openProfilesFolderCalls = 0;
@@ -397,6 +449,7 @@ class TrackingRepoIntelligenceBridgeService
   @override
   Future<void> saveState(RepoIntelligenceBridgeState state) async {
     saveStateCalls++;
+    savedStates.add(state);
   }
 
   @override

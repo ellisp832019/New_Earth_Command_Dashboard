@@ -75,7 +75,7 @@ class LegacyRepoIntelligenceBridgeProvider
 
   @override
   Future<void> saveState(RepoIntelligenceBridgeState state) {
-    return _service.saveState(state);
+    return _localProvider.saveState(state);
   }
 
   @override
