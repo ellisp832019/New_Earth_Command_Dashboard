@@ -43,8 +43,8 @@ class LegacyRepoIntelligenceBridgeProvider
 
   @override
   Future<RepoIntelligenceBridgeWorkspace> loadWorkspace() async {
-    final profiles = await _service.loadProfiles();
-    final state = await _service.loadState();
+    final profiles = await _localProvider.loadProfiles();
+    final state = await _localProvider.loadState();
     final activeProfile = _resolveEffectiveProfile(profiles, state);
     final bundle = await _localProvider.loadExportsForProfile(activeProfile);
     final syncLogLines = await _service.loadSyncLogLines();
