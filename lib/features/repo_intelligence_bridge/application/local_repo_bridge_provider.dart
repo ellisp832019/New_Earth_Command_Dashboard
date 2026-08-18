@@ -7,6 +7,10 @@ abstract class LocalRepoBridgeProvider {
   Future<RepoIntelligenceBridgeExportBundle> loadExportsForProfile(
     RepoIntelligenceBridgeProfile profile,
   );
+
+  Future<List<RepoIntelligenceBridgeProfile>> loadProfiles();
+
+  Future<RepoIntelligenceBridgeState> loadState();
 }
 
 class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
@@ -19,5 +23,15 @@ class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
     RepoIntelligenceBridgeProfile profile,
   ) {
     return _service.loadExportsForProfile(profile);
+  }
+
+  @override
+  Future<List<RepoIntelligenceBridgeProfile>> loadProfiles() {
+    return _service.loadProfiles();
+  }
+
+  @override
+  Future<RepoIntelligenceBridgeState> loadState() {
+    return _service.loadState();
   }
 }

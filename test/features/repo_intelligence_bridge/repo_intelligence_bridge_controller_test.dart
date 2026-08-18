@@ -10,10 +10,20 @@ import 'package:new_earth_command_dashboard/features/repo_intelligence_bridge/da
 
 void main() {
   test(
-    'loadExportsForProfile can be faked through the local provider seam',
+    'loadProfiles and loadState can be faked through the local provider seam',
     () async {
       final service = TrackingRepoIntelligenceBridgeService();
       final localProvider = FakeLocalRepoBridgeProvider(
+        profiles: <RepoIntelligenceBridgeProfile>[
+          _trackedProfile('/exports/tracked', '/vault/tracked'),
+        ],
+        state: const RepoIntelligenceBridgeState(
+          activeProfileFile: 'tracked.json',
+          dashboardExportRoot: '/exports/tracked',
+          obsidianVaultPath: '/vault/tracked',
+          moduleHomePath: '/module/root/tracked',
+          lastSyncAt: '2026-08-18T08:00:00Z',
+        ),
         bundle: const RepoIntelligenceBridgeExportBundle(
           projectStatus: RepoIntelligenceBridgeProjectStatus(
             project: 'Fake Project',
@@ -73,9 +83,11 @@ void main() {
       expect(workspace.bundle.projectStatus?.project, 'Fake Project');
       expect(workspace.bundle.repoHealth?.score, 99);
       expect(workspace.bundle.nextActions.single.title, 'Fake export seam');
+      expect(localProvider.loadProfilesCalls, 1);
+      expect(localProvider.loadStateCalls, 1);
       expect(localProvider.loadExportsCalls, 1);
-      expect(service.loadProfilesCalls, 1);
-      expect(service.loadStateCalls, 1);
+      expect(service.loadProfilesCalls, 0);
+      expect(service.loadStateCalls, 0);
       expect(service.loadSyncLogLinesCalls, 1);
     },
   );
@@ -104,7 +116,11 @@ void main() {
     expect(workspace.lastSyncTime, DateTime.parse('2026-08-18T08:00:00Z'));
     expect(workspace.bundle.projectStatus?.project, 'Tracked Project');
     expect(workspace.bundle.repoHealth?.score, 87);
+    expect(localProvider.loadProfilesCalls, 1);
+    expect(localProvider.loadStateCalls, 1);
     expect(localProvider.loadExportsCalls, 1);
+    expect(service.loadProfilesCalls, 0);
+    expect(service.loadStateCalls, 0);
   });
 
   test('non-export methods continue through the legacy service path', () async {
@@ -154,19 +170,29 @@ void main() {
     expect(service.openStateFileCalls, 1);
     expect(syncLines, contains('sync:sync_all.ps1'));
     expect(localProvider.loadExportsCalls, 2);
+    expect(localProvider.loadProfilesCalls, 2);
+    expect(localProvider.loadStateCalls, 2);
+    expect(service.loadProfilesCalls, 0);
+    expect(service.loadStateCalls, 0);
   });
 
   test(
-    'legacy local provider delegates loadExportsForProfile correctly',
+    'legacy local provider delegates loadExportsForProfile, loadProfiles, and loadState correctly',
     () async {
       final service = TrackingRepoIntelligenceBridgeService();
       final provider = LegacyLocalRepoBridgeProvider(service);
 
+      final profiles = await provider.loadProfiles();
+      final state = await provider.loadState();
       final bundle = await provider.loadExportsForProfile(
         _trackedProfile('/exports/tracked', '/vault/tracked'),
       );
 
+      expect(profiles.single.fileName, 'tracked.json');
+      expect(state.activeProfileFile, 'tracked.json');
       expect(bundle.projectStatus?.project, 'Tracked Project');
+      expect(service.loadProfilesCalls, 1);
+      expect(service.loadStateCalls, 1);
       expect(service.loadExportsCalls, 1);
     },
   );
@@ -181,54 +207,87 @@ void main() {
 }
 
 class FakeLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
-  FakeLocalRepoBridgeProvider({RepoIntelligenceBridgeExportBundle? bundle})
-    : _bundle =
-          bundle ??
-          const RepoIntelligenceBridgeExportBundle(
-            projectStatus: RepoIntelligenceBridgeProjectStatus(
-              project: 'Tracked Project',
-              type: 'repo',
-              status: 'green',
-              phase: 'Build',
-              health: 'good',
-              healthScore: 87,
-              currentFocus: 'Tracked Project',
-              generatedAt: '2026-08-18T08:00:00Z',
-              repoRoot: '/repo/root',
-            ),
-            nextActions: <RepoIntelligenceBridgeNextAction>[
-              RepoIntelligenceBridgeNextAction(
-                title: 'Track delegation',
-                priority: 'High',
-                status: 'Open',
-              ),
-            ],
-            tasks: <RepoIntelligenceBridgeTask>[],
-            risks: <RepoIntelligenceBridgeRisk>[],
-            decisions: <RepoIntelligenceBridgeDecision>[],
-            timeline: <RepoIntelligenceBridgeTimelineItem>[],
-            repoHealth: RepoIntelligenceBridgeRepoHealth(
-              health: 'good',
-              score: 87,
-              totalScannedFiles: 12,
-              todoMarkers: 1,
-              checks: <RepoIntelligenceBridgeRepoHealthCheck>[],
-              generatedAt: '2026-08-18T08:00:00Z',
-            ),
-            aiContext: RepoIntelligenceBridgeAiContext(
-              projectName: 'Tracked Project',
-              sourceOfTruth: '/source/of/truth',
-              generatedAt: '2026-08-18T08:00:00Z',
-              lockedRules: <String>['local-first'],
-              safeAiPermissions: <String>['read_only'],
-              blockedAiPermissions: <String>['write'],
-              humanApprovalRequired: <String>['sync'],
-            ),
-            syncManifest: null,
-          );
+  FakeLocalRepoBridgeProvider({
+    List<RepoIntelligenceBridgeProfile>? profiles,
+    RepoIntelligenceBridgeState? state,
+    RepoIntelligenceBridgeExportBundle? bundle,
+  }) : _profiles =
+           profiles ??
+           <RepoIntelligenceBridgeProfile>[
+             _trackedProfile('/exports/tracked', '/vault/tracked'),
+           ],
+       _state =
+           state ??
+           const RepoIntelligenceBridgeState(
+             activeProfileFile: 'tracked.json',
+             dashboardExportRoot: '/exports/tracked',
+             obsidianVaultPath: '/vault/tracked',
+             moduleHomePath: '/module/root/tracked',
+             lastSyncAt: '2026-08-18T08:00:00Z',
+           ),
+       _bundle =
+           bundle ??
+           const RepoIntelligenceBridgeExportBundle(
+             projectStatus: RepoIntelligenceBridgeProjectStatus(
+               project: 'Tracked Project',
+               type: 'repo',
+               status: 'green',
+               phase: 'Build',
+               health: 'good',
+               healthScore: 87,
+               currentFocus: 'Tracked Project',
+               generatedAt: '2026-08-18T08:00:00Z',
+               repoRoot: '/repo/root',
+             ),
+             nextActions: <RepoIntelligenceBridgeNextAction>[
+               RepoIntelligenceBridgeNextAction(
+                 title: 'Track delegation',
+                 priority: 'High',
+                 status: 'Open',
+               ),
+             ],
+             tasks: <RepoIntelligenceBridgeTask>[],
+             risks: <RepoIntelligenceBridgeRisk>[],
+             decisions: <RepoIntelligenceBridgeDecision>[],
+             timeline: <RepoIntelligenceBridgeTimelineItem>[],
+             repoHealth: RepoIntelligenceBridgeRepoHealth(
+               health: 'good',
+               score: 87,
+               totalScannedFiles: 12,
+               todoMarkers: 1,
+               checks: <RepoIntelligenceBridgeRepoHealthCheck>[],
+               generatedAt: '2026-08-18T08:00:00Z',
+             ),
+             aiContext: RepoIntelligenceBridgeAiContext(
+               projectName: 'Tracked Project',
+               sourceOfTruth: '/source/of/truth',
+               generatedAt: '2026-08-18T08:00:00Z',
+               lockedRules: <String>['local-first'],
+               safeAiPermissions: <String>['read_only'],
+               blockedAiPermissions: <String>['write'],
+               humanApprovalRequired: <String>['sync'],
+             ),
+             syncManifest: null,
+           );
 
+  final List<RepoIntelligenceBridgeProfile> _profiles;
+  final RepoIntelligenceBridgeState _state;
   final RepoIntelligenceBridgeExportBundle _bundle;
+  int loadProfilesCalls = 0;
+  int loadStateCalls = 0;
   int loadExportsCalls = 0;
+
+  @override
+  Future<List<RepoIntelligenceBridgeProfile>> loadProfiles() async {
+    loadProfilesCalls++;
+    return _profiles;
+  }
+
+  @override
+  Future<RepoIntelligenceBridgeState> loadState() async {
+    loadStateCalls++;
+    return _state;
+  }
 
   @override
   Future<RepoIntelligenceBridgeExportBundle> loadExportsForProfile(
