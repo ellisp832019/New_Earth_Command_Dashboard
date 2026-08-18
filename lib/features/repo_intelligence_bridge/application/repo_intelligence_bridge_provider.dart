@@ -1,5 +1,8 @@
+import 'package:path/path.dart' as path;
+
 import '../data/repo_intelligence_bridge_models.dart';
 import '../data/repo_intelligence_bridge_service.dart';
+import 'local_repo_bridge_provider.dart';
 
 abstract class RepoIntelligenceBridgeProvider {
   const RepoIntelligenceBridgeProvider();
@@ -29,13 +32,45 @@ abstract class RepoIntelligenceBridgeProvider {
 
 class LegacyRepoIntelligenceBridgeProvider
     extends RepoIntelligenceBridgeProvider {
-  const LegacyRepoIntelligenceBridgeProvider(this._service);
+  const LegacyRepoIntelligenceBridgeProvider({
+    required RepoIntelligenceBridgeService service,
+    required LocalRepoBridgeProvider localProvider,
+  }) : _service = service,
+       _localProvider = localProvider;
 
   final RepoIntelligenceBridgeService _service;
+  final LocalRepoBridgeProvider _localProvider;
 
   @override
-  Future<RepoIntelligenceBridgeWorkspace> loadWorkspace() {
-    return _service.loadWorkspace();
+  Future<RepoIntelligenceBridgeWorkspace> loadWorkspace() async {
+    final profiles = await _service.loadProfiles();
+    final state = await _service.loadState();
+    final activeProfile = _resolveEffectiveProfile(profiles, state);
+    final bundle = await _localProvider.loadExportsForProfile(activeProfile);
+    final syncLogLines = await _service.loadSyncLogLines();
+    final lastSyncTime = _resolveLastSyncTime(
+      state: state,
+      bundle: bundle,
+      syncLogLines: syncLogLines,
+    );
+
+    return RepoIntelligenceBridgeWorkspace(
+      profiles: profiles,
+      state: state,
+      activeProfile: activeProfile,
+      bundle: bundle,
+      syncLogLines: syncLogLines,
+      lastSyncTime: lastSyncTime,
+      exportsDirectory: state.dashboardExportRoot.isNotEmpty
+          ? state.dashboardExportRoot
+          : activeProfile.dashboardExportPath,
+      moduleHomePath: state.moduleHomePath.isNotEmpty
+          ? state.moduleHomePath
+          : _service.moduleRootDirectory().path,
+      obsidianVaultPath: state.obsidianVaultPath.isNotEmpty
+          ? state.obsidianVaultPath
+          : activeProfile.obsidianVaultPath,
+    );
   }
 
   @override
@@ -85,4 +120,80 @@ class LegacyRepoIntelligenceBridgeProvider
   Future<void> openStateFile() {
     return _service.openStateFile();
   }
+}
+
+RepoIntelligenceBridgeProfile _resolveEffectiveProfile(
+  List<RepoIntelligenceBridgeProfile> profiles,
+  RepoIntelligenceBridgeState state,
+) {
+  if (profiles.isNotEmpty) {
+    for (final profile in profiles) {
+      if (profile.fileName == state.activeProfileFile) {
+        return profile;
+      }
+    }
+
+    final preferred = profiles.where(
+      (profile) => profile.fileName == 'new_earth_dashboard.json',
+    );
+    if (preferred.isNotEmpty) {
+      return preferred.first;
+    }
+
+    return profiles.first;
+  }
+
+  return RepoIntelligenceBridgeProfile(
+    fileName: state.activeProfileFile,
+    projectName: path.basenameWithoutExtension(state.activeProfileFile),
+    projectType: '',
+    repoRoot: '.',
+    sourceOfTruth: '',
+    obsidianVaultPath: state.obsidianVaultPath,
+    obsidianProjectFolder: '',
+    dashboardExportPath: path.join(
+      state.dashboardExportRoot,
+      path.basenameWithoutExtension(state.activeProfileFile),
+    ),
+    ignore: const <String>[],
+    lockedRules: const <String>[],
+    safeAiPermissions: const <String>[],
+    blockedAiPermissions: const <String>[],
+  );
+}
+
+DateTime? _resolveLastSyncTime({
+  required RepoIntelligenceBridgeState state,
+  required RepoIntelligenceBridgeExportBundle bundle,
+  required List<String> syncLogLines,
+}) {
+  DateTime? parsed(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(value.trim());
+  }
+
+  final stateSync = parsed(state.lastSyncAt);
+  if (stateSync != null) {
+    return stateSync;
+  }
+
+  final manifestSync = parsed(bundle.syncManifest?.generatedAt);
+  if (manifestSync != null) {
+    return manifestSync;
+  }
+
+  for (final line in syncLogLines.reversed) {
+    final spaceIndex = line.indexOf(' ');
+    if (spaceIndex <= 0) {
+      continue;
+    }
+    final candidate = DateTime.tryParse(line.substring(0, spaceIndex));
+    if (candidate != null) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
