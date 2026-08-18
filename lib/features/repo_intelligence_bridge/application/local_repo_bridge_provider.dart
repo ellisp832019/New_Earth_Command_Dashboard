@@ -11,6 +11,8 @@ abstract class LocalRepoBridgeProvider {
   Future<List<RepoIntelligenceBridgeProfile>> loadProfiles();
 
   Future<RepoIntelligenceBridgeState> loadState();
+
+  Future<void> saveState(RepoIntelligenceBridgeState state);
 }
 
 class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
@@ -33,5 +35,10 @@ class LegacyLocalRepoBridgeProvider extends LocalRepoBridgeProvider {
   @override
   Future<RepoIntelligenceBridgeState> loadState() {
     return _service.loadState();
+  }
+
+  @override
+  Future<void> saveState(RepoIntelligenceBridgeState state) {
+    return _service.saveState(state);
   }
 }
