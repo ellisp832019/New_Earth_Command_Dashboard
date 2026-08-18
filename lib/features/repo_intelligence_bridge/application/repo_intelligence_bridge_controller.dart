@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'local_repo_bridge_provider.dart';
 import 'repo_intelligence_bridge_provider.dart';
 import '../data/repo_intelligence_bridge_models.dart';
 import '../data/repo_intelligence_bridge_service.dart';
@@ -9,6 +10,12 @@ final repoIntelligenceBridgeServiceProvider =
       return RepoIntelligenceBridgeService();
     });
 
+final localRepoBridgeProvider = Provider<LocalRepoBridgeProvider>((ref) {
+  return LegacyLocalRepoBridgeProvider(
+    ref.watch(repoIntelligenceBridgeServiceProvider),
+  );
+});
+
 final repoIntelligenceBridgeWorkspaceProvider =
     FutureProvider<RepoIntelligenceBridgeWorkspace>((ref) async {
       return ref.watch(repoIntelligenceBridgeProvider).loadWorkspace();
@@ -17,7 +24,8 @@ final repoIntelligenceBridgeWorkspaceProvider =
 final repoIntelligenceBridgeProvider = Provider<RepoIntelligenceBridgeProvider>(
   (ref) {
     return LegacyRepoIntelligenceBridgeProvider(
-      ref.watch(repoIntelligenceBridgeServiceProvider),
+      service: ref.watch(repoIntelligenceBridgeServiceProvider),
+      localProvider: ref.watch(localRepoBridgeProvider),
     );
   },
 );
