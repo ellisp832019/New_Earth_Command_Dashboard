@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'repo_intelligence_bridge_provider.dart';
 import '../data/repo_intelligence_bridge_models.dart';
 import '../data/repo_intelligence_bridge_service.dart';
 
@@ -10,8 +11,16 @@ final repoIntelligenceBridgeServiceProvider =
 
 final repoIntelligenceBridgeWorkspaceProvider =
     FutureProvider<RepoIntelligenceBridgeWorkspace>((ref) async {
-      return ref.watch(repoIntelligenceBridgeServiceProvider).loadWorkspace();
+      return ref.watch(repoIntelligenceBridgeProvider).loadWorkspace();
     });
+
+final repoIntelligenceBridgeProvider = Provider<RepoIntelligenceBridgeProvider>(
+  (ref) {
+    return LegacyRepoIntelligenceBridgeProvider(
+      ref.watch(repoIntelligenceBridgeServiceProvider),
+    );
+  },
+);
 
 final repoIntelligenceBridgeControllerProvider =
     Provider<RepoIntelligenceBridgeController>((ref) {
@@ -23,12 +32,12 @@ class RepoIntelligenceBridgeController {
 
   final Ref _ref;
 
-  RepoIntelligenceBridgeService get _service =>
-      _ref.read(repoIntelligenceBridgeServiceProvider);
+  RepoIntelligenceBridgeProvider get _provider =>
+      _ref.read(repoIntelligenceBridgeProvider);
 
   Future<void> setActiveProfile(String fileName) async {
-    final workspace = await _service.loadWorkspace();
-    await _service.saveState(
+    final workspace = await _provider.loadWorkspace();
+    await _provider.saveState(
       RepoIntelligenceBridgeState(
         activeProfileFile: fileName,
         dashboardExportRoot: workspace.state.dashboardExportRoot,
@@ -41,15 +50,15 @@ class RepoIntelligenceBridgeController {
   }
 
   Future<void> updateState({required RepoIntelligenceBridgeState state}) async {
-    await _service.saveState(state);
+    await _provider.saveState(state);
     _ref.invalidate(repoIntelligenceBridgeWorkspaceProvider);
   }
 
   Future<RepoIntelligenceBridgeSyncResult> runValidateConfig({
     void Function(String line)? onOutputLine,
   }) async {
-    final workspace = await _service.loadWorkspace();
-    final result = await _service.runSync(
+    final workspace = await _provider.loadWorkspace();
+    final result = await _provider.runSync(
       profile: workspace.activeProfile,
       scriptName: 'validate_config.ps1',
       onOutputLine: onOutputLine,
@@ -61,8 +70,8 @@ class RepoIntelligenceBridgeController {
   Future<RepoIntelligenceBridgeSyncResult> runObsidianSync({
     void Function(String line)? onOutputLine,
   }) async {
-    final workspace = await _service.loadWorkspace();
-    final result = await _service.runSync(
+    final workspace = await _provider.loadWorkspace();
+    final result = await _provider.runSync(
       profile: workspace.activeProfile,
       scriptName: 'sync_to_obsidian.ps1',
       onOutputLine: onOutputLine,
@@ -74,8 +83,8 @@ class RepoIntelligenceBridgeController {
   Future<RepoIntelligenceBridgeSyncResult> runDashboardSync({
     void Function(String line)? onOutputLine,
   }) async {
-    final workspace = await _service.loadWorkspace();
-    final result = await _service.runSync(
+    final workspace = await _provider.loadWorkspace();
+    final result = await _provider.runSync(
       profile: workspace.activeProfile,
       scriptName: 'sync_to_dashboard.ps1',
       onOutputLine: onOutputLine,
@@ -87,8 +96,8 @@ class RepoIntelligenceBridgeController {
   Future<RepoIntelligenceBridgeSyncResult> runFullSync({
     void Function(String line)? onOutputLine,
   }) async {
-    final workspace = await _service.loadWorkspace();
-    final result = await _service.runSync(
+    final workspace = await _provider.loadWorkspace();
+    final result = await _provider.runSync(
       profile: workspace.activeProfile,
       scriptName: 'sync_all.ps1',
       onOutputLine: onOutputLine,
@@ -97,17 +106,17 @@ class RepoIntelligenceBridgeController {
     return result;
   }
 
-  Future<void> openModuleHome() => _service.openModuleHome();
+  Future<void> openModuleHome() => _provider.openModuleHome();
 
-  Future<void> openProfilesFolder() => _service.openProfilesFolder();
+  Future<void> openProfilesFolder() => _provider.openProfilesFolder();
 
   Future<void> openExportsFolder(RepoIntelligenceBridgeProfile profile) =>
-      _service.openExportsFolder(profile);
+      _provider.openExportsFolder(profile);
 
   Future<void> openObsidianVault(RepoIntelligenceBridgeProfile profile) =>
-      _service.openObsidianVault(profile);
+      _provider.openObsidianVault(profile);
 
-  Future<void> openSyncLog() => _service.openSyncLog();
+  Future<void> openSyncLog() => _provider.openSyncLog();
 
-  Future<void> openStateFile() => _service.openStateFile();
+  Future<void> openStateFile() => _provider.openStateFile();
 }
