@@ -10,6 +10,7 @@ import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
 import '../application/engineering_services.dart';
 import '../application/engineering_integration_adapters.dart';
+import '../data/engineering_snapshot_reader.dart';
 import '../data/engineering_repository.dart';
 import '../domain/engineering_models.dart';
 import 'widgets/engineering_widgets.dart';
@@ -18,10 +19,12 @@ class EngineeringStudioScreen extends StatefulWidget {
   const EngineeringStudioScreen({
     super.key,
     this.repository,
+    this.snapshotReader,
     this.initialSection = EngineeringSection.dashboard,
   });
 
   final EngineeringRepository? repository;
+  final EngineeringSnapshotReader? snapshotReader;
   final EngineeringSection initialSection;
 
   @override
@@ -32,6 +35,8 @@ class EngineeringStudioScreen extends StatefulWidget {
 class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
   late final EngineeringRepository _repository =
       widget.repository ?? LocalEngineeringRepository();
+  late final EngineeringSnapshotReader _snapshotReader =
+      widget.snapshotReader ?? LocalEngineeringSnapshotReader(_repository);
   late final EngineeringKnowledgeEngineAdapter _knowledgeEngineAdapter =
       const LocalEngineeringKnowledgeEngineAdapter();
   late final EngineeringGaiaAssistantAdapter _gaiaAssistantAdapter =
@@ -74,7 +79,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
 
   Future<void> _loadSnapshot() async {
     try {
-      final snapshot = await _repository.loadSnapshot();
+      final snapshot = await _snapshotReader.loadSnapshot();
       if (!mounted) {
         return;
       }
@@ -280,7 +285,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
 
   Future<void> _refreshSnapshot() async {
     try {
-      final snapshot = await _repository.loadSnapshot();
+      final snapshot = await _snapshotReader.loadSnapshot();
       if (!mounted) {
         return;
       }
