@@ -6,9 +6,11 @@ import 'package:path/path.dart' as path;
 
 import '../domain/engineering_models.dart';
 
-abstract class EngineeringRepository {
+abstract class EngineeringSnapshotReader {
   Future<EngineeringSnapshot> loadSnapshot();
+}
 
+abstract class EngineeringRepository extends EngineeringSnapshotReader {
   Future<void> saveSnapshot(EngineeringSnapshot snapshot);
 
   Future<void> resetLocalState();
