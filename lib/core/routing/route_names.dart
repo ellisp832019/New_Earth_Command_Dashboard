@@ -221,12 +221,41 @@ abstract final class RouteNames {
   static String voiceHome() => voiceHomeRoute;
   static const calmUiDemo = '/dashboard/calm-ui-demo';
 
-  static String omegaEngineeringStudioSection(String section) {
+  static String omegaEngineeringStudioSection(
+    String section, {
+    String? projectId,
+    String? canonicalProjectId,
+  }) {
     final trimmed = section.trim();
-    if (trimmed.isEmpty) {
-      return omegaEngineeringStudio;
+    final path = trimmed.isEmpty
+        ? omegaEngineeringStudio
+        : '$omegaEngineeringStudio/$trimmed';
+    final queryParameters = <String, String>{};
+    final trimmedProjectId = projectId?.trim();
+    if (trimmedProjectId != null && trimmedProjectId.isNotEmpty) {
+      queryParameters['projectId'] = trimmedProjectId;
     }
-    return '$omegaEngineeringStudio/$trimmed';
+    final trimmedCanonicalProjectId = canonicalProjectId?.trim();
+    if (trimmedCanonicalProjectId != null &&
+        trimmedCanonicalProjectId.isNotEmpty) {
+      queryParameters['canonicalProjectId'] = trimmedCanonicalProjectId;
+    }
+    return Uri(
+      path: path,
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
+    ).toString();
+  }
+
+  static String omegaEngineeringStudioForProject(
+    String projectId, {
+    String? canonicalProjectId,
+    String? section,
+  }) {
+    return omegaEngineeringStudioSection(
+      section ?? '',
+      projectId: projectId,
+      canonicalProjectId: canonicalProjectId,
+    );
   }
 
   static String launchpadCampaign(String campaignId) {
