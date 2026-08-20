@@ -8,9 +8,9 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../../core/theme/app_colours.dart';
 import '../../../core/routing/route_names.dart';
+import '../application/engineering_studio_dependencies.dart';
 import '../application/engineering_services.dart';
 import '../application/engineering_integration_adapters.dart';
-import '../data/engineering_snapshot_reader.dart';
 import '../data/engineering_repository.dart';
 import '../domain/engineering_models.dart';
 import 'widgets/engineering_widgets.dart';
@@ -18,11 +18,15 @@ import 'widgets/engineering_widgets.dart';
 class EngineeringStudioScreen extends StatefulWidget {
   const EngineeringStudioScreen({
     super.key,
+    this.projectScope,
+    this.dependencies,
     this.repository,
     this.snapshotReader,
     this.initialSection = EngineeringSection.dashboard,
   });
 
+  final EngineeringProjectScope? projectScope;
+  final EngineeringStudioDependencies? dependencies;
   final EngineeringRepository? repository;
   final EngineeringSnapshotReader? snapshotReader;
   final EngineeringSection initialSection;
@@ -33,10 +37,18 @@ class EngineeringStudioScreen extends StatefulWidget {
 }
 
 class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
-  late final EngineeringRepository _repository =
-      widget.repository ?? LocalEngineeringRepository();
+  late final EngineeringStudioDependencies _dependencies =
+      widget.dependencies ??
+      EngineeringStudioDependencies.local(
+        projectScope: widget.projectScope,
+        repository: widget.repository,
+        snapshotReader: widget.snapshotReader,
+      );
+  late final EngineeringProjectScope? _projectScope =
+      _dependencies.projectScope;
+  late final EngineeringRepository _repository = _dependencies.repository;
   late final EngineeringSnapshotReader _snapshotReader =
-      widget.snapshotReader ?? LocalEngineeringSnapshotReader(_repository);
+      _dependencies.snapshotReader;
   late final EngineeringKnowledgeEngineAdapter _knowledgeEngineAdapter =
       const LocalEngineeringKnowledgeEngineAdapter();
   late final EngineeringGaiaAssistantAdapter _gaiaAssistantAdapter =
@@ -118,7 +130,11 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
   }
 
   String _routeFor(EngineeringSection section) {
-    return RouteNames.omegaEngineeringStudioSection(section.routeSegment);
+    return RouteNames.omegaEngineeringStudioSection(
+      section.routeSegment,
+      projectId: _projectScope?.projectId,
+      canonicalProjectId: _projectScope?.canonicalProjectId,
+    );
   }
 
   void _clearSearch() {
@@ -1410,6 +1426,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
               sliver: SliverToBoxAdapter(
                 child: _HeroPanel(
                   snapshot: snapshot,
+                  projectScope: _projectScope,
                   searchController: _searchController,
                   searchQuery: _searchQuery,
                   statusFilter: _statusFilter,
@@ -1460,6 +1477,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
                 child: _EngineeringWorkspaceFrame(
                   snapshot: snapshot,
                   currentSection: _section,
+                  projectScope: _projectScope,
                   searchQuery: _searchQuery,
                   statusFilter: _statusFilter,
                   onSectionSelected: _setSection,
@@ -2919,6 +2937,7 @@ class _EngineeringStudioScreenState extends State<EngineeringStudioScreen> {
 class _HeroPanel extends StatelessWidget {
   const _HeroPanel({
     required this.snapshot,
+    required this.projectScope,
     required this.searchController,
     required this.searchQuery,
     required this.statusFilter,
@@ -2930,6 +2949,7 @@ class _HeroPanel extends StatelessWidget {
   });
 
   final EngineeringSnapshot snapshot;
+  final EngineeringProjectScope? projectScope;
   final TextEditingController searchController;
   final String searchQuery;
   final String statusFilter;
@@ -3049,6 +3069,11 @@ class _HeroPanel extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
+              if (projectScope != null)
+                _HeaderMetricChip(
+                  label: 'Project',
+                  value: projectScope!.displayName ?? projectScope!.projectId,
+                ),
               FilledButton.icon(
                 onPressed: onOpenKnowledgeEngine,
                 icon: const Icon(Icons.travel_explore_outlined),
@@ -3132,6 +3157,7 @@ class _EngineeringWorkspaceFrame extends StatelessWidget {
   const _EngineeringWorkspaceFrame({
     required this.snapshot,
     required this.currentSection,
+    required this.projectScope,
     required this.searchQuery,
     required this.statusFilter,
     required this.onSectionSelected,
@@ -3145,6 +3171,7 @@ class _EngineeringWorkspaceFrame extends StatelessWidget {
 
   final EngineeringSnapshot snapshot;
   final EngineeringSection currentSection;
+  final EngineeringProjectScope? projectScope;
   final String searchQuery;
   final String statusFilter;
   final ValueChanged<EngineeringSection> onSectionSelected;
@@ -3189,6 +3216,7 @@ class _EngineeringWorkspaceFrame extends StatelessWidget {
               _WorkspaceHeaderCard(
                 snapshot: snapshot,
                 currentSection: currentSection,
+                projectScope: projectScope,
                 searchQuery: searchQuery,
                 statusFilter: statusFilter,
                 onClearSearch: onClearSearch,
@@ -3253,6 +3281,7 @@ class _WorkspaceHeaderCard extends StatelessWidget {
   const _WorkspaceHeaderCard({
     required this.snapshot,
     required this.currentSection,
+    required this.projectScope,
     required this.searchQuery,
     required this.statusFilter,
     required this.onClearSearch,
@@ -3263,6 +3292,7 @@ class _WorkspaceHeaderCard extends StatelessWidget {
 
   final EngineeringSnapshot snapshot;
   final EngineeringSection currentSection;
+  final EngineeringProjectScope? projectScope;
   final String searchQuery;
   final String statusFilter;
   final VoidCallback onClearSearch;
@@ -3355,6 +3385,11 @@ class _WorkspaceHeaderCard extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
+              if (projectScope != null)
+                _HeaderMetricChip(
+                  label: 'Project',
+                  value: projectScope!.displayName ?? projectScope!.projectId,
+                ),
               _HeaderMetricChip(
                 label: 'Projects',
                 value: '${snapshot.projectCount}',
