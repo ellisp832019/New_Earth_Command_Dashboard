@@ -10,6 +10,10 @@ abstract class EngineeringSnapshotReader {
   Future<EngineeringSnapshot> loadSnapshot();
 }
 
+abstract class PersistedEngineeringSnapshotReader {
+  Future<EngineeringSnapshot?> loadPersistedSnapshotIfPresent();
+}
+
 abstract class EngineeringRepository extends EngineeringSnapshotReader {
   Future<void> saveSnapshot(EngineeringSnapshot snapshot);
 
@@ -49,7 +53,8 @@ abstract class EngineeringRepository extends EngineeringSnapshotReader {
   Future<EngineeringSnapshot> importSnapshot(File source);
 }
 
-class LocalEngineeringRepository implements EngineeringRepository {
+class LocalEngineeringRepository
+    implements EngineeringRepository, PersistedEngineeringSnapshotReader {
   LocalEngineeringRepository({
     this.moduleRootPath = 'modules/01_OMEGA_ENGINEERING_STUDIO_MODULE',
     EngineeringLocalDatabase? database,
@@ -89,6 +94,33 @@ class LocalEngineeringRepository implements EngineeringRepository {
     final snapshot = await _loadPersistedSnapshot(baseSnapshot);
     _cachedSnapshot = snapshot;
     return snapshot;
+  }
+
+  @override
+  Future<EngineeringSnapshot?> loadPersistedSnapshotIfPresent() async {
+    final row =
+        await (_database.select(_database.engineeringSnapshotRecords)
+              ..where((table) => table.snapshotId.equals('default'))
+              ..limit(1))
+            .getSingleOrNull();
+    if (row == null) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(row.payload);
+      final map = decoded is Map<String, dynamic>
+          ? decoded
+          : decoded is Map
+          ? decoded.map((key, value) => MapEntry(key.toString(), value))
+          : null;
+      if (map == null) {
+        return null;
+      }
+      return _snapshotFromPersistedJson(map);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -297,63 +329,12 @@ class LocalEngineeringRepository implements EngineeringRepository {
   Future<EngineeringSnapshot> _loadPersistedSnapshot(
     EngineeringSnapshot snapshot,
   ) async {
-    final row =
-        await (_database.select(_database.engineeringSnapshotRecords)
-              ..where((table) => table.snapshotId.equals('default'))
-              ..limit(1))
-            .getSingleOrNull();
-
-    if (row == null) {
+    final persisted = await loadPersistedSnapshotIfPresent();
+    if (persisted == null) {
       await _persistSnapshot(snapshot);
       return snapshot;
     }
-
-    try {
-      final decoded = jsonDecode(row.payload);
-      final map = decoded is Map<String, dynamic>
-          ? decoded
-          : decoded is Map
-          ? decoded.map((key, value) => MapEntry(key.toString(), value))
-          : null;
-      if (map == null) {
-        return snapshot;
-      }
-
-      return snapshot.copyWith(
-        settings: _settingsFromJson(map['settings']) ?? snapshot.settings,
-        projects: _projectsFromJson(map['projects']) ?? snapshot.projects,
-        circuitBlocks:
-            _circuitBlocksFromJson(map['circuitBlocks']) ??
-            snapshot.circuitBlocks,
-        pcbRevisions:
-            _pcbRevisionsFromJson(map['pcbRevisions']) ?? snapshot.pcbRevisions,
-        firmwareBuilds:
-            _firmwareBuildsFromJson(map['firmwareBuilds']) ??
-            snapshot.firmwareBuilds,
-        deviceNodes:
-            _deviceNodesFromJson(map['deviceNodes']) ?? snapshot.deviceNodes,
-        componentItems:
-            _componentItemsFromJson(map['componentItems']) ??
-            snapshot.componentItems,
-        experiments:
-            _experimentsFromJson(map['experiments']) ?? snapshot.experiments,
-        testProcedures:
-            _testProceduresFromJson(map['testProcedures']) ??
-            snapshot.testProcedures,
-        validationResults:
-            _validationResultsFromJson(map['validationResults']) ??
-            snapshot.validationResults,
-        manufacturingSteps:
-            _manufacturingStepsFromJson(map['manufacturingSteps']) ??
-            snapshot.manufacturingSteps,
-        documents: _documentsFromJson(map['documents']) ?? snapshot.documents,
-        attachments:
-            _attachmentsFromJson(map['attachments']) ?? snapshot.attachments,
-        decisions: _decisionsFromJson(map['decisions']) ?? snapshot.decisions,
-      );
-    } catch (_) {
-      return snapshot;
-    }
+    return persisted;
   }
 
   Future<void> _persistSnapshot(EngineeringSnapshot snapshot) async {
@@ -451,6 +432,10 @@ class LocalEngineeringRepository implements EngineeringRepository {
           _attachmentsFromJson(json['attachments']) ?? _buildAttachments(),
       decisions: _decisionsFromJson(json['decisions']) ?? _buildDecisions(),
     );
+  }
+
+  EngineeringSnapshot _snapshotFromPersistedJson(Map<String, dynamic> json) {
+    return _snapshotFromJson(json);
   }
 
   List<EngineeringProject> _buildProjects() {
