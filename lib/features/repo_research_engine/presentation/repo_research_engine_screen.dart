@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/routing/route_names.dart';
 import '../../../core/theme/app_colours.dart';
 import '../../../core/widgets/workspace_shell.dart';
-import '../data/repo_research_engine_service.dart';
+import '../application/repo_research_engine_controller.dart';
 
 class RepoResearchEngineScreen extends StatefulWidget {
   const RepoResearchEngineScreen({super.key, this.initialSection = 'home'});
@@ -20,7 +20,9 @@ class RepoResearchEngineScreen extends StatefulWidget {
 }
 
 class _RepoResearchEngineScreenState extends State<RepoResearchEngineScreen> {
-  late final RepoResearchEngineService _service = RepoResearchEngineService();
+  late final RepoResearchEngineRuntime _runtime =
+      RepoResearchEngineRuntime.local();
+  late final RepoResearchEngineController _service = _runtime.controller;
   late final ScrollController _scrollController = ScrollController();
   late final TextEditingController _repoPathController =
       TextEditingController();
