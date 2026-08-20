@@ -11,9 +11,13 @@ from .source_registry import RepositorySourceAdapterRegistry, RepositorySourcePr
 from .repository_workspace import (
     RepositoryCloneRequest,
     RepositoryCloneResult,
+    RepositoryGitState,
     RepositoryIdentity,
     RepositoryWorkspaceLayout,
     RepositoryWorkspaceManager,
+    RepositoryWorkspaceProvider,
+    RepositoryWorkspaceRuntime,
+    LocalRepositoryWorkspaceProvider,
 )
 from .research_sources import (
     DocumentationResearchSourceAdapter,

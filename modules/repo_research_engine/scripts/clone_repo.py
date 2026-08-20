@@ -8,7 +8,10 @@ from pathlib import Path
 MODULE_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(MODULE_ROOT))
 
-from sources import RepositoryCloneRequest, RepositoryWorkspaceManager
+from sources import (
+    RepositoryCloneRequest,
+    RepositoryWorkspaceRuntime,
+)
 
 
 def main() -> None:
@@ -26,7 +29,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    manager = RepositoryWorkspaceManager()
+    runtime = RepositoryWorkspaceRuntime()
+    manager = runtime.manager
     result = manager.clone_repository(
         RepositoryCloneRequest(
             source=args.source,
