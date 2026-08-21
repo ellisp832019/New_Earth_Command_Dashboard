@@ -9,6 +9,10 @@ from .source_adapters import (
 )
 from .source_registry import RepositorySourceAdapterRegistry, RepositorySourceProviderSpec
 from .repository_workspace import (
+    DEFAULT_CLONE_TIMEOUT,
+    RepositoryCloneLifecycleContext,
+    RepositoryCloneLifecycleError,
+    RepositoryCloneLifecycleKind,
     RepositoryCloneRequest,
     RepositoryCloneResult,
     RepositoryGitState,

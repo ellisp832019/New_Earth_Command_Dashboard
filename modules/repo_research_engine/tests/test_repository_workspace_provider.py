@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from subprocess import CompletedProcess
 
 from sources import (
+    DEFAULT_CLONE_TIMEOUT,
     LocalRepositoryWorkspaceProvider,
     RepositoryCloneRequest,
+    RepositoryCloneLifecycleContext,
     RepositoryGitState,
     RepositoryIdentity,
     RepositoryWorkspaceLayout,
@@ -80,6 +84,9 @@ class RecordingWorkspaceProvider:
         command: list[str],
         *,
         cwd: Path | None = None,
+        timeout: timedelta = DEFAULT_CLONE_TIMEOUT,
+        cancellation_event: threading.Event | None = None,
+        lifecycle: RepositoryCloneLifecycleContext | None = None,
     ) -> CompletedProcess[str]:
         self.calls.append(f"clone_source:{cwd}")
         return CompletedProcess(command, 0, stdout="clone ok", stderr="")
@@ -116,7 +123,14 @@ class RecordingWorkspaceProvider:
             encoding="utf-8",
         )
 
-    def cleanup_workspace(self, repository_root: Path) -> None:
+    def cleanup_workspace(
+        self,
+        repository_root: Path,
+        *,
+        workspace_root: Path | None = None,
+        ownership_sentinel_path: Path | None = None,
+        operation_id: str | None = None,
+    ) -> None:
         self.calls.append(f"cleanup_workspace:{repository_root}")
 
 
@@ -212,7 +226,15 @@ def test_local_provider_resolves_identity_and_git_state(tmp_path):
 
 def test_errors_propagate_deterministically(tmp_path):
     class FailingProvider(RecordingWorkspaceProvider):
-        def clone_source(self, command: list[str], *, cwd: Path | None = None):
+        def clone_source(
+            self,
+            command: list[str],
+            *,
+            cwd: Path | None = None,
+            timeout: timedelta = DEFAULT_CLONE_TIMEOUT,
+            cancellation_event: threading.Event | None = None,
+            lifecycle: RepositoryCloneLifecycleContext | None = None,
+        ) -> CompletedProcess[str]:
             self.calls.append("clone_source_fail")
             return CompletedProcess(command, 1, stdout="stdout", stderr="stderr")
 
