@@ -77,8 +77,8 @@ class EngineeringStudioRuntimeSnapshotReader
   }
 
   Future<EngineeringSnapshotEnvelope> loadEnvelope() async {
-    final canonicalProjectId = projectScope?.neosProjectId?.trim();
-    if (canonicalProjectId == null || canonicalProjectId.isEmpty) {
+    final readProjectScope = _resolvedProjectScope();
+    if (readProjectScope == null) {
       final localSnapshot = await localReader.loadPersistedSnapshotIfPresent();
       if (localSnapshot != null) {
         return _cache(
@@ -115,9 +115,23 @@ class EngineeringStudioRuntimeSnapshotReader
     );
     return _cache(
       await fallbackReader.loadEngineeringSnapshot(
-        projectScope: canonicalProjectId,
+        projectScope: readProjectScope,
       ),
     );
+  }
+
+  String? _resolvedProjectScope() {
+    final canonicalProjectId = projectScope?.neosProjectId?.trim();
+    if (canonicalProjectId != null && canonicalProjectId.isNotEmpty) {
+      return canonicalProjectId;
+    }
+
+    final requestedProjectId = projectScope?.projectId.trim();
+    if (requestedProjectId != null && requestedProjectId.isNotEmpty) {
+      return requestedProjectId;
+    }
+
+    return null;
   }
 
   EngineeringSnapshotEnvelope _cache(EngineeringSnapshotEnvelope envelope) {

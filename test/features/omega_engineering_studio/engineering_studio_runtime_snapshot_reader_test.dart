@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:new_earth_command_dashboard/features/omega_engineering_studio/application/engineering_studio_dependencies.dart';
@@ -5,6 +7,7 @@ import 'package:new_earth_command_dashboard/features/omega_engineering_studio/da
 import 'package:new_earth_command_dashboard/features/omega_engineering_studio/domain/engineering_models.dart';
 import 'package:new_earth_command_dashboard/features/omega_engineering_studio/domain/engineering_snapshot_envelope.dart';
 import 'package:new_earth_command_dashboard/features/omega_engineering_studio/domain/engineering_snapshot_metadata.dart';
+import 'package:new_earth_command_dashboard/features/omega_engineering_studio/domain/neos_read_transport.dart';
 
 import 'engineering_studio_test_fixtures.dart';
 import 'fakes/fake_neos_engineering_snapshot_reader.dart';
@@ -80,20 +83,24 @@ void main() {
   );
 
   test(
-    'unmapped project scopes skip NEOS and fall back to the local cache',
+    'unmapped project scopes attempt NEOS once before falling back to the local cache',
     () async {
       final localSnapshot = buildEngineeringStudioSnapshot();
       final liveReader = FakeNeosEngineeringSnapshotReader(
         envelope: _envelope(
           source: EngineeringSnapshotSource.neosLive,
           authority: EngineeringSnapshotAuthority.neos,
-          projectScope: 'microgrow',
+          projectScope: 'project_future_ideas',
           capturedAt: DateTime.utc(2026, 8, 19, 8, 20),
           refreshedAt: DateTime.utc(2026, 8, 19, 8, 20),
           stale: false,
           partial: false,
           version: '1.3.0',
           schemaVersion: 11,
+        ),
+        error: NeosTransportTimeoutException(
+          'timeout',
+          uri: Uri.parse('http://127.0.0.1:8765/health'),
         ),
       );
       final localReader = CountingPersistedSnapshotReader(localSnapshot);
@@ -123,10 +130,11 @@ void main() {
         EngineeringSnapshotAuthority.dashboardLocal,
       );
       expect(envelope.metadata.projectScope, 'project_future_ideas');
-      expect(envelope.metadata.fallbackReason, 'neos_unmapped');
+      expect(envelope.metadata.fallbackReason, 'neos_timeout');
       expect(reader.latestEnvelope, same(envelope));
       expect(reader.latestMetadata, same(envelope.metadata));
-      expect(liveReader.loadEngineeringSnapshotCalls, 0);
+      expect(liveReader.loadEngineeringSnapshotCalls, 1);
+      expect(liveReader.lastProjectScope, 'project_future_ideas');
       expect(localReader.loadPersistedSnapshotIfPresentCalls, 1);
       expect(seededCalls, 0);
     },
@@ -139,13 +147,17 @@ void main() {
         envelope: _envelope(
           source: EngineeringSnapshotSource.neosLive,
           authority: EngineeringSnapshotAuthority.neos,
-          projectScope: 'microgrow',
+          projectScope: 'project_future_ideas',
           capturedAt: DateTime.utc(2026, 8, 19, 8, 20),
           refreshedAt: DateTime.utc(2026, 8, 19, 8, 20),
           stale: false,
           partial: false,
           version: '1.3.0',
           schemaVersion: 11,
+        ),
+        error: NeosTransportTimeoutException(
+          'timeout',
+          uri: Uri.parse('http://127.0.0.1:8765/health'),
         ),
       );
       final localReader = NullPersistedSnapshotReader();
@@ -174,10 +186,54 @@ void main() {
         EngineeringSnapshotAuthority.fallback,
       );
       expect(envelope.metadata.projectScope, 'project_future_ideas');
-      expect(envelope.metadata.fallbackReason, 'neos_unmapped');
-      expect(liveReader.loadEngineeringSnapshotCalls, 0);
+      expect(envelope.metadata.fallbackReason, 'neos_timeout');
+      expect(liveReader.loadEngineeringSnapshotCalls, 1);
+      expect(liveReader.lastProjectScope, 'project_future_ideas');
       expect(localReader.loadPersistedSnapshotIfPresentCalls, 1);
       expect(seededCalls, 1);
+    },
+  );
+
+  test(
+    'EngineeringStudioDependencies.local composes the runtime reader with the repository as the persisted read source',
+    () async {
+      final liveReader = FakeNeosEngineeringSnapshotReader(
+        envelope: _envelope(
+          source: EngineeringSnapshotSource.neosLive,
+          authority: EngineeringSnapshotAuthority.neos,
+          projectScope: 'project_microgrow',
+          capturedAt: DateTime.utc(2026, 8, 19, 8, 20),
+          refreshedAt: DateTime.utc(2026, 8, 19, 8, 20),
+          stale: false,
+          partial: false,
+          version: '1.3.0',
+          schemaVersion: 11,
+        ),
+        error: StateError('neos down'),
+      );
+      final repository = CountingRuntimeRepository(
+        buildEngineeringStudioSnapshot(),
+      );
+      final dependencies = EngineeringStudioDependencies.local(
+        projectScope: EngineeringProjectScope.fromDashboardProjectId(
+          'project_microgrow',
+          canonicalProjectId: 'microgrow',
+        ),
+        repository: repository,
+        liveReader: liveReader,
+      );
+
+      final loaded = await dependencies.snapshotReader.loadSnapshot();
+
+      expect(loaded, same(repository.snapshot));
+      expect(
+        dependencies.snapshotReader,
+        isA<EngineeringStudioRuntimeSnapshotReader>(),
+      );
+      expect(liveReader.loadEngineeringSnapshotCalls, 1);
+      expect(liveReader.lastProjectScope, 'microgrow');
+      expect(repository.loadPersistedSnapshotIfPresentCalls, 1);
+      expect(repository.loadSnapshotCalls, 0);
     },
   );
 }
@@ -217,6 +273,100 @@ class NullPersistedSnapshotReader
   Future<EngineeringSnapshot?> loadPersistedSnapshotIfPresent() async {
     loadPersistedSnapshotIfPresentCalls++;
     return null;
+  }
+}
+
+class CountingRuntimeRepository extends EngineeringRepository
+    implements PersistedEngineeringSnapshotReader {
+  CountingRuntimeRepository(this.snapshot);
+
+  EngineeringSnapshot snapshot;
+  int loadSnapshotCalls = 0;
+  int loadPersistedSnapshotIfPresentCalls = 0;
+
+  @override
+  Future<EngineeringSnapshot> loadSnapshot() async {
+    loadSnapshotCalls++;
+    return snapshot;
+  }
+
+  @override
+  Future<EngineeringSnapshot?> loadPersistedSnapshotIfPresent() async {
+    loadPersistedSnapshotIfPresentCalls++;
+    return snapshot;
+  }
+
+  @override
+  Future<void> saveSnapshot(EngineeringSnapshot snapshot) async {
+    this.snapshot = snapshot;
+  }
+
+  @override
+  Future<void> resetLocalState() async {}
+
+  @override
+  Future<EngineeringProject> createProject({
+    required String title,
+    required String summary,
+    required String status,
+    required String priority,
+    required int progressPercent,
+    required String milestone,
+    required String nextAction,
+    required String system,
+    DateTime? targetDate,
+    required List<String> tags,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<EngineeringProject> updateProject(EngineeringProject project) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<CircuitBlock> upsertCircuitBlock(CircuitBlock block) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<PCBRevision> upsertPcbRevision(PCBRevision revision) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<FirmwareBuild> upsertFirmwareBuild(FirmwareBuild build) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<DeviceNode> upsertDeviceNode(DeviceNode device) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<EngineeringDocument> upsertDocument(
+    EngineeringDocument document,
+  ) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<EngineeringAttachment> upsertAttachment(
+    EngineeringAttachment attachment,
+  ) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> exportSnapshot(File destination) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<EngineeringSnapshot> importSnapshot(File source) async {
+    throw UnimplementedError();
   }
 }
 
