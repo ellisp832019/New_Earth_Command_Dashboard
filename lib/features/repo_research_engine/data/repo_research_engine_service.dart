@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:path/path.dart' as path;
 
@@ -282,6 +283,56 @@ class RepoResearchExportRecord {
 
 enum RepoResearchProcessFailureKind { launchFailure, timedOut }
 
+enum RepoResearchCloneFailureKind {
+  validationFailure,
+  launchFailure,
+  gitFailure,
+  timedOut,
+  cancelled,
+  cleanupFailure,
+  protocolError,
+  watchdogFailure,
+}
+
+class RepoResearchCloneCancellation {
+  final Completer<void> _requested = Completer<void>();
+
+  bool get isRequested => _requested.isCompleted;
+
+  Future<void> get whenRequested => _requested.future;
+
+  void request() {
+    if (!_requested.isCompleted) {
+      _requested.complete();
+    }
+  }
+}
+
+class RepoResearchCloneException implements Exception {
+  const RepoResearchCloneException({
+    required this.kind,
+    required this.message,
+    required this.operationId,
+    required this.command,
+    this.stdout = '',
+    this.stderr = '',
+    this.primaryCause,
+  });
+
+  final RepoResearchCloneFailureKind kind;
+  final String message;
+  final String operationId;
+  final List<String> command;
+  final String stdout;
+  final String stderr;
+  final String? primaryCause;
+
+  @override
+  String toString() {
+    return 'RepoResearchCloneException(kind: $kind, message: $message)';
+  }
+}
+
 class RepoResearchProcessException implements Exception {
   const RepoResearchProcessException({
     required this.kind,
@@ -307,10 +358,12 @@ class RepoResearchProcessException implements Exception {
 
 class RepoResearchEngineService {
   static const Duration defaultResearchTimeout = Duration(minutes: 10);
+  static const Duration defaultCloneWatchdogTimeout = Duration(minutes: 13);
 
   RepoResearchEngineService({
     Directory? workingDirectory,
     Duration researchTimeout = defaultResearchTimeout,
+    Duration cloneWatchdogTimeout = defaultCloneWatchdogTimeout,
     Future<Process> Function(
       String executable,
       List<String> arguments, {
@@ -320,10 +373,12 @@ class RepoResearchEngineService {
     processStarter,
   }) : _workingDirectory = workingDirectory ?? Directory.current,
        _researchTimeout = researchTimeout,
+       _cloneWatchdogTimeout = cloneWatchdogTimeout,
        _processStarter = processStarter ?? _defaultProcessStarter;
 
   final Directory _workingDirectory;
   final Duration _researchTimeout;
+  final Duration _cloneWatchdogTimeout;
   final Future<Process> Function(
     String executable,
     List<String> arguments, {
@@ -440,11 +495,43 @@ class RepoResearchEngineService {
     required String source,
     required String workspaceRoot,
     String? branch,
+  }) {
+    return _cloneRepository(
+      source: source,
+      workspaceRoot: workspaceRoot,
+      branch: branch,
+    );
+  }
+
+  Future<RepoResearchCloneResult> cloneRepositoryWithCancellation({
+    required String source,
+    required String workspaceRoot,
+    String? branch,
+    required RepoResearchCloneCancellation cancellation,
+  }) {
+    return _cloneRepository(
+      source: source,
+      workspaceRoot: workspaceRoot,
+      branch: branch,
+      cancellation: cancellation,
+    );
+  }
+
+  Future<RepoResearchCloneResult> _cloneRepository({
+    required String source,
+    required String workspaceRoot,
+    String? branch,
+    RepoResearchCloneCancellation? cancellation,
   }) async {
     final moduleRoot = moduleRootDirectory();
     final script = path.join(moduleRoot.path, 'scripts', 'clone_repo.py');
+    final operationId = _cloneOperationId();
     final args = <String>[
       script,
+      '--protocol-version',
+      'ds05-c4b1-clone-protocol-v1',
+      '--operation-id',
+      operationId,
       '--source',
       source,
       '--workspace-root',
@@ -453,69 +540,201 @@ class RepoResearchEngineService {
     if (branch != null && branch.trim().isNotEmpty) {
       args.addAll(['--branch', branch.trim()]);
     }
+    if (cancellation != null) {
+      args.add('--control-stdin');
+    }
 
     final command = _pythonCommand();
-    final process = await Process.start(
-      command,
-      args,
-      workingDirectory: moduleRoot.path,
-      runInShell: true,
-    );
-    final stdoutBuffer = StringBuffer();
-    final stderrBuffer = StringBuffer();
-
-    process.stdout.transform(utf8.decoder).listen(stdoutBuffer.write);
-    process.stderr.transform(utf8.decoder).listen(stderrBuffer.write);
-    final exitCode = await process.exitCode;
-    final stdout = stdoutBuffer.toString();
-    final stderr = stderrBuffer.toString();
-
-    if (exitCode != 0) {
-      throw StateError(
-        stderr.trim().isNotEmpty ? stderr.trim() : 'Repository clone failed.',
+    final commandLine = <String>[command, ...args];
+    late final Process process;
+    try {
+      process = await _processStarter(
+        command,
+        args,
+        workingDirectory: moduleRoot.path,
+        runInShell: true,
+      );
+    } on ProcessException catch (error) {
+      throw RepoResearchCloneException(
+        kind: RepoResearchCloneFailureKind.launchFailure,
+        message: 'Unable to start repository clone.',
+        operationId: operationId,
+        command: commandLine,
+        primaryCause: _sanitizeCloneText(error.message),
       );
     }
 
-    final decoded = jsonDecode(stdout);
-    if (decoded is! Map<String, dynamic>) {
-      throw StateError('Repository clone returned an invalid response.');
+    final stdoutBuffer = StringBuffer();
+    final stderrBuffer = StringBuffer();
+    final stdoutDone = process.stdout
+        .transform(utf8.decoder)
+        .listen(stdoutBuffer.write)
+        .asFuture<void>();
+    final stderrDone = process.stderr
+        .transform(utf8.decoder)
+        .listen(stderrBuffer.write)
+        .asFuture<void>();
+    var terminal = false;
+    var cancellationSent = false;
+    var stdinClosed = false;
+
+    Future<void> closeStdin() async {
+      if (stdinClosed) {
+        return;
+      }
+      stdinClosed = true;
+      try {
+        await process.stdin.close();
+      } catch (_) {
+        // The child may already have closed its control channel.
+      }
     }
 
-    final result = RepoResearchCloneResult(
-      exitCode: exitCode,
-      source: decoded['source']?.toString() ?? source,
-      workspaceRoot: decoded['workspace_root']?.toString() ?? workspaceRoot,
-      repositoryRoot: decoded['repository_root']?.toString() ?? '',
-      sourceRoot: decoded['source_root']?.toString() ?? '',
-      provider: decoded['provider']?.toString() ?? 'local',
-      ownerPath: decoded['owner_path']?.toString() ?? '',
-      repoName: decoded['repo_name']?.toString() ?? '',
-      branch: decoded['branch']?.toString() ?? '',
-      commit: decoded['commit']?.toString() ?? '',
-      manifestPath: decoded['manifest_path']?.toString() ?? '',
-      workspaceManifestPath:
-          decoded['workspace_manifest_path']?.toString() ?? '',
-      command: <String>[command, ...args],
-      stdout: stdout,
-      stderr: stderr,
-    );
+    Future<void> sendCancellation() async {
+      if (terminal || cancellationSent) {
+        return;
+      }
+      cancellationSent = true;
+      final frame = jsonEncode({
+        'protocol_version': 'ds05-c4b1-clone-protocol-v1',
+        'kind': 'cancel',
+        'operation_id': operationId,
+        'reason': 'user_cancelled',
+      });
+      try {
+        process.stdin.writeln(frame);
+        await process.stdin.flush();
+      } finally {
+        await closeStdin();
+      }
+    }
 
-    await appendCloneHistory(
-      RepoResearchCloneHistoryRecord(
-        timestamp: DateTime.now().toIso8601String(),
-        source: result.source,
-        workspaceRoot: result.workspaceRoot,
-        repositoryRoot: result.repositoryRoot,
-        sourceRoot: result.sourceRoot,
-        provider: result.provider,
-        ownerPath: result.ownerPath,
-        repoName: result.repoName,
-        branch: result.branch,
-        commit: result.commit,
+    final exitFuture = process.exitCode;
+    final cancellationFuture = cancellation?.whenRequested.then((_) async {
+      await sendCancellation();
+      return true;
+    });
+    final watchdogCompleter = Completer<void>();
+    final watchdogTimer = Timer(_cloneWatchdogTimeout, () {
+      if (!watchdogCompleter.isCompleted) {
+        watchdogCompleter.complete();
+      }
+    });
+    final race = <Future<Object>>[
+      exitFuture.then<Object>((code) => code),
+      watchdogCompleter.future.then<Object>(
+        (_) => const _CloneWatchdogExpired(),
       ),
-    );
+      if (cancellationFuture != null)
+        cancellationFuture.then<Object>((_) => const _CloneCancelled()),
+    ];
 
-    return result;
+    Object outcome;
+    try {
+      outcome = await Future.any<Object>(race);
+      if (outcome is _CloneWatchdogExpired) {
+        process.kill(ProcessSignal.sigterm);
+        await exitFuture;
+        await Future.wait<void>(<Future<void>>[stdoutDone, stderrDone]);
+        terminal = true;
+        await closeStdin();
+        throw RepoResearchCloneException(
+          kind: RepoResearchCloneFailureKind.watchdogFailure,
+          message: 'Repository clone watchdog expired.',
+          operationId: operationId,
+          command: commandLine,
+          stdout: _sanitizeCloneText(stdoutBuffer.toString()),
+          stderr: _sanitizeCloneText(stderrBuffer.toString()),
+        );
+      }
+      if (outcome is _CloneCancelled) {
+        final exitCode = await exitFuture;
+        await Future.wait<void>(<Future<void>>[stdoutDone, stderrDone]);
+        terminal = true;
+        await closeStdin();
+        if (exitCode != 0) {
+          throw _cloneFailureFromProcess(
+            exitCode: exitCode,
+            operationId: operationId,
+            command: commandLine,
+            stdout: stdoutBuffer.toString(),
+            stderr: stderrBuffer.toString(),
+          );
+        }
+        outcome = exitCode;
+      }
+
+      final exitCode = outcome as int;
+      await Future.wait<void>(<Future<void>>[stdoutDone, stderrDone]);
+      terminal = true;
+      await closeStdin();
+      final stdout = stdoutBuffer.toString();
+      final stderr = stderrBuffer.toString();
+
+      if (exitCode != 0) {
+        throw _cloneFailureFromProcess(
+          exitCode: exitCode,
+          operationId: operationId,
+          command: commandLine,
+          stdout: stdout,
+          stderr: stderr,
+        );
+      }
+
+      final decoded = _decodeCloneSuccess(
+        stdout,
+        operationId: operationId,
+        command: commandLine,
+      );
+      final result = RepoResearchCloneResult(
+        exitCode: exitCode,
+        source: _stringValue(decoded, 'source') ?? source,
+        workspaceRoot:
+            _stringValue(decoded, 'workspaceRoot', 'workspace_root') ??
+            workspaceRoot,
+        repositoryRoot:
+            _stringValue(decoded, 'repositoryRoot', 'repository_root') ?? '',
+        sourceRoot: _stringValue(decoded, 'sourceRoot', 'source_root') ?? '',
+        provider: _stringValue(decoded, 'provider') ?? 'local',
+        ownerPath: _stringValue(decoded, 'ownerPath', 'owner_path') ?? '',
+        repoName: _stringValue(decoded, 'repoName', 'repo_name') ?? '',
+        branch: _stringValue(decoded, 'branch') ?? '',
+        commit: _stringValue(decoded, 'commit') ?? '',
+        manifestPath:
+            _stringValue(decoded, 'manifestPath', 'manifest_path') ?? '',
+        workspaceManifestPath:
+            _stringValue(
+              decoded,
+              'workspaceManifestPath',
+              'workspace_manifest_path',
+            ) ??
+            '',
+        command: commandLine,
+        stdout: stdout,
+        stderr: stderr,
+      );
+
+      await appendCloneHistory(
+        RepoResearchCloneHistoryRecord(
+          timestamp: DateTime.now().toIso8601String(),
+          source: result.source,
+          workspaceRoot: result.workspaceRoot,
+          repositoryRoot: result.repositoryRoot,
+          sourceRoot: result.sourceRoot,
+          provider: result.provider,
+          ownerPath: result.ownerPath,
+          repoName: result.repoName,
+          branch: result.branch,
+          commit: result.commit,
+        ),
+      );
+
+      return result;
+    } finally {
+      terminal = true;
+      watchdogTimer.cancel();
+      await closeStdin();
+    }
   }
 
   Future<List<RepoResearchRunRecord>> loadRecentRuns({int limit = 8}) async {
@@ -807,6 +1026,172 @@ class RepoResearchEngineService {
     final moduleRoot = moduleRootDirectory();
     return File(path.join(moduleRoot.path, 'reports', 'change_history.json'));
   }
+}
+
+class _CloneWatchdogExpired {
+  const _CloneWatchdogExpired();
+}
+
+class _CloneCancelled {
+  const _CloneCancelled();
+}
+
+const _cloneProtocolVersion = 'ds05-c4b1-clone-protocol-v1';
+const _cloneFailureKinds = <String>{
+  'validation_failed',
+  'launch_failed',
+  'git_failed',
+  'timed_out',
+  'cancelled',
+  'cleanup_failed',
+  'protocol_error',
+};
+
+String _cloneOperationId() {
+  final now = DateTime.now().toUtc();
+  final timestamp =
+      '${now.year.toString().padLeft(4, '0')}'
+      '${now.month.toString().padLeft(2, '0')}'
+      '${now.day.toString().padLeft(2, '0')}'
+      'T${now.hour.toString().padLeft(2, '0')}'
+      '${now.minute.toString().padLeft(2, '0')}'
+      '${now.second.toString().padLeft(2, '0')}Z';
+  final random = Random.secure();
+  final hex = StringBuffer();
+  for (var index = 0; index < 32; index++) {
+    hex.write(random.nextInt(16).toRadixString(16));
+  }
+  return 'clone_v1_${timestamp}_${hex.toString()}';
+}
+
+Map<String, dynamic> _decodeCloneSuccess(
+  String stdout, {
+  required String operationId,
+  required List<String> command,
+}) {
+  try {
+    final decoded = jsonDecode(stdout);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+  } catch (_) {
+    // Convert malformed success output to the same deterministic protocol error.
+  }
+  throw RepoResearchCloneException(
+    kind: RepoResearchCloneFailureKind.protocolError,
+    message: 'Repository clone returned an invalid success response.',
+    operationId: operationId,
+    command: command,
+  );
+}
+
+String? _stringValue(
+  Map<String, dynamic> values,
+  String primary, [
+  String? legacy,
+]) {
+  final value = values[primary] ?? (legacy == null ? null : values[legacy]);
+  return value?.toString();
+}
+
+RepoResearchCloneException _cloneFailureFromProcess({
+  required int exitCode,
+  required String operationId,
+  required List<String> command,
+  required String stdout,
+  required String stderr,
+}) {
+  final trimmed = stderr.trim();
+  if (trimmed.isEmpty) {
+    return RepoResearchCloneException(
+      kind: RepoResearchCloneFailureKind.protocolError,
+      message: 'Repository clone returned an empty failure response.',
+      operationId: operationId,
+      command: command,
+      stdout: stdout,
+      stderr: stderr,
+    );
+  }
+
+  dynamic decoded;
+  try {
+    decoded = jsonDecode(trimmed);
+  } catch (_) {
+    return RepoResearchCloneException(
+      kind: RepoResearchCloneFailureKind.protocolError,
+      message: 'Repository clone returned a malformed failure response.',
+      operationId: operationId,
+      command: command,
+      stdout: stdout,
+      stderr: _sanitizeCloneText(stderr),
+    );
+  }
+  if (decoded is! Map<String, dynamic> ||
+      decoded['protocol_version'] != _cloneProtocolVersion ||
+      decoded['kind'] != 'clone_failure' ||
+      decoded['operation_id'] != operationId ||
+      decoded['failure_kind'] is! String ||
+      !_cloneFailureKinds.contains(decoded['failure_kind']) ||
+      decoded['message'] is! String ||
+      decoded['exit_code'] is! int ||
+      decoded['exit_code'] != exitCode ||
+      decoded['stdout'] is! String ||
+      decoded['stderr'] is! String ||
+      decoded['cleanup_state'] is! String ||
+      (decoded['primary_cause'] != null &&
+          decoded['primary_cause'] is! String)) {
+    return RepoResearchCloneException(
+      kind: RepoResearchCloneFailureKind.protocolError,
+      message: 'Repository clone returned an invalid failure response.',
+      operationId: operationId,
+      command: command,
+      stdout: stdout,
+      stderr: _sanitizeCloneText(stderr),
+    );
+  }
+
+  return RepoResearchCloneException(
+    kind: _mapCloneFailureKind(decoded['failure_kind'] as String),
+    message: _sanitizeCloneText(decoded['message'] as String),
+    operationId: operationId,
+    command: command,
+    stdout: _sanitizeCloneText(decoded['stdout']?.toString() ?? stdout),
+    stderr: _sanitizeCloneText(decoded['stderr']?.toString() ?? stderr),
+    primaryCause: decoded['primary_cause'] == null
+        ? null
+        : _sanitizeCloneText(decoded['primary_cause'] as String),
+  );
+}
+
+RepoResearchCloneFailureKind _mapCloneFailureKind(String kind) {
+  switch (kind) {
+    case 'validation_failed':
+      return RepoResearchCloneFailureKind.validationFailure;
+    case 'launch_failed':
+      return RepoResearchCloneFailureKind.launchFailure;
+    case 'git_failed':
+      return RepoResearchCloneFailureKind.gitFailure;
+    case 'timed_out':
+      return RepoResearchCloneFailureKind.timedOut;
+    case 'cancelled':
+      return RepoResearchCloneFailureKind.cancelled;
+    case 'cleanup_failed':
+      return RepoResearchCloneFailureKind.cleanupFailure;
+    case 'protocol_error':
+      return RepoResearchCloneFailureKind.protocolError;
+  }
+  return RepoResearchCloneFailureKind.protocolError;
+}
+
+String _sanitizeCloneText(String value) {
+  final urlCredentials = RegExp(r'([A-Za-z][A-Za-z0-9+.-]*://)[^/@\s]+@');
+  final token = RegExp(
+    r'\b(access[_-]?token|token|password|passwd|secret|authorization)\b\s*[:=]\s*([^\s,;]+)',
+    caseSensitive: false,
+  );
+  return value
+      .replaceAllMapped(urlCredentials, (match) => '${match[1]}***@')
+      .replaceAllMapped(token, (match) => '${match[1]}=***');
 }
 
 Map<String, List<String>> _stringListMap(dynamic value) {
