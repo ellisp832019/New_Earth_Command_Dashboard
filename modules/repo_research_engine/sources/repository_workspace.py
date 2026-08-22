@@ -806,10 +806,13 @@ class RepositoryWorkspaceManager:
         timeout: timedelta = DEFAULT_CLONE_TIMEOUT,
         cancellation_event: threading.Event | None = None,
         process_terminator: Any | None = None,
+        operation_id: str | None = None,
     ) -> RepositoryCloneResult:
         source = request.source.strip()
         if not source:
             raise ValueError("A source repository path or URL is required.")
+        if operation_id is not None:
+            _validate_operation_id(operation_id)
 
         workspace_root = Path(request.workspace_root).expanduser().resolve()
         identity = self._provider.resolve_identity(source)
@@ -822,7 +825,7 @@ class RepositoryWorkspaceManager:
                 command=[source],
             )
         self._provider.prepare_workspace(layout)
-        operation_id = _generate_clone_operation_id()
+        operation_id = operation_id or _generate_clone_operation_id()
         ownership_sentinel_path = layout.metadata_root / OWNERSHIP_SENTINEL_NAME
         lifecycle = RepositoryCloneLifecycleContext(
             workspace_root=workspace_root,
