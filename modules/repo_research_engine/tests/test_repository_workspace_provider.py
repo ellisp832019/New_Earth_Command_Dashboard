@@ -255,3 +255,23 @@ def test_errors_propagate_deterministically(tmp_path):
         raise AssertionError("Expected clone_repository to raise on clone failure")
 
     assert any(call.startswith("cleanup_workspace:") for call in provider.calls)
+
+
+def test_invalid_operation_id_is_rejected_before_workspace_preparation(tmp_path):
+    provider = RecordingWorkspaceProvider(tmp_path)
+    manager = RepositoryWorkspaceManager(provider=provider)
+
+    try:
+        manager.clone_repository(
+            RepositoryCloneRequest(
+                source="https://github.com/NewEarth/StructuredClone.git",
+                workspace_root=str(tmp_path / "workspace"),
+            ),
+            operation_id="bad/operation",
+        )
+    except RuntimeError as error:
+        assert "Invalid clone operation identifier." in str(error)
+    else:
+        raise AssertionError("Expected invalid operation id to be rejected")
+
+    assert provider.calls == []
