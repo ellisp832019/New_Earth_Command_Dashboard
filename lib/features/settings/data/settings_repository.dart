@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../core/constants/app_build_info.dart';
 import '../../../core/constants/default_seed_data.dart';
 import '../../../core/database/app_database.dart';
+import '../../dashboard/data/dashboard_card_layout.dart';
 
 class SettingsSnapshot {
   const SettingsSnapshot({required this.settings, required this.appVersion});
@@ -52,6 +53,22 @@ class SettingsRepository {
             ? const Value.absent()
             : Value(showProjectsWorkspaceSnapshot),
         updatedAt: Value(timestamp),
+      ),
+    );
+
+    return _getOrCreateSettings();
+  }
+
+  Future<AppSetting> updateDashboardCardLayout(
+    DashboardCardLayout layout,
+  ) async {
+    final settings = await _getOrCreateSettings();
+    await (_database.update(
+      _database.appSettings,
+    )..where((table) => table.settingsId.equals(settings.settingsId))).write(
+      AppSettingsCompanion(
+        dashboardCardLayoutJson: Value(layout.toJson()),
+        updatedAt: Value(DateTime.now()),
       ),
     );
 

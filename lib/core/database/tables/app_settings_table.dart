@@ -6,6 +6,8 @@ class AppSettings extends Table {
       text().named('theme_mode').withDefault(const Constant('System'))();
   TextColumn get defaultDashboardView =>
       text().named('default_dashboard_view').nullable()();
+  TextColumn get dashboardCardLayoutJson =>
+      text().named('dashboard_card_layout_json').nullable()();
   BoolColumn get showWellbeingCard => boolean()
       .named('show_wellbeing_card')
       .withDefault(const Constant(true))();

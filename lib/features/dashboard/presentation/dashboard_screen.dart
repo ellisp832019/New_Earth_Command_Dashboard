@@ -31,6 +31,7 @@ import '../../tasks/application/tasks_controller.dart';
 import '../../system_backup/application/backup_guardian_controller.dart';
 import '../../system_backup/data/backup_guardian_service.dart';
 import '../application/dashboard_controller.dart';
+import '../data/dashboard_card_layout.dart';
 import '../data/dashboard_repository.dart';
 import '../../treasury/application/treasury_controller.dart';
 import '../../treasury/data/treasury_folder_service.dart';
@@ -75,6 +76,45 @@ class _DashboardContent extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 1100;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardWidgets = <String, Widget>{
+      DashboardCardLayout.dailyFlowId: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DashboardSectionHeader(
+            title: 'Today\'s flow',
+            subtitle:
+                'Set one focus, choose up to three outcomes, then keep support work in its place.',
+          ),
+          const SizedBox(height: 14),
+          _DashboardFocusCard(snapshot: snapshot),
+          const SizedBox(height: 22),
+          _TopTaskShowcase(snapshot: snapshot),
+          const SizedBox(height: 22),
+          _ActiveProjectsPanel(snapshot: snapshot),
+          const SizedBox(height: 22),
+          _DashboardQuickCaptureCard(snapshot: snapshot),
+          const SizedBox(height: 22),
+          _DashboardEveningReviewCard(snapshot: snapshot),
+        ],
+      ),
+      DashboardCardLayout.nextStepId: _DashboardGuidanceCard(
+        snapshot: snapshot,
+      ),
+      DashboardCardLayout.treasuryId: const _TreasuryOverviewCard(),
+      DashboardCardLayout.commandCentreId: const _CompanyCommandCentreCard(),
+      DashboardCardLayout.supportStackId: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DashboardSectionHeader(
+            title: 'Support stack',
+            subtitle:
+                'Open these only when they help the day move more clearly.',
+          ),
+          const SizedBox(height: 14),
+          _SupportModuleGrid(snapshot: snapshot),
+        ],
+      ),
+    };
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -96,35 +136,11 @@ class _DashboardContent extends StatelessWidget {
                   children: [
                     _DashboardHero(snapshot: snapshot),
                     const SizedBox(height: 22),
-                    _DashboardSectionHeader(
-                      title: 'Today\'s flow',
-                      subtitle:
-                          'Set one focus, choose up to three outcomes, then keep support work in its place.',
-                    ),
-                    const SizedBox(height: 14),
-                    _DashboardFocusCard(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _TopTaskShowcase(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _ActiveProjectsPanel(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _DashboardQuickCaptureCard(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _DashboardEveningReviewCard(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _DashboardGuidanceCard(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    const _TreasuryOverviewCard(),
-                    const SizedBox(height: 22),
-                    const _CompanyCommandCentreCard(),
-                    const SizedBox(height: 22),
-                    _DashboardSectionHeader(
-                      title: 'Support stack',
-                      subtitle:
-                          'Open these only when they help the day move more clearly.',
-                    ),
-                    const SizedBox(height: 14),
-                    _SupportModuleGrid(snapshot: snapshot),
+                    for (final cardId in snapshot.cardLayout.visibleOrderedIds)
+                      if (cardWidgets[cardId] case final card?) ...[
+                        card,
+                        const SizedBox(height: 22),
+                      ],
                     const SizedBox(height: 20),
                     _DashboardFooter(isDark: isDark),
                   ],
