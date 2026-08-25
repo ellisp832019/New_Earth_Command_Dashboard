@@ -121,3 +121,6 @@ modules/repo_research_engine/reports/clone_history.json
 
 # Company Command Centre generated indexes
 modules/00_COMPANY_COMMAND_CENTRE_OMEGA_MODULE/omega_os_bridge/indexes/*.generated.json
+
+# Command Deck generated runtime data
+modules/new_earth_command_deck/dashboard_module/data/runtime/
