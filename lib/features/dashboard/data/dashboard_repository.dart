@@ -339,7 +339,9 @@ class DashboardRepository {
       return planTaskIds
           .map((taskId) {
             final task = tasksById[taskId];
-            if (task == null) {
+            if (task == null ||
+                _isClosedOrParked(task.status) ||
+                task.isArchived) {
               return null;
             }
 
@@ -362,9 +364,14 @@ class DashboardRepository {
               ..where(
                 (table) =>
                     table.isArchived.equals(false) &
-                    table.isTopThree.equals(true),
+                    table.isTopThree.equals(true) &
+                    table.status.isNotIn(const ['Done', 'Parked', 'Blocked']),
               )
-              ..orderBy([(table) => OrderingTerm.asc(table.createdAt)]))
+              ..orderBy([
+                (table) => OrderingTerm.asc(table.createdAt),
+                (table) => OrderingTerm.asc(table.taskId),
+              ])
+              ..limit(3))
             .get();
     final projectIds = tasks
         .map((task) => task.projectId)
@@ -393,6 +400,10 @@ class DashboardRepository {
           ),
         )
         .toList();
+  }
+
+  bool _isClosedOrParked(String status) {
+    return const {'Done', 'Parked', 'Blocked'}.contains(status);
   }
 
   DateTime _dateOnly(DateTime date) {

@@ -162,4 +162,36 @@ void main() {
       expect(snapshot.nextStepActionLabel, 'Review Parked');
     },
   );
+
+  test(
+    'dashboard repository keeps Top 3 bounded and excludes closed work',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+
+      final today = DateTime(2026, 5, 2, 9);
+      await DailyPlanService(database, now: () => today).ensureTodayPlan();
+      var minute = 0;
+      final taskRepository = TaskRepository(
+        database,
+        now: () => DateTime(2026, 5, 2, 9, minute++),
+      );
+      final tasks = <String>[];
+      for (var index = 0; index < 5; index++) {
+        final task = await taskRepository.createTask(title: 'Outcome $index');
+        tasks.add(task.taskId);
+        await taskRepository.setTopThree(task.taskId, isTopThree: true);
+      }
+      await taskRepository.markDone(tasks[0]);
+
+      final snapshot = await DashboardRepository(
+        database,
+        now: () => today,
+      ).loadTodaySnapshot();
+
+      expect(snapshot.topTasks, hasLength(3));
+      expect(snapshot.topTaskTitles, isNot(contains('Outcome 0')));
+      expect(snapshot.topTaskTitles, ['Outcome 1', 'Outcome 2', 'Outcome 3']);
+    },
+  );
 }
