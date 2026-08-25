@@ -38,31 +38,32 @@ class PlatformCoreRuntimeConfigurationResolver {
   static const defaultEnvironmentKey = _defaultEnvironmentKey;
 
   PlatformCoreRuntimeConfigurationResolver({
-    Map<String, String>? environment,
+    Map<String, String?>? environment,
     PlatformCoreRootCanonicalizer? canonicalizeRoot,
     this.environmentKey = _defaultEnvironmentKey,
   }) : _environment = environment ?? Platform.environment,
        _canonicalizeRoot = canonicalizeRoot ?? _canonicalizeDirectory;
 
-  final Map<String, String> _environment;
+  final Map<String, String?> _environment;
   final PlatformCoreRootCanonicalizer _canonicalizeRoot;
   final String environmentKey;
 
   Future<PlatformCoreRuntimeConfiguration> resolve() async {
-    final configured = _environment[environmentKey]?.trim();
-    if (configured == null || configured.isEmpty) {
+    final rawConfigured = _environment[environmentKey];
+    if (rawConfigured == null) {
       return const PlatformCoreRuntimeConfiguration(
-        status: PlatformCoreRuntimeConfigurationStatus.notConfigured,
+        status: PlatformCoreRuntimeConfigurationStatus.unavailable,
       );
     }
-    if (!p.isAbsolute(configured)) {
+    final configured = rawConfigured.trim();
+    if (configured.isEmpty || !_isAbsolutePath(configured)) {
       return const PlatformCoreRuntimeConfiguration(
         status: PlatformCoreRuntimeConfigurationStatus.invalidRoot,
       );
     }
 
     final normalized = p.normalize(configured);
-    if (normalized.isEmpty || !p.isAbsolute(normalized)) {
+    if (normalized.isEmpty || !_isAbsolutePath(normalized)) {
       return const PlatformCoreRuntimeConfiguration(
         status: PlatformCoreRuntimeConfigurationStatus.invalidRoot,
       );
@@ -76,7 +77,7 @@ class PlatformCoreRuntimeConfigurationResolver {
         );
       }
       final canonicalRoot = p.normalize(canonical);
-      if (!p.isAbsolute(canonicalRoot)) {
+      if (!_isAbsolutePath(canonicalRoot)) {
         return const PlatformCoreRuntimeConfiguration(
           status: PlatformCoreRuntimeConfigurationStatus.invalidRoot,
         );
@@ -102,5 +103,11 @@ class PlatformCoreRuntimeConfigurationResolver {
     } catch (_) {
       return null;
     }
+  }
+
+  static bool _isAbsolutePath(String value) {
+    return p.isAbsolute(value) ||
+        RegExp(r'^[A-Za-z]:[\\/]').hasMatch(value) ||
+        value.startsWith('/');
   }
 }

@@ -28,7 +28,15 @@ void main() {
     },
   );
 
-  test('rejects relative and empty configuration without fallback', () async {
+  test('distinguishes missing, empty, and relative configuration', () async {
+    final missing = PlatformCoreRuntimeConfigurationResolver(
+      environment: const {},
+      canonicalizeRoot: (normalized) async => normalized,
+    );
+    final nullValue = PlatformCoreRuntimeConfigurationResolver(
+      environment: const {'NEW_EARTH_PLATFORM_CORE_ROOT': null},
+      canonicalizeRoot: (normalized) async => normalized,
+    );
     final relative = PlatformCoreRuntimeConfigurationResolver(
       environment: const {'NEW_EARTH_PLATFORM_CORE_ROOT': 'relative-root'},
       canonicalizeRoot: (normalized) async => normalized,
@@ -39,13 +47,34 @@ void main() {
     );
 
     expect(
+      (await missing.resolve()).status,
+      PlatformCoreRuntimeConfigurationStatus.unavailable,
+    );
+    expect(
+      (await nullValue.resolve()).status,
+      PlatformCoreRuntimeConfigurationStatus.unavailable,
+    );
+    expect(
       (await relative.resolve()).status,
       PlatformCoreRuntimeConfigurationStatus.invalidRoot,
     );
     expect(
       (await empty.resolve()).status,
-      PlatformCoreRuntimeConfigurationStatus.notConfigured,
+      PlatformCoreRuntimeConfigurationStatus.invalidRoot,
     );
+  });
+
+  test('recognizes POSIX absolute paths independently of host style', () async {
+    final resolver = PlatformCoreRuntimeConfigurationResolver(
+      environment: const {'NEW_EARTH_PLATFORM_CORE_ROOT': '/opt/platform-core'},
+      canonicalizeRoot: (normalized) async => normalized,
+    );
+
+    final configuration = await resolver.resolve();
+
+    expect(configuration.isConfigured, isTrue);
+    expect(configuration.canonicalRoot, isNotEmpty);
+    expect(configuration.canonicalRoot, contains('opt'));
   });
 
   test(
