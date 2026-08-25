@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../dashboard/application/dashboard_controller.dart';
+import '../../dashboard/data/dashboard_card_layout.dart';
 import '../data/settings_repository.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
@@ -114,6 +115,13 @@ class SettingsController {
     await _ref
         .read(settingsRepositoryProvider)
         .updateDashboardCardVisibility(showProjectsWorkspaceSnapshot: value);
+    _invalidate();
+  }
+
+  Future<void> setDashboardCardLayout(DashboardCardLayout layout) async {
+    await _ref
+        .read(settingsRepositoryProvider)
+        .updateDashboardCardLayout(layout);
     _invalidate();
   }
 

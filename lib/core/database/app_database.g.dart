@@ -8469,6 +8469,17 @@ class $AppSettingsTable extends AppSettings
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _dashboardCardLayoutJsonMeta =
+      const VerificationMeta('dashboardCardLayoutJson');
+  @override
+  late final GeneratedColumn<String> dashboardCardLayoutJson =
+      GeneratedColumn<String>(
+        'dashboard_card_layout_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _showWellbeingCardMeta = const VerificationMeta(
     'showWellbeingCard',
   );
@@ -8800,6 +8811,7 @@ class $AppSettingsTable extends AppSettings
     settingsId,
     themeMode,
     defaultDashboardView,
+    dashboardCardLayoutJson,
     showWellbeingCard,
     showBusinessCard,
     showLearningCard,
@@ -8857,6 +8869,15 @@ class $AppSettingsTable extends AppSettings
         defaultDashboardView.isAcceptableOrUnknown(
           data['default_dashboard_view']!,
           _defaultDashboardViewMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dashboard_card_layout_json')) {
+      context.handle(
+        _dashboardCardLayoutJsonMeta,
+        dashboardCardLayoutJson.isAcceptableOrUnknown(
+          data['dashboard_card_layout_json']!,
+          _dashboardCardLayoutJsonMeta,
         ),
       );
     }
@@ -9095,6 +9116,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.string,
         data['${effectivePrefix}default_dashboard_view'],
       ),
+      dashboardCardLayoutJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dashboard_card_layout_json'],
+      ),
       showWellbeingCard: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}show_wellbeing_card'],
@@ -9204,6 +9229,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final String settingsId;
   final String themeMode;
   final String? defaultDashboardView;
+  final String? dashboardCardLayoutJson;
   final bool showWellbeingCard;
   final bool showBusinessCard;
   final bool showLearningCard;
@@ -9232,6 +9258,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.settingsId,
     required this.themeMode,
     this.defaultDashboardView,
+    this.dashboardCardLayoutJson,
     required this.showWellbeingCard,
     required this.showBusinessCard,
     required this.showLearningCard,
@@ -9264,6 +9291,11 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['theme_mode'] = Variable<String>(themeMode);
     if (!nullToAbsent || defaultDashboardView != null) {
       map['default_dashboard_view'] = Variable<String>(defaultDashboardView);
+    }
+    if (!nullToAbsent || dashboardCardLayoutJson != null) {
+      map['dashboard_card_layout_json'] = Variable<String>(
+        dashboardCardLayoutJson,
+      );
     }
     map['show_wellbeing_card'] = Variable<bool>(showWellbeingCard);
     map['show_business_card'] = Variable<bool>(showBusinessCard);
@@ -9319,6 +9351,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       defaultDashboardView: defaultDashboardView == null && nullToAbsent
           ? const Value.absent()
           : Value(defaultDashboardView),
+      dashboardCardLayoutJson: dashboardCardLayoutJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dashboardCardLayoutJson),
       showWellbeingCard: Value(showWellbeingCard),
       showBusinessCard: Value(showBusinessCard),
       showLearningCard: Value(showLearningCard),
@@ -9365,6 +9400,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       themeMode: serializer.fromJson<String>(json['themeMode']),
       defaultDashboardView: serializer.fromJson<String?>(
         json['defaultDashboardView'],
+      ),
+      dashboardCardLayoutJson: serializer.fromJson<String?>(
+        json['dashboardCardLayoutJson'],
       ),
       showWellbeingCard: serializer.fromJson<bool>(json['showWellbeingCard']),
       showBusinessCard: serializer.fromJson<bool>(json['showBusinessCard']),
@@ -9429,6 +9467,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'settingsId': serializer.toJson<String>(settingsId),
       'themeMode': serializer.toJson<String>(themeMode),
       'defaultDashboardView': serializer.toJson<String?>(defaultDashboardView),
+      'dashboardCardLayoutJson': serializer.toJson<String?>(
+        dashboardCardLayoutJson,
+      ),
       'showWellbeingCard': serializer.toJson<bool>(showWellbeingCard),
       'showBusinessCard': serializer.toJson<bool>(showBusinessCard),
       'showLearningCard': serializer.toJson<bool>(showLearningCard),
@@ -9480,6 +9521,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     String? settingsId,
     String? themeMode,
     Value<String?> defaultDashboardView = const Value.absent(),
+    Value<String?> dashboardCardLayoutJson = const Value.absent(),
     bool? showWellbeingCard,
     bool? showBusinessCard,
     bool? showLearningCard,
@@ -9510,6 +9552,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     defaultDashboardView: defaultDashboardView.present
         ? defaultDashboardView.value
         : this.defaultDashboardView,
+    dashboardCardLayoutJson: dashboardCardLayoutJson.present
+        ? dashboardCardLayoutJson.value
+        : this.dashboardCardLayoutJson,
     showWellbeingCard: showWellbeingCard ?? this.showWellbeingCard,
     showBusinessCard: showBusinessCard ?? this.showBusinessCard,
     showLearningCard: showLearningCard ?? this.showLearningCard,
@@ -9559,6 +9604,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       defaultDashboardView: data.defaultDashboardView.present
           ? data.defaultDashboardView.value
           : this.defaultDashboardView,
+      dashboardCardLayoutJson: data.dashboardCardLayoutJson.present
+          ? data.dashboardCardLayoutJson.value
+          : this.dashboardCardLayoutJson,
       showWellbeingCard: data.showWellbeingCard.present
           ? data.showWellbeingCard.value
           : this.showWellbeingCard,
@@ -9636,6 +9684,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('settingsId: $settingsId, ')
           ..write('themeMode: $themeMode, ')
           ..write('defaultDashboardView: $defaultDashboardView, ')
+          ..write('dashboardCardLayoutJson: $dashboardCardLayoutJson, ')
           ..write('showWellbeingCard: $showWellbeingCard, ')
           ..write('showBusinessCard: $showBusinessCard, ')
           ..write('showLearningCard: $showLearningCard, ')
@@ -9671,6 +9720,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     settingsId,
     themeMode,
     defaultDashboardView,
+    dashboardCardLayoutJson,
     showWellbeingCard,
     showBusinessCard,
     showLearningCard,
@@ -9703,6 +9753,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.settingsId == this.settingsId &&
           other.themeMode == this.themeMode &&
           other.defaultDashboardView == this.defaultDashboardView &&
+          other.dashboardCardLayoutJson == this.dashboardCardLayoutJson &&
           other.showWellbeingCard == this.showWellbeingCard &&
           other.showBusinessCard == this.showBusinessCard &&
           other.showLearningCard == this.showLearningCard &&
@@ -9735,6 +9786,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<String> settingsId;
   final Value<String> themeMode;
   final Value<String?> defaultDashboardView;
+  final Value<String?> dashboardCardLayoutJson;
   final Value<bool> showWellbeingCard;
   final Value<bool> showBusinessCard;
   final Value<bool> showLearningCard;
@@ -9764,6 +9816,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.settingsId = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.defaultDashboardView = const Value.absent(),
+    this.dashboardCardLayoutJson = const Value.absent(),
     this.showWellbeingCard = const Value.absent(),
     this.showBusinessCard = const Value.absent(),
     this.showLearningCard = const Value.absent(),
@@ -9794,6 +9847,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     required String settingsId,
     this.themeMode = const Value.absent(),
     this.defaultDashboardView = const Value.absent(),
+    this.dashboardCardLayoutJson = const Value.absent(),
     this.showWellbeingCard = const Value.absent(),
     this.showBusinessCard = const Value.absent(),
     this.showLearningCard = const Value.absent(),
@@ -9826,6 +9880,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<String>? settingsId,
     Expression<String>? themeMode,
     Expression<String>? defaultDashboardView,
+    Expression<String>? dashboardCardLayoutJson,
     Expression<bool>? showWellbeingCard,
     Expression<bool>? showBusinessCard,
     Expression<bool>? showLearningCard,
@@ -9857,6 +9912,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (themeMode != null) 'theme_mode': themeMode,
       if (defaultDashboardView != null)
         'default_dashboard_view': defaultDashboardView,
+      if (dashboardCardLayoutJson != null)
+        'dashboard_card_layout_json': dashboardCardLayoutJson,
       if (showWellbeingCard != null) 'show_wellbeing_card': showWellbeingCard,
       if (showBusinessCard != null) 'show_business_card': showBusinessCard,
       if (showLearningCard != null) 'show_learning_card': showLearningCard,
@@ -9904,6 +9961,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<String>? settingsId,
     Value<String>? themeMode,
     Value<String?>? defaultDashboardView,
+    Value<String?>? dashboardCardLayoutJson,
     Value<bool>? showWellbeingCard,
     Value<bool>? showBusinessCard,
     Value<bool>? showLearningCard,
@@ -9934,6 +9992,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       settingsId: settingsId ?? this.settingsId,
       themeMode: themeMode ?? this.themeMode,
       defaultDashboardView: defaultDashboardView ?? this.defaultDashboardView,
+      dashboardCardLayoutJson:
+          dashboardCardLayoutJson ?? this.dashboardCardLayoutJson,
       showWellbeingCard: showWellbeingCard ?? this.showWellbeingCard,
       showBusinessCard: showBusinessCard ?? this.showBusinessCard,
       showLearningCard: showLearningCard ?? this.showLearningCard,
@@ -9988,6 +10048,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (defaultDashboardView.present) {
       map['default_dashboard_view'] = Variable<String>(
         defaultDashboardView.value,
+      );
+    }
+    if (dashboardCardLayoutJson.present) {
+      map['dashboard_card_layout_json'] = Variable<String>(
+        dashboardCardLayoutJson.value,
       );
     }
     if (showWellbeingCard.present) {
@@ -10102,6 +10167,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('settingsId: $settingsId, ')
           ..write('themeMode: $themeMode, ')
           ..write('defaultDashboardView: $defaultDashboardView, ')
+          ..write('dashboardCardLayoutJson: $dashboardCardLayoutJson, ')
           ..write('showWellbeingCard: $showWellbeingCard, ')
           ..write('showBusinessCard: $showBusinessCard, ')
           ..write('showLearningCard: $showLearningCard, ')
@@ -18351,6 +18417,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       required String settingsId,
       Value<String> themeMode,
       Value<String?> defaultDashboardView,
+      Value<String?> dashboardCardLayoutJson,
       Value<bool> showWellbeingCard,
       Value<bool> showBusinessCard,
       Value<bool> showLearningCard,
@@ -18382,6 +18449,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<String> settingsId,
       Value<String> themeMode,
       Value<String?> defaultDashboardView,
+      Value<String?> dashboardCardLayoutJson,
       Value<bool> showWellbeingCard,
       Value<bool> showBusinessCard,
       Value<bool> showLearningCard,
@@ -18430,6 +18498,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<String> get defaultDashboardView => $composableBuilder(
     column: $table.defaultDashboardView,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dashboardCardLayoutJson => $composableBuilder(
+    column: $table.dashboardCardLayoutJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -18578,6 +18651,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get dashboardCardLayoutJson => $composableBuilder(
+    column: $table.dashboardCardLayoutJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get showWellbeingCard => $composableBuilder(
     column: $table.showWellbeingCard,
     builder: (column) => ColumnOrderings(column),
@@ -18718,6 +18796,11 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<String> get defaultDashboardView => $composableBuilder(
     column: $table.defaultDashboardView,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dashboardCardLayoutJson => $composableBuilder(
+    column: $table.dashboardCardLayoutJson,
     builder: (column) => column,
   );
 
@@ -18872,6 +18955,7 @@ class $$AppSettingsTableTableManager
                 Value<String> settingsId = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
                 Value<String?> defaultDashboardView = const Value.absent(),
+                Value<String?> dashboardCardLayoutJson = const Value.absent(),
                 Value<bool> showWellbeingCard = const Value.absent(),
                 Value<bool> showBusinessCard = const Value.absent(),
                 Value<bool> showLearningCard = const Value.absent(),
@@ -18903,6 +18987,7 @@ class $$AppSettingsTableTableManager
                 settingsId: settingsId,
                 themeMode: themeMode,
                 defaultDashboardView: defaultDashboardView,
+                dashboardCardLayoutJson: dashboardCardLayoutJson,
                 showWellbeingCard: showWellbeingCard,
                 showBusinessCard: showBusinessCard,
                 showLearningCard: showLearningCard,
@@ -18934,6 +19019,7 @@ class $$AppSettingsTableTableManager
                 required String settingsId,
                 Value<String> themeMode = const Value.absent(),
                 Value<String?> defaultDashboardView = const Value.absent(),
+                Value<String?> dashboardCardLayoutJson = const Value.absent(),
                 Value<bool> showWellbeingCard = const Value.absent(),
                 Value<bool> showBusinessCard = const Value.absent(),
                 Value<bool> showLearningCard = const Value.absent(),
@@ -18965,6 +19051,7 @@ class $$AppSettingsTableTableManager
                 settingsId: settingsId,
                 themeMode: themeMode,
                 defaultDashboardView: defaultDashboardView,
+                dashboardCardLayoutJson: dashboardCardLayoutJson,
                 showWellbeingCard: showWellbeingCard,
                 showBusinessCard: showBusinessCard,
                 showLearningCard: showLearningCard,

@@ -191,6 +191,6 @@ void main() {
         .map((row) => row.read<int>('user_version'))
         .getSingle();
 
-    expect(userVersion, 16);
+    expect(userVersion, 17);
   });
 }

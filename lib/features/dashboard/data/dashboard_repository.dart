@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import 'dashboard_card_layout.dart';
 
 enum DashboardNextStepActionType { planner, tasks, parkedTasks, projectDetail }
 
@@ -30,6 +31,10 @@ class DashboardSnapshot {
     this.carryForwardNotes,
     this.tomorrowFocus,
     this.nextStepProjectId,
+    this.cardLayout = const DashboardCardLayout(
+      orderedIds: DashboardCardLayout.defaultOrder,
+      hiddenIds: <String>{},
+    ),
   });
 
   final DateTime date;
@@ -56,6 +61,7 @@ class DashboardSnapshot {
   final String? carryForwardNotes;
   final String? tomorrowFocus;
   final String? nextStepProjectId;
+  final DashboardCardLayout cardLayout;
 }
 
 class DashboardProjectSummary {
@@ -141,6 +147,9 @@ class DashboardRepository {
       showLearningCard: settings?.showLearningCard ?? true,
       showContentCard: settings?.showContentCard ?? true,
       energyLabel: energyLabel,
+      cardLayout: DashboardCardLayout.fromJson(
+        settings?.dashboardCardLayoutJson,
+      ),
     );
   }
 

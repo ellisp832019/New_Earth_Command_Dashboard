@@ -8,6 +8,8 @@ import '../../../core/routing/security_route_policy.dart';
 import '../../../core/widgets/workspace_shell.dart';
 import '../../security/application/security_session_controller.dart';
 import '../../security/presentation/security_locked_notice_card.dart';
+import '../../dashboard/data/dashboard_card_layout.dart';
+import '../../dashboard/presentation/dashboard_card_personalization.dart';
 import '../application/settings_controller.dart';
 import '../../voice_assistant/voice_speech_service.dart';
 import '../../voice_intelligence/presentation/voice_startup_status_chip.dart';
@@ -648,6 +650,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Text(
                         'Hide anything that adds noise instead of helping the day.',
                         style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.tonalIcon(
+                        key: const Key('settingsCustomizeDashboardButton'),
+                        onPressed: () => showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (_) => DashboardCardPersonalizationSheet(
+                            initialLayout: DashboardCardLayout.fromJson(
+                              appSettings.dashboardCardLayoutJson,
+                            ),
+                          ),
+                        ),
+                        icon: const Icon(Icons.dashboard_customize_outlined),
+                        label: const Text('Customize Dashboard'),
                       ),
                       const SizedBox(height: 12),
                       SwitchListTile(
