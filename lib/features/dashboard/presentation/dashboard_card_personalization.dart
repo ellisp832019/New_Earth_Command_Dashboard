@@ -77,11 +77,11 @@ class _DashboardCardPersonalizationSheetState
                 key: const Key('dashboardCardPersonalizationResetButton'),
                 onPressed: _isSaving ? null : _reset,
                 icon: const Icon(Icons.restart_alt),
-                label: const Text('Reset to Default'),
+                label: const Text('Restore default layout'),
               ),
               const SizedBox(height: 8),
               Text(
-                'Daily Flow stays together so Today Focus, Top 3, projects, capture, and carry-forward remain one coherent workspace.',
+                'Restores card order and visibility only. Your tasks, projects, and dashboard data stay unchanged.',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -153,9 +153,9 @@ class _CardPreferenceRow extends StatelessWidget {
     return Card(
       child: ListTile(
         title: Text(_labelFor(id)),
-        subtitle: Text(canHide ? 'Presentation only' : 'Core daily flow'),
-        leading: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        subtitle: Text(_descriptionFor(id)),
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
               key: Key('dashboardCardMoveUp-$id'),
@@ -174,10 +174,15 @@ class _CardPreferenceRow extends StatelessWidget {
             ),
           ],
         ),
-        trailing: Switch(
-          key: Key('dashboardCardVisibility-$id'),
-          value: visible,
-          onChanged: canHide ? onVisibilityChanged : null,
+        trailing: Semantics(
+          label: canHide
+              ? 'Show ${_labelFor(id)}'
+              : '${_labelFor(id)} is always visible',
+          child: Switch(
+            key: Key('dashboardCardVisibility-$id'),
+            value: visible,
+            onChanged: canHide ? onVisibilityChanged : null,
+          ),
         ),
       ),
     );
@@ -197,6 +202,23 @@ class _CardPreferenceRow extends StatelessWidget {
         return 'Support Stack';
       default:
         return cardId;
+    }
+  }
+
+  String _descriptionFor(String cardId) {
+    switch (cardId) {
+      case DashboardCardLayout.dailyFlowId:
+        return 'Always visible - Today Focus, Top 3, projects, capture, and review.';
+      case DashboardCardLayout.nextStepId:
+        return 'Shows the next practical action that helps move work forward.';
+      case DashboardCardLayout.treasuryId:
+        return 'Shows key finance and treasury information.';
+      case DashboardCardLayout.commandCentreId:
+        return 'Provides quick access to core New Earth controls and status.';
+      case DashboardCardLayout.supportStackId:
+        return 'Shows supporting tools and operational shortcuts.';
+      default:
+        return 'Dashboard information and shortcuts.';
     }
   }
 }
