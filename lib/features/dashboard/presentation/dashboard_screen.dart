@@ -96,21 +96,27 @@ class _DashboardContent extends StatelessWidget {
                   children: [
                     _DashboardHero(snapshot: snapshot),
                     const SizedBox(height: 22),
+                    _DashboardSectionHeader(
+                      title: 'Today\'s flow',
+                      subtitle:
+                          'Set one focus, choose up to three outcomes, then keep support work in its place.',
+                    ),
+                    const SizedBox(height: 14),
+                    _DashboardFocusCard(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    _TopTaskShowcase(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    _ActiveProjectsPanel(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    _DashboardQuickCaptureCard(snapshot: snapshot),
+                    const SizedBox(height: 22),
+                    _DashboardEveningReviewCard(snapshot: snapshot),
+                    const SizedBox(height: 22),
                     _DashboardGuidanceCard(snapshot: snapshot),
                     const SizedBox(height: 22),
                     const _TreasuryOverviewCard(),
                     const SizedBox(height: 22),
                     const _CompanyCommandCentreCard(),
-                    const SizedBox(height: 22),
-                    _DashboardSectionHeader(
-                      title: 'Primary work',
-                      subtitle:
-                          'Keep the next useful move, focus, and projects close together.',
-                    ),
-                    const SizedBox(height: 14),
-                    _TopTaskShowcase(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _SecondaryPanelGrid(snapshot: snapshot),
                     const SizedBox(height: 22),
                     _DashboardSectionHeader(
                       title: 'Support stack',
@@ -119,8 +125,6 @@ class _DashboardContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     _SupportModuleGrid(snapshot: snapshot),
-                    const SizedBox(height: 22),
-                    _DashboardEveningReviewCard(snapshot: snapshot),
                     const SizedBox(height: 20),
                     _DashboardFooter(isDark: isDark),
                   ],
@@ -377,29 +381,16 @@ class _TopTaskShowcase extends StatelessWidget {
             const _ShowcaseTaskState(
               badge: '1',
               title: 'Choose your first priority task',
-              subtitle: 'Your Top 3 will appear here once selected.',
-              label: 'Today',
+              subtitle:
+                  'Your Top 3 stays empty until you choose what matters today.',
+              label: 'Open slot',
               accent: AppColours.darkSecondary,
             ),
-            const _ShowcaseTaskState(
-              badge: '2',
-              title: 'Create momentum with one useful action',
-              subtitle: 'Planner and Tasks stay in sync with this list.',
-              label: 'Planner',
-              accent: AppColours.darkSuccess,
-            ),
-            const _ShowcaseTaskState(
-              badge: '3',
-              title: 'Keep the dashboard clear',
-              subtitle: 'Only three priorities live here at a time.',
-              label: 'Focus',
-              accent: AppColours.darkPurple,
-            ),
           ]
-        : List.generate(3, (index) {
-            final task = index < tasks.length ? tasks[index] : null;
-            return _ShowcaseTaskState.fromTask(index: index, task: task);
-          });
+        : [
+            for (var index = 0; index < tasks.length; index++)
+              _ShowcaseTaskState.fromTask(index: index, task: tasks[index]),
+          ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,7 +401,7 @@ class _TopTaskShowcase extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Today\'s Focus',
+                'Top 3',
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(color: AppColours.darkText),
@@ -1109,44 +1100,6 @@ class _CompanyChip extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SecondaryPanelGrid extends StatelessWidget {
-  const _SecondaryPanelGrid({required this.snapshot});
-
-  final DashboardSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useThreeColumns = constraints.maxWidth >= 980;
-
-        if (useThreeColumns) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _DashboardFocusCard(snapshot: snapshot)),
-              const SizedBox(width: 16),
-              Expanded(child: _ActiveProjectsPanel(snapshot: snapshot)),
-              const SizedBox(width: 16),
-              Expanded(child: _DashboardQuickCaptureCard(snapshot: snapshot)),
-            ],
-          );
-        }
-
-        return Column(
-          children: [
-            _DashboardFocusCard(snapshot: snapshot),
-            const SizedBox(height: 16),
-            _ActiveProjectsPanel(snapshot: snapshot),
-            const SizedBox(height: 16),
-            _DashboardQuickCaptureCard(snapshot: snapshot),
-          ],
-        );
-      },
     );
   }
 }
