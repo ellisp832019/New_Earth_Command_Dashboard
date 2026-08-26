@@ -44,6 +44,7 @@ import '../../features/learning/presentation/add_learning_item_screen.dart';
 import '../../features/learning/presentation/learning_screen.dart';
 import '../../features/launchpad/presentation/launchpad_routes.dart';
 import '../../features/more/presentation/more_screen.dart';
+import '../../features/governed_status/presentation/platform_core_governed_status_screen.dart';
 import '../../features/knowledge_library/presentation/knowledge_library_screen.dart';
 import '../../features/command_deck/presentation/command_deck_screen.dart';
 import '../../features/funding_grants_command_centre/presentation/funding_grants_command_centre_screen.dart';
@@ -445,6 +446,11 @@ final appRouter = GoRouter(
               path: RouteNames.more,
               builder: (context, state) => const MoreScreen(),
               routes: [
+                GoRoute(
+                  path: 'platform-core',
+                  builder: (context, state) =>
+                      const PlatformCoreGovernedStatusScreen(),
+                ),
                 GoRoute(
                   path: 'ai-employee',
                   builder: (context, state) => const GaiaEmployeeScreen(),

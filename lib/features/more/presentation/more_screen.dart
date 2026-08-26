@@ -81,6 +81,14 @@ class MoreScreen extends ConsumerWidget {
       route: RouteNames.systems,
     ),
     _MoreItem(
+      title: 'Platform Core Status',
+      description:
+          'View the read-only Platform Core declaration and its source status.',
+      icon: Icons.account_tree_outlined,
+      route: RouteNames.platformCoreGovernedStatus,
+      badge: 'Read-only',
+    ),
+    _MoreItem(
       title: 'Module Hub',
       description:
           'Inspect, enable, dock, and review dashboard modules from one calm registry.',

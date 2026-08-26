@@ -72,8 +72,9 @@ class PlatformCoreRuntimeConfigurationResolver {
     try {
       final canonical = await _canonicalizeRoot(normalized);
       if (canonical == null || canonical.isEmpty) {
-        return const PlatformCoreRuntimeConfiguration(
+        return PlatformCoreRuntimeConfiguration(
           status: PlatformCoreRuntimeConfigurationStatus.unavailable,
+          configurationSource: environmentKey,
         );
       }
       final canonicalRoot = p.normalize(canonical);
@@ -88,8 +89,9 @@ class PlatformCoreRuntimeConfigurationResolver {
         configurationSource: environmentKey,
       );
     } catch (_) {
-      return const PlatformCoreRuntimeConfiguration(
+      return PlatformCoreRuntimeConfiguration(
         status: PlatformCoreRuntimeConfigurationStatus.unavailable,
+        configurationSource: environmentKey,
       );
     }
   }
