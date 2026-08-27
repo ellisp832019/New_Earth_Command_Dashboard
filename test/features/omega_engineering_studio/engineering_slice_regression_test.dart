@@ -58,6 +58,12 @@ void main() {
     expect(find.text('Recent activity'), findsOneWidget);
     expect(find.text('Power cycle evidence pack'), findsOneWidget);
     expect(find.text('BioCalm firmware artifact'), findsOneWidget);
+    expect(
+      find.text(
+        'Specialist technical workspace for engineering evidence, project context, and technical workflows.',
+      ),
+      findsAtLeastNWidgets(1),
+    );
   });
 
   testWidgets('core engineering workspaces expose attachment actions', (
