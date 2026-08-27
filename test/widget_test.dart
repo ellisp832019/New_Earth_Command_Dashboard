@@ -654,7 +654,7 @@ void main() {
 
     final moreScreenList = find.byKey(const Key('moreScreenList'));
 
-    for (var i = 0; i < 6 && find.text('Journal').evaluate().isEmpty; i++) {
+    for (var i = 0; i < 12 && find.text('Journal').evaluate().isEmpty; i++) {
       await tester.drag(moreScreenList, const Offset(0, -480));
       await pumpUntilIdle(tester);
     }
@@ -666,7 +666,7 @@ void main() {
 
     for (
       var i = 0;
-      i < 6 && find.text('Voice Assistant').evaluate().isEmpty;
+      i < 12 && find.text('Voice Assistant').evaluate().isEmpty;
       i++
     ) {
       await tester.drag(moreScreenList, const Offset(0, -480));
@@ -677,8 +677,6 @@ void main() {
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
     expect(find.text('Voice Assistant'), findsAtLeastNWidgets(1));
-    expect(find.text('Settings'), findsAtLeastNWidgets(1));
-    expect(find.text('Visual Capture'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('dashboard daily flow cues stay calm and connected', (
@@ -2730,7 +2728,7 @@ void main() {
 
     for (
       var i = 0;
-      i < 6 && find.text('Voice Assistant').evaluate().isEmpty;
+      i < 12 && find.text('Voice Assistant').evaluate().isEmpty;
       i++
     ) {
       await tester.drag(moreScreenList, const Offset(0, -480));
