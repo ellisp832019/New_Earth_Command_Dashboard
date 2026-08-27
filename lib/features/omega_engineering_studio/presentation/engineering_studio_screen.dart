@@ -2989,7 +2989,7 @@ class _HeroPanel extends StatelessWidget {
                     Text(today, style: theme.textTheme.titleMedium),
                     const SizedBox(height: 6),
                     Text(
-                      'Build the next useful thing, keep the system calm, and surface only the work that matters most today.',
+                      'Specialist technical workspace for engineering evidence, project context, and technical workflows.',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ],
@@ -3345,7 +3345,7 @@ class _WorkspaceHeaderCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Build the next useful thing, keep the system calm, and surface only the work that matters most today.',
+                'Specialist technical workspace for engineering evidence, project context, and technical workflows.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColours.darkMutedText,
                   height: 1.35,
