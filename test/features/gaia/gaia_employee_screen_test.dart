@@ -74,8 +74,20 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('GAIA AI Employee'), findsOneWidget);
-    await tester.tap(find.text('GAIA AI Employee').first);
+    final gaiaDestination = find.text('GAIA AI Employee');
+    final moreScreenList = find.byKey(const Key('moreScreenList'));
+    final moreScreenScrollable = find
+        .descendant(of: moreScreenList, matching: find.byType(Scrollable))
+        .first;
+    await tester.scrollUntilVisible(
+      gaiaDestination,
+      500,
+      scrollable: moreScreenScrollable,
+    );
+    await tester.ensureVisible(gaiaDestination);
+    await tester.pumpAndSettle();
+    expect(gaiaDestination, findsOneWidget);
+    await tester.tap(gaiaDestination.first);
     await tester.pumpAndSettle();
 
     expect(find.text('GAIA integration surface'), findsOneWidget);

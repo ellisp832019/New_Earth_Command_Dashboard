@@ -228,6 +228,10 @@ class MoreScreen extends ConsumerWidget {
       for (final item in _items)
         if (item.route != RouteNames.gaiaEmployee || gaiaEnabled) item,
     ];
+    final groupedItems = <String, List<_MoreItem>>{};
+    for (final item in items) {
+      groupedItems.putIfAbsent(_groupFor(item), () => []).add(item);
+    }
     final theme = Theme.of(context);
 
     return WorkspaceShell(
@@ -252,7 +256,7 @@ class MoreScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Supporting modules',
+                            'Explore by purpose',
                             style: theme.textTheme.displaySmall?.copyWith(
                               color: AppColours.darkText,
                               fontSize: 28,
@@ -267,7 +271,7 @@ class MoreScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'A calm home for supporting modules, reference tools, and dashboard-adjacent workflows.',
+                            'Choose a work area first, then open the tool that fits the moment.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColours.darkMutedText,
                             ),
@@ -284,145 +288,14 @@ class MoreScreen extends ConsumerWidget {
           const SizedBox(height: 14),
           const _OmegaKnowledgeEngineBanner(),
           const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 1000 ? 2 : 1;
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: crossAxisCount == 1 ? 3.2 : 2.7,
-                ),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  final isOmegaKnowledgeEngine =
-                      item.route ==
-                      RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE');
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () => context.push(item.route),
-                    child: Ink(
-                      decoration: _morePanelDecoration(),
-                      padding: const EdgeInsets.all(18),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              gradient: isOmegaKnowledgeEngine
-                                  ? LinearGradient(
-                                      colors: [
-                                        AppColours.darkSecondary.withValues(
-                                          alpha: 0.22,
-                                        ),
-                                        AppColours.darkSurfaceRaised.withValues(
-                                          alpha: 0.98,
-                                        ),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: isOmegaKnowledgeEngine
-                                  ? null
-                                  : AppColours.darkSurfaceRaised.withValues(
-                                      alpha: 0.95,
-                                    ),
-                              border: Border.all(
-                                color: isOmegaKnowledgeEngine
-                                    ? AppColours.darkSecondary.withValues(
-                                        alpha: 0.4,
-                                      )
-                                    : AppColours.darkOutline.withValues(
-                                        alpha: 0.22,
-                                      ),
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              item.icon,
-                              color: isOmegaKnowledgeEngine
-                                  ? AppColours.darkText
-                                  : AppColours.darkSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.title,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: AppColours.darkText,
-                                  ),
-                                ),
-                                if (item.badge != null) ...[
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isOmegaKnowledgeEngine
-                                          ? AppColours.darkSecondary.withValues(
-                                              alpha: 0.22,
-                                            )
-                                          : AppColours.darkSecondary.withValues(
-                                              alpha: 0.14,
-                                            ),
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: isOmegaKnowledgeEngine
-                                            ? AppColours.darkSecondary
-                                                  .withValues(alpha: 0.5)
-                                            : AppColours.darkSecondary
-                                                  .withValues(alpha: 0.26),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      isOmegaKnowledgeEngine
-                                          ? 'Scan / report only'
-                                          : item.badge!,
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: AppColours.darkText,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                                const SizedBox(height: 8),
-                                Text(
-                                  item.description,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColours.darkMutedText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.chevron_right,
-                            color: AppColours.darkMutedText,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+          for (final group in _moreGroupOrder)
+            if (groupedItems[group] case final groupItems?
+                when groupItems.isNotEmpty) ...[
+              _MoreGroupHeading(title: group),
+              const SizedBox(height: 10),
+              _MoreGroupGrid(items: groupItems),
+              const SizedBox(height: 18),
+            ],
         ],
       ),
     );
@@ -458,6 +331,222 @@ class _MoreItem {
   final IconData icon;
   final String route;
   final String? badge;
+}
+
+const _moreGroupOrder = <String>[
+  'WORK',
+  'KNOWLEDGE',
+  'SYSTEMS',
+  'BUSINESS',
+  'PERSONAL',
+  'SPECIALIST',
+  'HARDWARE / DEVELOPMENT',
+  'ADMIN / SETTINGS',
+];
+
+String _groupFor(_MoreItem item) {
+  switch (item.title) {
+    case 'Treasury':
+    case 'Assets':
+    case 'Meeting System':
+    case 'Inbox':
+      return 'WORK';
+    case 'About & Help':
+    case 'Omega Knowledge Engine':
+    case 'Education & Learning Hub':
+    case 'Knowledge Library':
+      return 'KNOWLEDGE';
+    case 'Systems':
+    case 'Platform Core Status':
+    case 'Folder Health':
+      return 'SYSTEMS';
+    case 'Company Command Centre':
+    case 'Launchpad':
+    case 'Funding & Grants':
+    case 'Business':
+      return 'BUSINESS';
+    case 'Journal':
+    case 'Learning':
+    case 'Content':
+    case 'Wellbeing':
+    case 'Visual Capture':
+      return 'PERSONAL';
+    case 'Repo Research Engine':
+    case 'Omega Engineering Studio':
+    case 'GAIA AI Employee':
+    case 'Voice Intelligence':
+    case 'Voice Assistant':
+    case 'Alexa Voice Gateway':
+    case 'Module Hub':
+    case 'Omega Experiment Workspace':
+    case 'Projects Intelligence':
+      return 'SPECIALIST';
+    case 'Command Deck':
+      return 'HARDWARE / DEVELOPMENT';
+    case 'Settings':
+      return 'ADMIN / SETTINGS';
+  }
+  return 'SPECIALIST';
+}
+
+class _MoreGroupHeading extends StatelessWidget {
+  const _MoreGroupHeading({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: AppColours.darkSecondary,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.1,
+        ),
+      ),
+    );
+  }
+}
+
+class _MoreGroupGrid extends StatelessWidget {
+  const _MoreGroupGrid({required this.items});
+
+  final List<_MoreItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth >= 1000 ? 2 : 1;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: crossAxisCount == 1 ? 3.2 : 2.7,
+          ),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final isOmegaKnowledgeEngine =
+                item.route ==
+                RouteNames.modulePackage('26_OMEGA_KNOWLEDGE_ENGINE');
+            return InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => context.push(item.route),
+              child: Ink(
+                decoration: _morePanelDecoration(),
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        gradient: isOmegaKnowledgeEngine
+                            ? LinearGradient(
+                                colors: [
+                                  AppColours.darkSecondary.withValues(
+                                    alpha: 0.22,
+                                  ),
+                                  AppColours.darkSurfaceRaised.withValues(
+                                    alpha: 0.98,
+                                  ),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: isOmegaKnowledgeEngine
+                            ? null
+                            : AppColours.darkSurfaceRaised.withValues(
+                                alpha: 0.95,
+                              ),
+                        border: Border.all(
+                          color: isOmegaKnowledgeEngine
+                              ? AppColours.darkSecondary.withValues(alpha: 0.4)
+                              : AppColours.darkOutline.withValues(alpha: 0.22),
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        item.icon,
+                        color: isOmegaKnowledgeEngine
+                            ? AppColours.darkText
+                            : AppColours.darkSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppColours.darkText,
+                            ),
+                          ),
+                          if (item.badge != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColours.darkSecondary.withValues(
+                                  alpha: 0.14,
+                                ),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: AppColours.darkSecondary.withValues(
+                                    alpha: 0.26,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                isOmegaKnowledgeEngine
+                                    ? 'Scan / report only'
+                                    : item.badge!,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: AppColours.darkText,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Text(
+                            item.description,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColours.darkMutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColours.darkMutedText,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class _OmegaKnowledgeEngineBanner extends StatelessWidget {
