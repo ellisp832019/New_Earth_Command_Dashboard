@@ -1070,10 +1070,10 @@ void main() {
     await pumpUntilIdle(tester);
 
     appRouter.go(RouteNames.projectsWorkspace);
-    await pumpUntilFound(tester, find.text('New Earth Projects'));
+    await pumpUntilFound(tester, find.text('Human project context, grouping, progress, and next actions.'));
     await tester.pumpAndSettle();
 
-    expect(find.text('New Earth Projects'), findsAtLeastNWidgets(1));
+    expect(find.text('Human project context, grouping, progress, and next actions.'), findsAtLeastNWidgets(1));
     expect(
       find.text('MicroGrow', skipOffstage: false),
       findsAtLeastNWidgets(1),
@@ -1106,7 +1106,9 @@ void main() {
       findsAtLeastNWidgets(1),
     );
     expect(
-      find.text('Read-only project intelligence workspace'),
+      find.text(
+        'Observed technical insight from connected repositories; not project authority.',
+      ),
       findsAtLeastNWidgets(1),
     );
   });
@@ -1145,7 +1147,7 @@ void main() {
     await pumpUntilIdle(tester);
 
     expect(find.text('Tasks'), findsAtLeastNWidgets(1));
-    expect(find.text('Current Tasks'), findsAtLeastNWidgets(1));
+    expect(find.text('Actionable work inventory'), findsAtLeastNWidgets(1));
     expect(
       find.text('2 tasks are visible in the current task view.'),
       findsAtLeastNWidgets(1),
@@ -1450,7 +1452,7 @@ void main() {
     expect(find.text('Daily Planner'), findsAtLeastNWidgets(1));
     expect(
       find.text(
-        'A calm place to set the day, choose the Top 3, and review it gently.',
+        'Plan tomorrow, carry-forward, and detailed review here. Daily Flow is for today\'s focus.',
       ),
       findsAtLeastNWidgets(1),
     );

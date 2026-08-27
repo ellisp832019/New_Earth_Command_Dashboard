@@ -14,7 +14,7 @@ void main() {
 
     expect(find.text('Declaration available'), findsOneWidget);
     expect(find.text('Source: Platform Core'), findsOneWidget);
-    expect(find.text('Declaration authority'), findsOneWidget);
+    expect(find.text('Declared authority'), findsOneWidget);
     expect(find.text('Read-only'), findsOneWidget);
     expect(find.text('New Earth Command Dashboard'), findsOneWidget);
     expect(find.text('Declarative project'), findsNothing);
