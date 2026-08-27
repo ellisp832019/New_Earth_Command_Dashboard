@@ -40,7 +40,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
     return WorkspaceShell(
       title: 'Projects',
-      subtitle: 'New Earth Projects',
+      subtitle: 'Human project context, grouping, progress, and next actions.',
       onBack: () => context.go(RouteNames.projectsIntelligence),
       trailingActions: [
         TextButton.icon(

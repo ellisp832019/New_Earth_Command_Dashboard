@@ -1130,7 +1130,7 @@ class _SupportModuleGrid extends StatelessWidget {
     final summaryTiles = <_CompactModuleTile>[
       const _CompactModuleTile(
         title: 'Command Deck',
-        description: 'Shortcut hub.',
+        description: 'Future hardware support.',
         icon: Icons.space_dashboard_outlined,
         route: RouteNames.commandDeck,
         accent: AppColours.darkSecondary,
@@ -1158,7 +1158,7 @@ class _SupportModuleGrid extends StatelessWidget {
       ),
       const _CompactModuleTile(
         title: 'Repo Bridge',
-        description: 'Read-only repo view.',
+        description: 'Observed repo view.',
         icon: Icons.device_hub_outlined,
         route: RouteNames.repoIntelligenceBridge,
         accent: AppColours.darkPrimary,
@@ -4012,7 +4012,7 @@ class _DashboardQuickCaptureCardState
           ),
           const SizedBox(height: 12),
           Text(
-            'Park a thought quickly, then return to the committed work above.',
+            'Use universal fast capture for a thought, then review it in Inbox before turning it into work.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColours.darkMutedText),

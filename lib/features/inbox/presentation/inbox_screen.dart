@@ -25,7 +25,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
 
     return WorkspaceShell(
       title: 'Inbox',
-      subtitle: 'Capture, triage, and carry forward with calm.',
+      subtitle: 'Temporary processing destination for new captures.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(

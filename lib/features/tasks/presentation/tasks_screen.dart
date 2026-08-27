@@ -37,7 +37,8 @@ class TasksScreen extends ConsumerWidget {
 
     return WorkspaceShell(
       title: 'Tasks',
-      subtitle: 'Current Tasks',
+      subtitle:
+          'Local actionable work inventory: filter, start, complete, park, or archive tasks.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         FilledButton.icon(
@@ -184,7 +185,7 @@ class _TaskListView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Current Tasks',
+                    'Actionable work inventory',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: AppColours.darkText,
                     ),

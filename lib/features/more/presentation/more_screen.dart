@@ -22,7 +22,7 @@ class MoreScreen extends ConsumerWidget {
     _MoreItem(
       title: 'Command Deck',
       description:
-          'Run the local command centre for Stream Deck workflows, scripts, and setup.',
+          'Support the future physical control surface with bounded local commands and setup.',
       icon: Icons.space_dashboard_outlined,
       route: RouteNames.commandDeck,
     ),
@@ -44,7 +44,7 @@ class MoreScreen extends ConsumerWidget {
     _MoreItem(
       title: 'Omega Engineering Studio',
       description:
-          'Track projects, circuits, boards, firmware, devices, validation, and manufacturing readiness.',
+          'Review technical evidence and workflows for circuits, boards, firmware, devices, and manufacturing.',
       icon: Icons.precision_manufacturing_outlined,
       route: RouteNames.modulePackage('01_OMEGA_ENGINEERING_STUDIO_MODULE'),
       badge: 'Build',
@@ -52,7 +52,7 @@ class MoreScreen extends ConsumerWidget {
     _MoreItem(
       title: 'Company Command Centre',
       description:
-          'Open company records, LinkedIn planning, and the main company workspace.',
+          'Coordinate company operations, records, LinkedIn planning, and the company workspace.',
       icon: Icons.domain_outlined,
       route: RouteNames.companyCommandCentre,
       badge: 'Company',
@@ -60,7 +60,7 @@ class MoreScreen extends ConsumerWidget {
     _MoreItem(
       title: 'GAIA AI Employee',
       description:
-          'Open the read-only GAIA workspace and hand off execution to the standalone Control Centre.',
+          'Open the read-only GAIA workspace for interpreted recommendations and controlled handoff.',
       icon: Icons.smart_toy_outlined,
       route: RouteNames.gaiaEmployee,
       badge: 'GAIA',
@@ -76,14 +76,14 @@ class MoreScreen extends ConsumerWidget {
     _MoreItem(
       title: 'Systems',
       description:
-          'Protect the full D: drive, review backup status, and keep recovery tools calm.',
+          'Review protected recovery state and local system safeguards.',
       icon: Icons.shield_outlined,
       route: RouteNames.systems,
     ),
     _MoreItem(
       title: 'Platform Core Status',
       description:
-          'View the read-only Platform Core declaration and its source status.',
+          'View Declared Platform Core architecture and source status; Dashboard does not edit it.',
       icon: Icons.account_tree_outlined,
       route: RouteNames.platformCoreGovernedStatus,
       badge: 'Read-only',
@@ -113,14 +113,14 @@ class MoreScreen extends ConsumerWidget {
     _MoreItem(
       title: 'Knowledge Library',
       description:
-          'Search the Omega OS PDF catalogue and review extractable items.',
+          'Search Indexed Omega OS knowledge and review extractable items.',
       icon: Icons.library_books_outlined,
       route: RouteNames.knowledgeLibrary,
     ),
     _MoreItem(
       title: 'Projects Intelligence',
       description:
-          'Review read-only project and repo health from the bridge layer.',
+          'Review Observed technical and repository insight from the bridge layer.',
       icon: Icons.account_tree_outlined,
       route: RouteNames.projectsIntelligence,
     ),

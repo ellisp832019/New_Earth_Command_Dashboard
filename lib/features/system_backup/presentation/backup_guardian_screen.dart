@@ -33,13 +33,13 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
     return snapshotAsync.when(
       loading: () => WorkspaceShell(
         title: 'Backup Guardian',
-        subtitle: 'Backup and restore workspace',
+        subtitle: 'Protected recovery state and backup actions.',
         onBack: () => context.go(RouteNames.systems),
         child: const Center(child: CircularProgressIndicator()),
       ),
       error: (error, stackTrace) => WorkspaceShell(
         title: 'Backup Guardian',
-        subtitle: 'Backup and restore workspace',
+        subtitle: 'Protected recovery state and backup actions.',
         onBack: () => context.go(RouteNames.systems),
         child: _ErrorState(
           message: 'Backup Guardian could not load right now.',
@@ -50,7 +50,7 @@ class _BackupGuardianScreenState extends ConsumerState<BackupGuardianScreen> {
       data: (snapshot) {
         return WorkspaceShell(
           title: 'Backup Guardian',
-          subtitle: 'Backup and restore workspace',
+          subtitle: 'Protected recovery state and backup actions.',
           onBack: () => context.go(RouteNames.systems),
           child: SafeArea(
             child: CustomScrollView(

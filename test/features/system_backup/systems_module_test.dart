@@ -30,9 +30,7 @@ void main() {
     await tester.pump();
     expect(find.text('Systems'), findsAtLeastNWidgets(1));
     expect(
-      find.text(
-        'Protect the full D: drive, review backup status, and keep recovery tools calm.',
-      ),
+      find.text('Review protected recovery state and local system safeguards.'),
       findsAtLeastNWidgets(1),
     );
   });

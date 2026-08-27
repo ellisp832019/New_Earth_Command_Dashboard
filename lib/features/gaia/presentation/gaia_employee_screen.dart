@@ -22,7 +22,7 @@ class GaiaEmployeeScreen extends ConsumerWidget {
     return WorkspaceShell(
       title: 'GAIA AI Employee',
       subtitle:
-          'Read-only embedded operations and programme intelligence workspace',
+          'Interpreted recommendations and analysis; read-only workspace with controlled handoff.',
       onBack: () => context.go(RouteNames.more),
       child: enabled && controller != null
           ? GaiaEmployeeWorkspace(
