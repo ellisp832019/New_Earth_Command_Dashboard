@@ -207,7 +207,7 @@ class _StatusPanel extends StatelessWidget {
               runSpacing: 8,
               children: [
                 Chip(label: Text('Source: Platform Core')),
-                Chip(label: Text('Declaration authority')),
+                Chip(label: Text('Declared authority')),
                 Chip(label: Text('Read-only')),
               ],
             ),

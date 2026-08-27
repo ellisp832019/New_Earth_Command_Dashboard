@@ -80,7 +80,7 @@ class _KnowledgeLibraryScreenState extends State<KnowledgeLibraryScreen> {
   String? _sourceSectionFilter;
   String? _categoryFilter;
   String _query = '';
-  String _status = 'Loading the Omega OS library catalogue...';
+  String _status = 'Loading the Indexed Omega OS knowledge catalogue...';
   bool _isLoadingMore = false;
   Object? _error;
 

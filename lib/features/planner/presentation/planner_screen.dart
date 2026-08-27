@@ -25,7 +25,7 @@ class PlannerScreen extends ConsumerWidget {
     return WorkspaceShell(
       title: 'Daily Planner',
       subtitle:
-          'A calm place to set the day, choose the Top 3, and review it gently.',
+          'Local planning for tomorrow, carry-forward, and detailed review. Daily Flow is for today\'s focus.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(
@@ -247,7 +247,7 @@ class _PlannerViewState extends ConsumerState<_PlannerView> {
               ),
               const SizedBox(height: 8),
               Text(
-                'A calm place to set the day, choose the Top 3, and review it gently.',
+                'Plan tomorrow, carry-forward, and detailed review here. Daily Flow is for today\'s focus.',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColours.darkMutedText,
                 ),

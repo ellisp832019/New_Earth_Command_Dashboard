@@ -78,7 +78,7 @@ class _CompanyCommandCentreScreenState
       data: (snapshot) {
         return WorkspaceShell(
           title: 'Company Command Centre',
-          subtitle: 'Local-first company operations',
+          subtitle: 'Operational company coordination and records.',
           onBack: () => context.go(RouteNames.moduleHub),
           child: DefaultTabController(
             length: _tabs.length,

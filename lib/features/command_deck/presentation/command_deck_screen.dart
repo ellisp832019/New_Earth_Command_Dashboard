@@ -151,7 +151,7 @@ class _CommandDeckScreenState extends State<CommandDeckScreen> {
   Widget build(BuildContext context) {
     return WorkspaceShell(
       title: 'Command Deck',
-      subtitle: 'Local commands, paths, and safe shortcuts.',
+      subtitle: 'Future hardware-support surface for bounded commands and tactile controls.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(
