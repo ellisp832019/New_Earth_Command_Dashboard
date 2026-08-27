@@ -542,6 +542,8 @@ void main() {
 
     expect(find.text('Dashboard'), findsWidgets);
     expect(find.text('Today\'s Focus'), findsAtLeastNWidgets(1));
+    expect(find.text('Today\'s flow'), findsAtLeastNWidgets(1));
+    expect(find.text('Next useful action'), findsAtLeastNWidgets(1));
     expect(find.text('Next useful move'), findsAtLeastNWidgets(1));
     expect(
       find.text(
@@ -808,6 +810,23 @@ void main() {
       find.byKey(const Key('dashboardFocusBridgeCard')),
       findsAtLeastNWidgets(1),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('dashboard home stays usable in a small window', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 700);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    expect(find.byKey(const Key('dashboardScrollView')), findsOneWidget);
+    expect(find.text('Today\'s flow'), findsAtLeastNWidgets(1));
+    expect(find.text('Next useful action'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 
