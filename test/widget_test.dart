@@ -646,6 +646,9 @@ void main() {
   testWidgets('more screen links to supporting screens', (
     WidgetTester tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 5000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(buildTestApp());
     await pumpUntilIdle(tester);
 
@@ -677,6 +680,63 @@ void main() {
     expect(find.text('Wellbeing'), findsAtLeastNWidgets(1));
     expect(find.text('Inbox'), findsAtLeastNWidgets(1));
     expect(find.text('Voice Assistant'), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets('desktop sidebar avoids duplicate More destinations', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 5000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(buildTestApp());
+    await pumpUntilIdle(tester);
+
+    final sidebar = find.byType(SingleChildScrollView);
+    expect(sidebar, findsOneWidget);
+    expect(
+      find.descendant(of: sidebar, matching: find.text('Dashboard')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sidebar, matching: find.text('Users & Devices')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sidebar, matching: find.text('QR Studio')),
+      findsOneWidget,
+    );
+
+    for (final duplicateLabel in [
+      'Company',
+      'Journal',
+      'Learning',
+      'Content',
+      'Business',
+      'Wellbeing',
+      'Inbox',
+      'Voice',
+      'Alexa',
+      'Command Deck',
+      'Experiments',
+      'Engineering',
+      'About',
+    ]) {
+      expect(
+        find.descendant(of: sidebar, matching: find.text(duplicateLabel)),
+        findsNothing,
+        reason: '$duplicateLabel should be reached through More instead',
+      );
+    }
+
+    final moreNavigation = find.text('More').first;
+    await tester.ensureVisible(moreNavigation);
+    await tester.tap(moreNavigation);
+    await pumpUntilIdle(tester);
+    expect(find.byKey(const Key('moreScreenList')), findsOneWidget);
+    expect(find.text('Company Command Centre'), findsAtLeastNWidgets(1));
+    expect(find.text('Command Deck'), findsAtLeastNWidgets(1));
+    expect(find.text('Omega Engineering Studio'), findsAtLeastNWidgets(1));
+    expect(find.text('About & Help'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('dashboard daily flow cues stay calm and connected', (

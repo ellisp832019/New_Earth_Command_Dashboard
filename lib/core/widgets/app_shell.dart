@@ -195,12 +195,6 @@ class _Sidebar extends StatelessWidget {
                   selected: navigationShell.currentIndex == 0,
                   onTap: () => navigationShell.goBranch(0),
                 ),
-                const SizedBox(height: 8),
-                _SidebarLink(
-                  label: 'Company',
-                  icon: Icons.domain_outlined,
-                  route: RouteNames.companyCommandCentre,
-                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -269,48 +263,6 @@ class _Sidebar extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _SidebarSection(
-              title: 'Support',
-              children: [
-                _SidebarLink(
-                  label: 'Journal',
-                  icon: Icons.menu_book_outlined,
-                  route: RouteNames.journal,
-                ),
-                _SidebarLink(
-                  label: 'Learning',
-                  icon: Icons.school_outlined,
-                  route: RouteNames.learning,
-                ),
-                _SidebarLink(
-                  label: 'Content',
-                  icon: Icons.campaign_outlined,
-                  route: RouteNames.content,
-                ),
-                _SidebarLink(
-                  label: 'Business',
-                  icon: Icons.handshake_outlined,
-                  route: RouteNames.business,
-                ),
-                _SidebarLink(
-                  label: 'Wellbeing',
-                  icon: Icons.favorite_border,
-                  route: RouteNames.wellbeing,
-                ),
-                _SidebarLink(
-                  label: 'Inbox',
-                  icon: Icons.inbox_outlined,
-                  route: RouteNames.inbox,
-                ),
-                _SidebarLink(
-                  label: 'Voice',
-                  icon: Icons.mic_none_rounded,
-                  route: RouteNames.voice,
-                ),
-                const _AlexaGatewaySidebarLink(),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _SidebarSection(
               title: 'Tools',
               children: [
                 _SidebarLink(
@@ -322,34 +274,6 @@ class _Sidebar extends StatelessWidget {
                   label: 'QR Studio',
                   icon: Icons.print_outlined,
                   route: RouteNames.assetQrLabelStudio,
-                ),
-                _SidebarLink(
-                  label: 'Command Deck',
-                  icon: Icons.space_dashboard_outlined,
-                  route: RouteNames.commandDeck,
-                ),
-                _SidebarLink(
-                  label: 'Experiments',
-                  icon: Icons.science_outlined,
-                  route: RouteNames.experimentWorkspace,
-                ),
-                _SidebarLink(
-                  label: 'Engineering',
-                  icon: Icons.precision_manufacturing_outlined,
-                  route: RouteNames.modulePackage(
-                    '01_OMEGA_ENGINEERING_STUDIO_MODULE',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _SidebarSection(
-              title: 'About',
-              children: [
-                _SidebarLink(
-                  label: 'About',
-                  icon: Icons.help_outline,
-                  route: RouteNames.aboutHelp,
                 ),
               ],
             ),
@@ -873,19 +797,6 @@ class _DesktopWindowButton extends StatelessWidget {
           child: Icon(icon, size: 18, color: foreground),
         ),
       ),
-    );
-  }
-}
-
-class _AlexaGatewaySidebarLink extends StatelessWidget {
-  const _AlexaGatewaySidebarLink();
-
-  @override
-  Widget build(BuildContext context) {
-    return _SidebarLink(
-      label: 'Alexa',
-      icon: Icons.hub_outlined,
-      route: RouteNames.alexaVoiceGateway,
     );
   }
 }
