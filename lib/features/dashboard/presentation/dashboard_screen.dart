@@ -97,8 +97,16 @@ class _DashboardContent extends StatelessWidget {
           _DashboardEveningReviewCard(snapshot: snapshot),
         ],
       ),
-      DashboardCardLayout.nextStepId: _DashboardGuidanceCard(
-        snapshot: snapshot,
+      DashboardCardLayout.nextStepId: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _DashboardSectionHeader(
+            title: 'Next useful action',
+            subtitle: 'A focused recommendation for the next move today.',
+          ),
+          const SizedBox(height: 14),
+          _DashboardGuidanceCard(snapshot: snapshot),
+        ],
       ),
       DashboardCardLayout.treasuryId: const _TreasuryOverviewCard(),
       DashboardCardLayout.commandCentreId: const _CompanyCommandCentreCard(),
@@ -108,7 +116,7 @@ class _DashboardContent extends StatelessWidget {
           _DashboardSectionHeader(
             title: 'Support stack',
             subtitle:
-                'Open these only when they help the day move more clearly.',
+                'Specialist tools and system views stay here until they help the day move more clearly.',
           ),
           const SizedBox(height: 14),
           _SupportModuleGrid(snapshot: snapshot),
@@ -253,17 +261,17 @@ class _DashboardHero extends ConsumerWidget {
                 icon: Icon(_nextStepIcon(snapshot.nextStepActionType)),
                 label: Text(snapshot.nextStepActionLabel),
               ),
-              FilledButton.tonalIcon(
+              TextButton.icon(
                 onPressed: () => context.push(RouteNames.commandPalette),
                 icon: const Icon(Icons.search),
                 label: const Text('Quick Search'),
               ),
-              FilledButton.tonalIcon(
+              TextButton.icon(
                 onPressed: () => context.push(RouteNames.tasks),
                 icon: const Icon(Icons.task_alt_outlined),
                 label: const Text('Open Tasks'),
               ),
-              FilledButton.tonalIcon(
+              TextButton.icon(
                 onPressed: () => context.push(RouteNames.planner),
                 icon: const Icon(Icons.event_note_outlined),
                 label: const Text('Open Planner'),
