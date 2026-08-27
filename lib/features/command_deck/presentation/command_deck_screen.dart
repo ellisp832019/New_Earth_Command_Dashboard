@@ -152,7 +152,7 @@ class _CommandDeckScreenState extends State<CommandDeckScreen> {
     return WorkspaceShell(
       title: 'Command Deck',
       subtitle:
-          'Future hardware-support surface for bounded commands and tactile controls.',
+          'Development preview for a future physical, tactile hardware interface. Software-only today.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(
@@ -770,7 +770,7 @@ class _CommandDeckHero extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'A virtual command surface for meeting starts, build sessions, project jumps, and local handoff workflows.',
+                'Future hardware interface preview for tactile controls, layout mapping, and software workflows.',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: AppColours.darkText,
                 ),
@@ -779,7 +779,7 @@ class _CommandDeckHero extends StatelessWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
                 child: Text(
-                  'The Command Deck stays local-first and software-only for now. Scripts, page links, and folder targets live in the module pack so the page remains calm, portable, and easy to extend later.',
+                  'This is a software emulator and development surface only. It does not connect to or control physical hardware today; the virtual layout is a reference for future tactile hardware.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColours.darkMutedText,
                     height: 1.45,
@@ -792,12 +792,16 @@ class _CommandDeckHero extends StatelessWidget {
                 runSpacing: 10,
                 children: [
                   const _Pill(
-                    label: 'Software-only first',
+                    label: 'Development preview',
                     accent: AppColours.darkSecondary,
                   ),
                   const _Pill(
-                    label: 'Grouped by workflow',
+                    label: 'Software emulator',
                     accent: AppColours.darkSuccess,
+                  ),
+                  const _Pill(
+                    label: 'Not connected',
+                    accent: AppColours.darkAmber,
                   ),
                   _Pill(
                     label: workspace.actionLog.isEmpty
@@ -815,10 +819,10 @@ class _CommandDeckHero extends StatelessWidget {
             runSpacing: 10,
             alignment: wide ? WrapAlignment.end : WrapAlignment.start,
             children: [
-              FilledButton.icon(
+              TextButton.icon(
                 onPressed: () => context.push(RouteNames.dashboard),
                 icon: const Icon(Icons.dashboard_outlined),
-                label: const Text('Dashboard'),
+                label: const Text('Open Dashboard'),
               ),
               TextButton.icon(
                 onPressed: () => context.push(RouteNames.launchpad),
