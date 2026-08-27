@@ -36,6 +36,12 @@ void main() {
       expect(find.text(heading), findsOneWidget);
     }
     expect(find.text('Command Deck'), findsOneWidget);
+    expect(
+      find.text(
+        'Support the future physical control surface with bounded local commands and setup.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Platform Core Status'), findsOneWidget);
     expect(find.text('Knowledge Library'), findsOneWidget);
     expect(find.text('Company Command Centre'), findsOneWidget);
