@@ -37,7 +37,8 @@ class TasksScreen extends ConsumerWidget {
 
     return WorkspaceShell(
       title: 'Tasks',
-      subtitle: 'Local actionable work inventory: filter, start, complete, park, or archive tasks.',
+      subtitle:
+          'Local actionable work inventory: filter, start, complete, park, or archive tasks.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         FilledButton.icon(

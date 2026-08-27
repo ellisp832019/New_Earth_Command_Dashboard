@@ -1070,10 +1070,16 @@ void main() {
     await pumpUntilIdle(tester);
 
     appRouter.go(RouteNames.projectsWorkspace);
-    await pumpUntilFound(tester, find.text('Human project context, grouping, progress, and next actions.'));
+    await pumpUntilFound(
+      tester,
+      find.text('Human project context, grouping, progress, and next actions.'),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('Human project context, grouping, progress, and next actions.'), findsAtLeastNWidgets(1));
+    expect(
+      find.text('Human project context, grouping, progress, and next actions.'),
+      findsAtLeastNWidgets(1),
+    );
     expect(
       find.text('MicroGrow', skipOffstage: false),
       findsAtLeastNWidgets(1),

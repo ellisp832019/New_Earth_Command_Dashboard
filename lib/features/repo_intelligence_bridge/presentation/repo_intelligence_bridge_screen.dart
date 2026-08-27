@@ -19,7 +19,8 @@ class RepoIntelligenceBridgeScreen extends ConsumerWidget {
 
     return WorkspaceShell(
       title: 'Repo Intelligence Bridge',
-      subtitle: 'Observed repository insight presented as a read-only bridge view.',
+      subtitle:
+          'Observed repository insight presented as a read-only bridge view.',
       onBack: () => context.go(RouteNames.projectsIntelligence),
       trailingActions: [
         IconButton(

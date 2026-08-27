@@ -36,7 +36,8 @@ class _ProjectsIntelligenceScreenState
 
     return WorkspaceShell(
       title: 'Projects Hub',
-      subtitle: 'Observed technical insight from connected repositories; not project authority.',
+      subtitle:
+          'Observed technical insight from connected repositories; not project authority.',
       onBack: () => context.go(RouteNames.dashboard),
       trailingActions: [
         IconButton(
