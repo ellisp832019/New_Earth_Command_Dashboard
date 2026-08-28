@@ -652,7 +652,7 @@ class _TreasuryOverviewCard extends ConsumerWidget {
         receiptsLabel: 'Receipts are unavailable until the folder is linked.',
         onOpenTreasury: () => context.push(RouteNames.treasury),
         onReload: () => ref.invalidate(treasuryWorkspaceProvider),
-        stateSummaries: const <TreasuryStateSummary>[],
+        stateSummaries: null,
       ),
       data: (data) => _TreasuryOverviewPanel(
         title: 'Treasury',
@@ -696,34 +696,37 @@ class _TreasuryOverviewPanel extends StatelessWidget {
   final String receiptsLabel;
   final VoidCallback onOpenTreasury;
   final VoidCallback onReload;
-  final List<TreasuryStateSummary> stateSummaries;
+  final List<TreasuryStateSummary>? stateSummaries;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final summaryMap = {
-      for (final summary in stateSummaries) summary.kind: summary.count,
+      for (final summary in stateSummaries ?? const <TreasuryStateSummary>[])
+        summary.kind: summary.count,
     };
+    String metricValue(TreasuryStatusKind kind) =>
+        stateSummaries == null ? 'Unavailable' : '${summaryMap[kind] ?? 0}';
 
     final metricChips = [
       _TreasuryMetricChip(
         label: 'Safe',
-        value: '${summaryMap[TreasuryStatusKind.safe] ?? 0}',
+        value: metricValue(TreasuryStatusKind.safe),
         accent: AppColours.darkSuccess,
       ),
       _TreasuryMetricChip(
         label: 'Watch',
-        value: '${summaryMap[TreasuryStatusKind.watch] ?? 0}',
+        value: metricValue(TreasuryStatusKind.watch),
         accent: AppColours.darkAmber,
       ),
       _TreasuryMetricChip(
         label: 'Pause',
-        value: '${summaryMap[TreasuryStatusKind.pause] ?? 0}',
+        value: metricValue(TreasuryStatusKind.pause),
         accent: const Color(0xFFE26B6B),
       ),
       _TreasuryMetricChip(
         label: 'Decision',
-        value: '${summaryMap[TreasuryStatusKind.decision] ?? 0}',
+        value: metricValue(TreasuryStatusKind.decision),
         accent: AppColours.darkSecondary,
       ),
     ];
