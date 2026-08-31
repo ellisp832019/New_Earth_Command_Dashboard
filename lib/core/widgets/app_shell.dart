@@ -117,8 +117,8 @@ class _DesktopShell extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _DesktopWindowBar(
-                  title: 'New Earth Command Centre',
-                  subtitle: 'Local-first command center',
+                  title: 'New Earth Dashboard',
+                  subtitle: 'Personal / operational workspace',
                 ),
                 Expanded(
                   child: Row(
