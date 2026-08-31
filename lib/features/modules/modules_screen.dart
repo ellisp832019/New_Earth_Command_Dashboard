@@ -96,7 +96,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
 
     return WorkspaceShell(
       title: 'Module Hub',
-      subtitle: 'Live local module registry',
+      subtitle: 'Local module view - Not Canonical',
       onBack: () => _goBack(context),
       trailingActions: [
         IconButton(
@@ -109,7 +109,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           _HeaderCard(
-            subtitle: 'Live local module registry',
+            subtitle: 'Local module view - Not Canonical',
             summary:
                 'Showing ${filteredModules.length} of ${modules.length} modules',
             enabledCount: enabledCount,
