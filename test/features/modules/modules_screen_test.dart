@@ -15,7 +15,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Module Hub'), findsOneWidget);
-    expect(find.text('Live local module registry'), findsWidgets);
+    expect(find.text('Local module view - Not Canonical'), findsWidgets);
     expect(find.text('More - Module Hub'), findsWidgets);
 
     await tester.scrollUntilVisible(
