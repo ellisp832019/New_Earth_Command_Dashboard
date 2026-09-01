@@ -35,7 +35,7 @@ class ModuleOperationsScreen extends ConsumerWidget {
                   Text('Module operations', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Text(
-                    'Keep the local registry fresh, inspect install paths, and stage module changes safely before any deeper automation arrives.',
+                    'Keep the local module view current, inspect install paths, and stage module changes safely before any deeper automation arrives.',
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),

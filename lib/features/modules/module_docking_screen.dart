@@ -222,7 +222,7 @@ class ModuleOperationsLinkCard extends StatelessWidget {
             Text('Next place to open', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'Use operations when you need to refresh the registry or inspect local module paths.',
+              'Use operations when you need to refresh the local module view or inspect local module paths.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
