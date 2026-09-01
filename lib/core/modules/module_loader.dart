@@ -116,7 +116,7 @@ class ModuleLoader {
       id: 'module_hub',
       name: 'Module Hub',
       description:
-          'System core registry for registering, inspecting, enabling and docking dashboard modules.',
+          'Local dashboard view for inspecting, enabling and docking modules.',
       category: ModuleCategory.systemCore,
       version: '0.1.0',
       status: ModuleStatus.enabled,

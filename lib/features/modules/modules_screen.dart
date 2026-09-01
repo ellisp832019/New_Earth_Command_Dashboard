@@ -237,7 +237,7 @@ class _ModulesScreenState extends ConsumerState<ModulesScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Use search, filters, and sort to narrow the registry to what matters now.',
+              'Use search, filters, and sort to narrow the local module view to what matters now.',
               style: theme.textTheme.bodySmall,
             ),
           ],
